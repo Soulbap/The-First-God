@@ -78,7 +78,7 @@ test('milepæler og meldinger: oversikten annonseres, og sluttmilepælen vises s
   const list = reachedMilestones(s);
   assert.equal(list.at(-1).id, 'first_world_civilization');
   const realm = list.find((m) => m.id === 'connected_realm');
-  assert.match(realm.opens, /Verden/);
+  assert.match(realm.opens, /planetvisningen/); // OPUS-01: oversikten er nå planeten
   const p = classifyPresentation({ type: 'milestone', id: 'first_world_civilization', title: 'Verdens første sivilisasjon', text: 'x' });
   assert.equal(p.kicker, 'Milepæl');
   const card = insightCard(createGame(), UPGRADES.find((u) => u.id === 'sawmill_up'));
