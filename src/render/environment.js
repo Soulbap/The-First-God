@@ -9,7 +9,7 @@ export function buildEnvironment(state) {
   const { width: W, height: H, pond } = state.world;
   const cols = Math.ceil(W / ENV_CELL) + 2, rows = Math.ceil(H / ENV_CELL) + 2;
   const n = cols * rows;
-  const canopy = new Float32Array(n), conifer = new Float32Array(n), moisture = new Float32Array(n), soil = new Float32Array(n);
+  const canopy = new Float32Array(n), conifer = new Float32Array(n), moisture = new Float32Array(n), soil = new Float32Array(n), settlement = new Float32Array(n);
   const nM = makeNoise(state.seed + 701), nS = makeNoise(state.seed + 733);
   const C = state.settlement.center;
 
@@ -47,12 +47,18 @@ export function buildEnvironment(state) {
       const m = fbm(nM, x / 230, y / 230, 3) * 0.75 + smooth(2.8, 1.05, pd) * 0.6 + c * 0.12;
       moisture[k] = clamp((m - 0.2) / 0.7);
       const dc = Math.hypot(x - C.x, (y - C.y) * 1.2);
+      let settled = 0;
+      for (const b of state.buildings) {
+        const d = Math.hypot(x - b.x, (y - b.y) * 1.25);
+        settled = Math.max(settled, 1 - smooth(b.radius * 0.7, b.radius * 2.5 + 20, d) * (b.complete ? 1 : Math.max(0.25, b.progress)));
+      }
+      settlement[k] = clamp(settled);
       // Bart jord: sparsomt kronedekke, tørt, nær stein og i leiren.
-      const s = fbm(nS, x / 85 + 11, y / 85, 3) * 0.8 - c * 0.5 - moisture[k] * 0.2 + clamp(rockInfl[k]) * 0.45 + (1 - smooth(40, 170, dc)) * 0.08;
+      const s = fbm(nS, x / 85 + 11, y / 85, 3) * 0.8 - c * 0.5 - moisture[k] * 0.2 + clamp(rockInfl[k]) * 0.45 + (1 - smooth(40, 170, dc)) * 0.08 + settlement[k] * 0.32;
       soil[k] = clamp((s - 0.36) / 0.38);
     }
   }
-  return { cols, rows, cell: ENV_CELL, canopy, conifer, moisture, soil };
+  return { cols, rows, cell: ENV_CELL, canopy, conifer, moisture, soil, settlement };
 }
 
 const sample = (env, f, x, y) => {
@@ -68,4 +74,5 @@ export const envAt = (env, x, y) => ({
   conifer: sample(env, env.conifer, x, y),
   moisture: sample(env, env.moisture, x, y),
   soil: sample(env, env.soil, x, y),
+  settlement: sample(env, env.settlement, x, y),
 });

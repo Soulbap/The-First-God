@@ -4,6 +4,7 @@ import { makeCanvas, makeNoise, fbm, mix, smooth, clamp, rgba, jitter, dab, mulb
 import { envAt } from './environment.js';
 
 export const TERRAIN_SCALE = 2; // piksler per verdensenhet i terrengbildet
+export const ECOLOGY_SCALE = 0.16; // lavfrekvent og billig: bare tone, ikke detaljtegning
 
 const LUSH = [76, 92, 46], DRY = [112, 110, 66], MOSS = [54, 72, 42], DIRT = [112, 92, 66];
 const NEEDLE = [88, 72, 52], LEAF = [112, 100, 58], WET = [58, 76, 44], MUD = [78, 68, 50];
@@ -205,6 +206,33 @@ export function buildTerrain(state, env) {
   }
   ctx.restore();
   return canvas;
+}
+
+// Et lite, avledet lag over det cachede terrenget. Det bygges sjelden og gjør
+// derfor at hogst, oppvekst og bygging kan prege bakken uten full terrengrebake.
+export function buildEcologyOverlay(state, env) {
+  const { width: W, height: H } = state.world;
+  const scale = ECOLOGY_SCALE;
+  const c = makeCanvas(Math.ceil(W * scale), Math.ceil(H * scale));
+  const g = c.getContext('2d');
+  const img = g.createImageData(c.width, c.height);
+  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) {
+    const e = envAt(env, x / scale, y / scale);
+    const k = (y * c.width + x) * 4;
+    // Skyggefull skogbunn, eksponert jord og bosettingsjord har forskjellige,
+    // begrensede pigmenter; den opprinnelige malte bakken er fortsatt grunnlaget.
+    const forest = e.canopy * (0.07 + e.conifer * 0.11);
+    const open = (1 - e.canopy) * e.soil * 0.06;
+    const settled = e.settlement * 0.1;
+    const alpha = Math.min(0.22, forest + open + settled);
+    const warm = open + settled;
+    img.data[k] = Math.round(54 + warm * 62);
+    img.data[k + 1] = Math.round(67 + warm * 28);
+    img.data[k + 2] = Math.round(40 + warm * 22);
+    img.data[k + 3] = Math.round(alpha * 255);
+  }
+  g.putImageData(img, 0, 0);
+  return c;
 }
 
 // Sømløs finkornsflis (én flis, to støylag med ulik periode, lys/mørk med alfa). Flislegges over 200 verdensenheter;

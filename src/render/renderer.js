@@ -1,7 +1,7 @@
 // Verdenspresentasjon: oversetter spilltilstand til et levende, dybdesortert bilde.
 // Leser tilstanden, men eier ingen spilleregler.
 import { makeCanvas, drawSprite, clamp, smooth, taper, dab, makeNoise, fbm, mulberry, rgba } from './paint.js';
-import { buildTerrain, buildGrain, GRAIN_UNITS, TERRAIN_SCALE } from './terrain.js';
+import { buildTerrain, buildEcologyOverlay, buildGrain, GRAIN_UNITS, TERRAIN_SCALE, ECOLOGY_SCALE } from './terrain.js';
 import { buildEnvironment } from './environment.js';
 import { generateDecor, decorSprites, SWAY_STEPS } from './decor.js';
 import { treeSprite, growthLevels, treeHeight, lookVariant } from './trees.js';
@@ -41,12 +41,14 @@ const lowerBound = (arr, y) => {
 
 export function createRenderer(canvas) {
   const ctx = canvas.getContext('2d');
-  const R = { ctx, terrain: null, decor: null, env: null, grain: null, wearCanvas: null, wearImg: null, exposure: null, wearBox: null, fx: createFx(), emitTimers: new Map(), stats: { frameMs: 0 } };
+  const R = { ctx, terrain: null, decor: null, env: null, ecologyOverlay: null, ecologyRevision: -1, grain: null, wearCanvas: null, wearImg: null, exposure: null, wearBox: null, fx: createFx(), emitTimers: new Map(), stats: { frameMs: 0, ecologyRefreshMs: 0 } };
   const litterCache = new Map();
 
   R.reset = (state) => {
     R.env = buildEnvironment(state);
     R.terrain = buildTerrain(state, R.env);
+    R.ecologyOverlay = buildEcologyOverlay(state, R.env);
+    R.ecologyRevision = state.ecology.revision;
     // Nedskalerte kopier (mip) så utzoomet visning ikke må minifisere hele det store bildet hvert bilde.
     R.terrainMips = [{ s: TERRAIN_SCALE, c: R.terrain }];
     for (const sc of [1, 0.5]) {
@@ -127,6 +129,15 @@ export function createRenderer(canvas) {
   // Kontinuerlig liv: røyk, gnister, byggestøv og guddommelig byggelys.
   R.update = (state, dt, simDt, renderTime) => {
     const fx = R.fx;
+    // Sjelden, avgrenset oppdatering av et lavoppløst overlay. Baseterrenget,
+    // dekor og mips beholdes; ingen helverdens-rebake skjer i hovedløkka.
+    if (R.ecologyRevision !== state.ecology.revision) {
+      const t0 = performance.now();
+      R.env = buildEnvironment(state);
+      R.ecologyOverlay = buildEcologyOverlay(state, R.env);
+      R.ecologyRevision = state.ecology.revision;
+      R.stats.ecologyRefreshMs = performance.now() - t0;
+    }
     updateFx(fx, dt);
     for (const f of fx.falls) {
       if (!f.dusted && f.t > 1.3) {
@@ -275,6 +286,9 @@ export function createRenderer(canvas) {
     for (const m of R.terrainMips) if (m.s >= S * 0.85) tm = m;
     ctx.imageSmoothingQuality = 'low'; // bilineær er rask og nok når mip-nivået velges etter zoom
     ctx.drawImage(tm.c, sx0 * tm.s, sy0 * tm.s, (sx1 - sx0) * tm.s, (sy1 - sy0) * tm.s, sx0, sy0, sx1 - sx0, sy1 - sy0);
+    ctx.globalAlpha = 0.85;
+    ctx.drawImage(R.ecologyOverlay, sx0 * ECOLOGY_SCALE, sy0 * ECOLOGY_SCALE, (sx1 - sx0) * ECOLOGY_SCALE, (sy1 - sy0) * ECOLOGY_SCALE, sx0, sy0, sx1 - sx0, sy1 - sy0);
+    ctx.globalAlpha = 1;
 
     ctx.imageSmoothingQuality = S > 2.4 ? 'medium' : 'low';
     // Finkorn: en sømløs flis holder bakken levende ved nærzoom uten synlig gjentakelse.

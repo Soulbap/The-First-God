@@ -7,6 +7,8 @@ import { buildEnvironment, envAt } from '../src/render/environment.js';
 import { generateDecor } from '../src/render/decor.js';
 import { pileCount } from '../src/render/buildings.js';
 import { lookVariant, TREE_VARIANTS } from '../src/render/trees.js';
+import { advance, clickNode } from '../src/sim/game.js';
+import { ECOLOGY_REFRESH_SECONDS } from '../src/sim/ecology.js';
 
 const scene = (seed) => {
   const s = createGame(seed);
@@ -81,4 +83,29 @@ test('trevarianter: lookVariant gir 8 ulike utseender uten å endre simuleringen
     seen.add(v);
   }
   assert.ok(seen.size >= 6, 'flere ulike utseender i verden');
+});
+
+test('lunder er artstunge, og den åpne leiren beholder spillbare startressurser', () => {
+  const s = createGame();
+  const C = s.settlement.center;
+  const trees = s.nodes.filter((n) => n.kind === 'tree');
+  assert.ok(trees.length >= 70, 'skogmassene er store nok til å leses på områdezoom');
+  assert.ok(trees.filter((n) => n.species === 'spruce').length > 20);
+  assert.ok(trees.filter((n) => n.species === 'birch').length > 20);
+  assert.ok(trees.every((n) => Math.hypot(n.x - C.x, n.y - C.y) >= 90 || n.growth < 0.5), 'ingen moden krone stenger startlysningen');
+  assert.ok(s.nodes.some((n) => n.kind === 'tree' && n.growth === 1));
+  assert.ok(s.nodes.some((n) => n.kind === 'rock' && n.stone > 0));
+});
+
+test('økologilaget oppdateres avledet og avgrenset uten å endre økonomien', () => {
+  const s = createGame();
+  const before = structuredClone(s.resources);
+  const tree = s.nodes.find((n) => n.kind === 'tree' && n.growth === 1);
+  while (clickNode(s, tree.id)) { /* fell treet gjennom den virkelige spillregelen */ }
+  advance(s, ECOLOGY_REFRESH_SECONDS + 0.2);
+  assert.ok(s.ecology.revision >= 1, 'miljøpresentasjonen får et oppdateringspunkt');
+  assert.deepEqual(s.resources, { wood: before.wood + 12, stone: before.stone, pp: before.pp }, 'miljøoppdateringen gir ingen egne ressurser');
+  const rev = s.ecology.revision;
+  advance(s, ECOLOGY_REFRESH_SECONDS * 0.4);
+  assert.equal(s.ecology.revision, rev, 'oppdateringer er begrenset i tid');
 });

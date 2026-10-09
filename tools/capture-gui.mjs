@@ -12,6 +12,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 const [base = 'http://localhost:5173', outDir = 'docs/gui-01', suffix = ''] = process.argv.slice(2);
+const smokeOnly = process.env.GUI_SMOKE_ONLY === '1';
 const BROWSER = process.env.BROWSER_PATH || 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const PORT = 9333;
 
@@ -101,7 +102,7 @@ try {
   await cdp.send('Runtime.enable');
   await cdp.send('Log.enable');
   await cdp.send('Page.enable');
-  for (const s of SCENES) {
+  for (const s of (smokeOnly ? [] : SCENES)) {
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: s.w, height: s.h, deviceScaleFactor: 1, mobile: false });
     await cdp.send('Page.navigate', { url: `${base}/?debug` });
     for (let i = 0; i < 300; i++) {
@@ -115,6 +116,17 @@ try {
     fs.writeFileSync(file, Buffer.from(shot.data, 'base64'));
     console.log('lagret', file);
   }
+  // Den samme ekte Edge-siden kjører den utvidede samhandlingskontrollen. Dette
+  // holder nettleser-røyktesten repeterbar uten å gjøre den til en Node-/DOM-test.
+  await cdp.send('Page.navigate', { url: `${base}/?debug` });
+  for (let i = 0; i < 300; i++) {
+    if (await evaluate(cdp, `!!(window.TFG && document.getElementById('loading').hidden)`).catch(() => false)) break;
+    await sleep(100);
+  }
+  const smoke = await evaluate(cdp, `(async () => await (await import('/tools/gui-smoke.js')).run())()`);
+  console.log(`GUI-røykprøve: ${smoke.pass}/${smoke.results.length}; feil: ${smoke.fail.join(', ') || 'ingen'}`);
+  const renderStats = await evaluate(cdp, `({ frameMs: window.TFG.renderStats.frameMs, ecologyRefreshMs: window.TFG.renderStats.ecologyRefreshMs })`);
+  console.log(`Rendermåling (nåværende scene): ${renderStats.frameMs.toFixed(2)} ms/bilde; miljøoppdatering ${renderStats.ecologyRefreshMs.toFixed(2)} ms.`);
   cdp.close();
   console.log(errors.length ? `Konsollfeil:\n${errors.join('\n')}` : 'Ingen konsollfeil.');
 } finally {

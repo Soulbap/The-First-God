@@ -38,6 +38,7 @@ export function makeTree(state, species, x, y, growth) {
 }
 
 function addTree(state, species, x, y, growth) {
+  if (state.nodes.filter((n) => n.kind === 'tree').length >= B.tree.maxTrees) return null;
   const t = makeTree(state, species, x, y, growth);
   state.nodes.push(t);
   return t;
@@ -71,6 +72,9 @@ export function createWorld(seed = 20261009) {
     timers: { seed: B.tree.seedIntervalSeconds, wearDecay: 0 },
     stats: { log: [], autoStart: null },
     wear: { cell, cols, rows, data: new Float32Array(cols * rows) },
+    // Renderer-avledet økologi. Ingen ressurs- eller navigasjonstilstand ligger her;
+    // revisjonen forteller bare presentasjonen når et begrenset miljølag kan oppdateres.
+    ecology: { revision: 0, refreshTimer: 0 },
     events: [],
   };
   state.settlement.angleOffset = rand(rng) * Math.PI * 2;
@@ -82,21 +86,24 @@ export function createWorld(seed = 20261009) {
   addTree(state, 'birch', C.x + 45, C.y - 120, 0.12);
   addTree(state, 'spruce', C.x + 205, C.y - 70, 0.7);
 
-  // Lunder rundt leirplassen.
-  for (let g = 0; g < 11; g++) {
+  // Lunder rundt leirplassen. Hver lund har en tydelig hovedart; blanding skjer
+  // bare langs kanten, slik at skogen leses som bestander framfor jevn støy.
+  for (let g = 0; g < 12; g++) {
     const a = rand(rng) * Math.PI * 2;
-    const d = range(rng, 280, 980);
+    const d = range(rng, 300, 1020);
     const gx = C.x + Math.cos(a) * d, gy = C.y + Math.sin(a) * d * 0.7;
     if (!inBounds(state, gx, gy, 60) || inPond(state, gx, gy, 60)) continue;
     const species = rand(rng) < 0.55 ? 'spruce' : 'birch';
-    const count = 5 + Math.floor(rand(rng) * 8);
+    const count = 6 + Math.floor(rand(rng) * 7);
     for (let i = 0; i < count; i++) {
       for (let tries = 0; tries < 8; tries++) {
-        const x = gx + (rand(rng) + rand(rng) - 1) * 150;
-        const y = gy + (rand(rng) + rand(rng) - 1) * 110;
+        // To summerte trekk samler trærne nær sentrum uten å lage harde sirkler.
+        const x = gx + (rand(rng) + rand(rng) - 1) * 138;
+        const y = gy + (rand(rng) + rand(rng) - 1) * 102;
         if (!isFreeForTree(state, x, y)) continue;
-        const growth = rand(rng) < 0.2 ? range(rng, 0.12, 0.45) : range(rng, 0.55, 1);
-        const sp = rand(rng) < 0.82 ? species : (species === 'birch' ? 'spruce' : 'birch');
+        const edge = Math.hypot(x - gx, (y - gy) * 1.15) / 150;
+        const growth = edge > 0.62 && rand(rng) < 0.48 ? range(rng, 0.12, 0.48) : range(rng, 0.55, 1);
+        const sp = rand(rng) < (edge > 0.55 ? 0.68 : 0.9) ? species : (species === 'birch' ? 'spruce' : 'birch');
         addTree(state, sp, x, y, growth);
         break;
       }

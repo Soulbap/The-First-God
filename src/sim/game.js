@@ -6,6 +6,7 @@ import { stepNature, harvestTree, harvestRock, treeAvailable } from './nature.js
 import { stepConstruction } from './construction.js';
 import { stepHumans } from './humans.js';
 import { stepWear } from './wear.js';
+import { stepEcology } from './ecology.js';
 import { pruneStats } from './stats.js';
 import { requirementMet } from './economy.js';
 import { checkDiscoveries } from './discovery.js';
@@ -29,6 +30,7 @@ export function step(state, dt = DT) {
   stepConstruction(state, dt);
   stepHumans(state, dt);
   stepWear(state, dt);
+  stepEcology(state, dt);
   checkMilestones(state);
   checkDiscoveries(state);
   pruneStats(state);
