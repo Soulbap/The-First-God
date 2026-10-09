@@ -1,5 +1,6 @@
 // Bygg som males i byggetrinn: grunn → stenger/stolper → vegger → tak/dekke → dør.
 import { mulberry, paintSprite, dab, taper, jitter, rgba, clamp, smooth, lerp } from './paint.js';
+import { paintTownhouse, paintSawmill, paintMason, paintMarket, paintHall } from './city.js';
 
 const STEPS = 48; // kvantisering av byggefremdrift for mellomlagring
 
@@ -472,7 +473,12 @@ export function buildingSprite(b) {
       : b.type === 'storage' ? paintStorage(seed, p)
       : b.type === 'hearth' ? paintHearth(seed, p)
         : b.type === 'field' ? paintField(seed, p)
-          : b.type === 'workshop' ? paintWorkshop(seed, p) : paintFirePit(seed, p);
+          : b.type === 'workshop' ? paintWorkshop(seed, p)
+            : b.type === 'sawmill' ? paintSawmill(seed, p)
+              : b.type === 'mason' ? paintMason(seed, p)
+                : b.type === 'townhouse' ? paintTownhouse(seed, p)
+                  : b.type === 'market' ? paintMarket(seed, p)
+                    : b.type === 'hall' ? paintHall(seed, p) : paintFirePit(seed, p);
   cache.set(b.id, { level, sprite });
   return sprite;
 }

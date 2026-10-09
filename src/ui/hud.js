@@ -3,16 +3,16 @@
 import { icon } from './icons.js';
 import { RESOURCES } from '../data/gui.js';
 import { PresentationCoordinator } from './presentation.js';
-import { selectInsights, selectResources, selectDivine, currentEpoch, reachedMilestones, fmtAmount, fmtRate } from './insights.js';
+import { selectInsights, selectResources, selectDivine, currentEpoch, reachedMilestones, fmtAmount, fmtRate, selectRealm, realmVisible } from './insights.js';
 
-const TITLES = { insights: 'Innsikter', milestones: 'Milepæler' };
+const TITLES = { insights: 'Innsikter', milestones: 'Milepæler', realm: 'Rike' };
 const EMPTY_TEXT = 'Ingen innsikter ennå. Rør ved treet eller steinen — verden svarer.';
 
 export function createHud({ onBuy, onSpeed, onView, onZoom, onRagnarok }) {
   const $ = (id) => document.getElementById(id);
   const els = {
     hud: $('hud'), res: $('resources'), divine: $('divine'), drawer: $('drawer'), title: $('drawer-title'), sub: $('drawer-sub'),
-    tabs: $('drawer-tabs'), list: $('insight-list'), empty: $('insight-empty'), ms: $('milestone-list'),
+    tabs: $('drawer-tabs'), list: $('insight-list'), empty: $('insight-empty'), ms: $('milestone-list'), realm: $('realm-panel'),
     nav: $('nav'), hint: $('hint'), toasts: $('toasts'), controls: $('controls'), dialog: $('dialog'), summary: $('ragnarok-summary'),
   };
   const navBtn = (id) => els.nav.querySelector(`[data-nav="${id}"]`);
@@ -25,6 +25,7 @@ export function createHud({ onBuy, onSpeed, onView, onZoom, onRagnarok }) {
   let tab = 'all';
   let tabSig = '';
   let msSig = '';
+  let realmSig = '';
   let lastState = null;
   let autoOpened = false;
   let dialogReturn = null;
@@ -45,13 +46,14 @@ export function createHud({ onBuy, onSpeed, onView, onZoom, onRagnarok }) {
     els.drawer.classList.toggle('open', open);
     els.drawer.inert = !open;
     els.hud.classList.toggle('drawer-open', open);
-    for (const id of ['insights', 'milestones']) navBtn(id).setAttribute('aria-expanded', String(mode === id));
+    for (const id of ['insights', 'milestones', 'realm']) navBtn(id).setAttribute('aria-expanded', String(mode === id));
     if (open) {
       els.title.textContent = TITLES[mode];
       els.list.hidden = mode !== 'insights';
       els.tabs.hidden = true;
       els.empty.hidden = true;
       els.ms.hidden = mode !== 'milestones';
+      els.realm.hidden = mode !== 'realm';
       if (lastState) render(lastState);
       if (focus) els.title.focus({ preventScroll: true });
     } else if (focus && prev) {
@@ -187,9 +189,33 @@ export function createHud({ onBuy, onSpeed, onView, onZoom, onRagnarok }) {
       `<li>${icon('flag')}<div><h3>${m.title}</h3><p>${m.text}</p>${m.opens ? `<p class="opens">${m.opens}</p>` : ''}</div></li>`).join('');
   }
 
+  // ---------- Rike ----------
+  const esc = (t) => String(t).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const checklist = (items) => `<ul class="checks">${items.map((c) => `<li class="${c.ok ? 'ok' : 'miss'}"><span class="dot"></span><span>${esc(c.label)}</span>${c.need != null ? `<span class="num">${Math.min(c.have, 9999)}/${c.need}</span>` : ''}</li>`).join('')}</ul>`;
+  function renderRealm(state) {
+    const m = selectRealm(state);
+    const sig = JSON.stringify(m, (k, v) => (typeof v === 'number' ? Math.floor(v * 10) / 10 : v));
+    if (sig === realmSig) return;
+    realmSig = sig;
+    const cityMissing = m.city ? m.city.filter((c) => !c.ok) : [];
+    const parts = [];
+    parts.push(`<section><h3>Sivilisasjonen</h3><p class="big">${esc(m.stage)}</p>${m.next ? `<p class="muted">Neste: ${esc(m.next)}</p>` : ''}</section>`);
+    if (state.totals.knowledge > 0) parts.push(`<section><h3>Kunnskap</h3><p>${fmtAmount(m.knowledge.value)} <span class="muted">${fmtRate(m.knowledge.rate)} · ${m.knowledge.techs} fremskritt</span></p></section>`);
+    parts.push(`<section><h3>Bosettinger (${m.settlements.length})</h3><ul class="rows">${m.settlements.map((s) => `<li><strong>${esc(s.name)}</strong><span>${esc(s.founding ? 'Grunnlegges' : s.stage)}${s.role && !s.founding ? ' · ' + esc(s.role) : ''}</span><span class="num">${s.people}/${s.housing || '–'} folk</span></li>`).join('')}</ul></section>`);
+    if (cityMissing.length) parts.push(`<section><h3>Veien til by</h3>${checklist(m.city)}</section>`);
+    if (m.expansion) parts.push(`<section><h3>Nye bosettinger</h3>${checklist(m.expansion)}</section>`);
+    if (m.network.deliveries > 0 || m.network.routes > 0) parts.push(`<section><h3>Forbindelser</h3><p>${m.network.routes} etablerte ruter · ${m.network.deliveries} leveranser${m.network.caravans ? ` · ${m.network.caravans} karavaner` : ''}</p></section>`);
+    if (m.world.unlocked || m.world.regions.length) {
+      const mis = m.world.mission ? `<p class="muted">${m.world.mission.kind === 'outpost' ? 'Nybyggere' : 'Ekspedisjon'} på vei mot ${esc(m.world.mission.region)}${m.world.mission.phase === 'away' ? ' — borte' : ''}.</p>` : '';
+      parts.push(`<section><h3>Verden</h3>${mis}<ul class="rows">${m.world.regions.map((r) => `<li><strong>${esc(r.name)}</strong><span>${esc(r.biome)} · ${esc(r.state)}</span><span class="num">${r.pop ? r.pop + ' folk' : ''}</span></li>`).join('')}</ul><p class="muted">${m.world.unknown} land ukjent${m.world.reachable ? ` · ${m.world.reachable} innen rekkevidde` : ''}</p></section>`);
+    }
+    els.realm.innerHTML = parts.join('');
+  }
+
   // ---------- Ressurser ----------
   function renderRes(container, items) {
     const keep = new Set(items.map((i) => i.id));
+    container.dataset.dense = items.length >= 6 ? '1' : '';
     for (const el of [...container.children]) if (!keep.has(el.dataset.res)) el.remove();
     for (const item of items) {
       let el = container.querySelector(`[data-res="${item.id}"]`);
@@ -197,6 +223,7 @@ export function createHud({ onBuy, onSpeed, onView, onZoom, onRagnarok }) {
         el = document.createElement('div');
         el.className = 'res' + (container.dataset.ready ? ' enter' : '');
         el.dataset.res = item.id;
+        el.title = RESOURCES[item.id].name;
         el.innerHTML = `${icon(RESOURCES[item.id].icon)}<div><span class="lbl">${RESOURCES[item.id].name}</span><div class="line"><span class="val"></span><span class="rate" hidden></span></div></div>`;
         container.appendChild(el);
       }
@@ -282,6 +309,12 @@ export function createHud({ onBuy, onSpeed, onView, onZoom, onRagnarok }) {
     }
     if (mode === 'insights') renderInsights(model);
     if (mode === 'milestones') renderMilestones(state);
+    const realmBtn = navBtn('realm'), showRealm = realmVisible(state);
+    if (realmBtn.hidden && showRealm) realmBtn.classList.add('enter');
+    realmBtn.hidden = !showRealm;
+    if (mode === 'realm') { if (showRealm) renderRealm(state); else setMode(null, { focus: false }); }
+    const worldBtn = els.controls.querySelector('[data-view="world"]');
+    if (worldBtn) worldBtn.hidden = !state.unlocks.worldView;
   }
 
   return {
@@ -331,7 +364,7 @@ export function createHud({ onBuy, onSpeed, onView, onZoom, onRagnarok }) {
       els.divine.innerHTML = '';
       delete els.res.dataset.ready;
       delete els.divine.dataset.ready;
-      tab = 'all'; tabSig = ''; msSig = ''; autoOpened = false; lastState = null;
+      tab = 'all'; tabSig = ''; msSig = ''; realmSig = ''; autoOpened = false; lastState = null;
       setMode(null, { focus: false });
     },
   };

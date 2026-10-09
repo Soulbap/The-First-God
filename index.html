@@ -32,6 +32,7 @@
         <div id="insight-list" class="cards"></div>
         <p id="insight-empty" class="empty" hidden></p>
         <ol id="milestone-list" class="milestones" hidden></ol>
+        <div id="realm-panel" class="realm" hidden></div>
       </div>
     </aside>
 
@@ -41,6 +42,9 @@
       </button>
       <button type="button" class="nav-btn" data-nav="milestones" aria-controls="drawer" aria-expanded="false" hidden>
         <span class="nav-ico" data-icon="flag"></span><span class="nav-lbl">Milepæler</span>
+      </button>
+      <button type="button" class="nav-btn" data-nav="realm" aria-controls="drawer" aria-expanded="false" hidden>
+        <span class="nav-ico" data-icon="realm"></span><span class="nav-lbl">Rike</span>
       </button>
       <button type="button" class="nav-btn" data-nav="ragnarok" aria-haspopup="dialog">
         <span class="nav-ico" data-icon="ragnarok"></span><span class="nav-lbl">Ragnarok</span>
@@ -57,6 +61,7 @@
       <div class="group" role="group" aria-label="Utsnitt">
         <button type="button" data-view="near" title="Nær: leiren og menneskene">Nær</button>
         <button type="button" data-view="area" disabled title="Låses opp ved milepælen Sammenhengende bosetting">Område</button>
+        <button type="button" data-view="world" hidden title="Verden: riket, rutene og landene bortenfor (V)">Verden</button>
       </div>
       <div class="group" role="group" aria-label="Zoom">
         <button type="button" data-zoom="out" aria-label="Zoom ut" title="Zoom ut" data-icon="minus"></button>

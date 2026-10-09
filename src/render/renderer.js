@@ -12,7 +12,9 @@ import { createFx, emit, flyToPile, popup, shake, updateFx, shakeAngle, drawPart
 import { zoomOf, viewH, screenToWorld, worldToScreen, VIEW } from '../view/camera.js';
 import { gatherInterval } from '../sim/humans.js';
 import { treeCapacity } from '../sim/nature.js';
-import { settlementRole, settlementStage } from '../sim/regional.js';
+import { routeKey } from '../sim/regional.js';
+import { plankPileSprite, blockPileSprite } from './city.js';
+import { drawOverview } from './overview.js';
 
 export const wind = (x, t) => 0.6 * Math.sin(t * 0.9 + x * 0.003) + 0.4 * Math.sin(t * 2.1 + x * 0.009 + 1.3);
 
@@ -152,12 +154,17 @@ export function createRenderer(canvas) {
       if ((b.type === 'fire' || b.type === 'hearth') && b.complete) {
         if (every('smoke' + b.id, 0.22, dt)) emit(fx, 'smoke', b.x + (Math.random() - 0.5) * 2, b.y - 8, 1, { spread: 2, wind: w, z: 2, alpha: 0.2 });
         if (every('spark' + b.id, 0.9, dt)) emit(fx, 'spark', b.x, b.y - 4, 1, { spread: 3 });
-      } else if (b.complete && simDt > 0) {
+      } else if (b.complete && simDt > 0 && !['field', 'market', 'mason', 'sawmill', 'hall'].includes(b.type)) {
         if (every('chimney' + b.id, 1.4, dt)) emit(fx, 'smoke', b.x, b.y - 40, 1, { spread: 1.5, wind: w, light: true, alpha: 0.13 });
       } else if (!b.complete && b.divine) {
         if (every('divine' + b.id, 0.1, dt)) emit(fx, 'mote', b.x, b.y, 1, { spread: 40, spreadY: 14, z: 4 });
       } else if (!b.complete && simDt > 0 && b.builders.length) {
         if (every('build' + b.id, 0.6, dt)) emit(fx, 'dust', b.x, b.y, 2, { spread: 30, spreadY: 10, z: 3 });
+      }
+      if (b.complete && b.active && simDt > 0) {
+        if (b.type === 'sawmill' && every('saw' + b.id, 0.28, dt)) emit(fx, 'chip', b.x - 9, b.y - 3, 2, { spread: 8, z: 5 });
+        if (b.type === 'mason' && every('mason' + b.id, 0.4, dt)) { emit(fx, 'dust', b.x + 14, b.y, 1, { spread: 8, z: 4 }); emit(fx, 'chip', b.x + 14, b.y - 2, 1, { spread: 6, z: 5 }); fx.parts[fx.parts.length - 1].color = '#a7a396'; }
+        if (b.type === 'hall' && every('hall' + b.id, 0.8, dt)) emit(fx, 'mote', b.x, b.y - 18, 1, { spread: 30, spreadY: 6, z: 14 });
       }
     }
   };
@@ -220,10 +227,12 @@ export function createRenderer(canvas) {
     stamp(state, sp.x, sp.y, 9, 28, 0.22 + activity * 0.54);
     // Ingen UI-forbindelse: den regionale stien forsterkes bare når reelle
     // leveringer har fullført. Små avvik holder den som et brukt terrengspor.
-    const other = state.settlements?.find((s) => s.id === 'second');
-    if (other && state.region?.completedDeliveries) {
-      trackTo(state.settlement.center, other, Math.min(0.62, 0.16 + state.region.completedDeliveries * 0.08));
-      stamp(state, other.x, other.y, 18, 58, Math.min(0.76, 0.18 + state.region.completedProjects * 0.16));
+    for (const other of state.settlements) {
+      if (other.id === 'first') continue;
+      const trips = state.network.routes[routeKey('first', other.id)]?.trips || 0;
+      if (!trips) continue;
+      trackTo(state.settlement.center, other, Math.min(0.62, 0.16 + trips * 0.05));
+      stamp(state, other.x, other.y, 18, 58, Math.min(0.76, 0.18 + (other.projectsDone || 0) * 0.16));
     }
     // Skriv bare der noe er slitt (nå eller forrige gang).
     let minI = cols, maxI = -1, minJ = rows, maxJ = -1;
@@ -252,6 +261,11 @@ export function createRenderer(canvas) {
       }
     }
     R.wearCanvas.getContext('2d').putImageData(R.wearImg, 0, 0);
+  };
+
+  // Verdensoversikt: en egen visning av samme tilstand (se render/overview.js).
+  R.renderOverview = (state, cam, renderTime, hoverRegionId) => {
+    drawOverview(ctx, R, state, { sw: cam.screenW, sh: cam.screenH, dpr: cam.dpr || 1, time: renderTime, hoverId: hoverRegionId });
   };
 
   // ---------- Treffsjekk for klikking ----------
@@ -403,7 +417,8 @@ export function createRenderer(canvas) {
       if (b.type === 'fire' || b.type === 'hearth' || b.progress < 0.5) continue;
       shadow(b.x + b.radius * 0.45, b.y + b.radius * 0.18, b.radius * 1.3, b.radius * 0.42, 0.55);
     }
-    for (const h of state.humans) if (inView(h.x, h.y)) drawHumanShadow(ctx, h);
+    for (const h of state.humans) if (!h.away && inView(h.x, h.y)) drawHumanShadow(ctx, h);
+    for (const c of state.globe.caravans) if (inView(c.x, c.y)) drawHumanShadow(ctx, caravanFigure(c));
 
     // Dybdesorterte objekter.
     const list = [];
@@ -432,7 +447,12 @@ export function createRenderer(canvas) {
     list.push({ y: sp.y + WOOD_PILE_OFFSET.y, draw: () => drawSprite(ctx, woodPileSprite(pileCount(state.resources.wood)), sp.x + WOOD_PILE_OFFSET.x, sp.y + WOOD_PILE_OFFSET.y) });
     list.push({ y: sp.y + STONE_PILE_OFFSET.y, draw: () => drawSprite(ctx, stonePileSprite(pileCount(state.resources.stone)), sp.x + STONE_PILE_OFFSET.x, sp.y + STONE_PILE_OFFSET.y) });
     const hInfo = { time: state.time, gatherInterval: gatherInterval(state), renderTime };
-    for (const h of state.humans) if (inView(h.x, h.y)) list.push({ y: h.y, draw: () => drawHuman(ctx, h, hInfo) });
+    for (const h of state.humans) if (!h.away && inView(h.x, h.y)) list.push({ y: h.y, draw: () => drawHuman(ctx, h, hInfo) });
+    // Karavaner fra fjerne land: ekte figurer som går inn over kartkanten med varer.
+    for (const c of state.globe.caravans) if (inView(c.x, c.y)) list.push({ y: c.y, draw: () => drawHuman(ctx, caravanFigure(c), hInfo) });
+    // Foredlede varer lagres synlig ved lageret.
+    if (state.resources.planks >= 1) list.push({ y: sp.y + 6, draw: () => drawSprite(ctx, plankPileSprite(Math.min(14, Math.ceil(Math.sqrt(state.resources.planks) * 1.6))), sp.x - 36, sp.y + 8) });
+    if (state.resources.cutstone >= 1) list.push({ y: sp.y + 8, draw: () => drawSprite(ctx, blockPileSprite(Math.min(18, Math.ceil(Math.sqrt(state.resources.cutstone) * 2))), sp.x + 40, sp.y + 10) });
     for (const f of fx.falls) list.push({ y: f.y + 0.5, draw: () => drawFall(f) });
     list.sort((a, b) => a.y - b.y);
     for (const o of list) o.draw();
@@ -491,37 +511,29 @@ export function createRenderer(canvas) {
 
     const areaK = smooth(VIEW.semanticAreaW * 0.9, VIEW.semanticAreaW * 1.25, cam.w);
     if (areaK > 0 && state.buildings.length) {
-      const s = worldToScreen(cam, C.x, C.y - 120);
-      const pop = state.settlements?.find((q) => q.id === 'first')?.population.length ?? state.humans.length;
-      const homes = state.buildings.filter((b) => b.complete && b.settlementId !== 'second' && (b.type === 'shelter' || b.type === 'hut')).length;
       ctx.globalAlpha = areaK;
-      ctx.font = 'italic 15px Georgia, "Palatino Linotype", serif';
-      ctx.fillStyle = 'rgba(16,12,8,0.55)';
-      const firstSettlement = state.settlements.find((q) => q.id === 'first');
-      const settlementName = state.milestones.first_village != null ? 'Den første landsbyen' : 'Den første boplassen';
-      ctx.fillText(settlementName, s.x + 1, s.y + 1);
-      ctx.fillStyle = '#efe4cc';
-      ctx.fillText(settlementName, s.x, s.y);
-      ctx.font = '12px "Segoe UI", system-ui, sans-serif';
-      ctx.fillStyle = 'rgba(236,226,204,0.85)';
-      ctx.fillText(`${settlementStage(state, firstSettlement)} · ${pop} mennesker · ${homes} hjem`, s.x, s.y + 17);
-      ctx.globalAlpha = 1;
-      const second = state.settlements?.find((q) => q.id === 'second');
-      if (second && state.expansion.founded) {
-        const s2 = worldToScreen(cam, second.x, second.y - 90);
-        ctx.globalAlpha = areaK;
+      ctx.textAlign = 'center';
+      for (const S of state.settlements) {
+        if (S.id !== 'first' && S.state === 'founding' && !state.buildings.some((q) => q.settlementId === S.id)) continue;
+        const isFirst = S.id === 'first';
+        const s = worldToScreen(cam, S.x, S.y - (isFirst ? 120 : 90));
+        const name = isFirst ? (state.milestones.first_village != null ? 'Den første landsbyen' : 'Den første boplassen') : S.name;
+        const homes = state.buildings.filter((q) => q.complete && q.settlementId === S.id && (q.type === 'hut' || q.type === 'shelter' || q.type === 'townhouse')).length;
         ctx.font = 'italic 15px Georgia, "Palatino Linotype", serif';
-        ctx.fillStyle = 'rgba(16,12,8,0.55)'; ctx.fillText(second.name, s2.x + 1, s2.y + 1);
-        ctx.fillStyle = '#efe4cc'; ctx.fillText(second.name, s2.x, s2.y);
-        const secondHomes = state.buildings.filter((b) => b.complete && b.settlementId === 'second' && (b.type === 'hut' || b.type === 'shelter')).length;
-        const secondStore = state.buildings.some((b) => b.complete && b.settlementId === 'second' && b.type === 'storage');
-        const localState = `${settlementStage(state, second)} · ${settlementRole(state, second)}`;
+        ctx.fillStyle = 'rgba(16,12,8,0.55)'; ctx.fillText(name, s.x + 1, s.y + 1);
+        ctx.fillStyle = '#efe4cc'; ctx.fillText(name, s.x, s.y);
         ctx.font = '12px "Segoe UI", system-ui, sans-serif'; ctx.fillStyle = 'rgba(236,226,204,0.85)';
-        ctx.fillText(`${second.population.length} mennesker · ${secondHomes} hjem · ${localState}`, s2.x, s2.y + 17);
-        ctx.globalAlpha = 1;
-      } else if (state.expansion?.discovered && state.expansion.site) {
+        ctx.fillText(`${S.stage} · ${S.role} · ${S.population.length} mennesker · ${homes} hjem`, s.x, s.y + 17);
+      }
+      ctx.globalAlpha = 1;
+      if (state.expansion?.discovered && !state.expansion.founded && state.expansion.site) {
         const s2 = worldToScreen(cam, state.expansion.site.x, state.expansion.site.y);
         ctx.globalAlpha = areaK * 0.75; ctx.fillStyle = '#d7c58e'; ctx.beginPath(); ctx.arc(s2.x, s2.y, 4, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
+      }
+      const party = state.realm.party;
+      if (party) {
+        const s3 = worldToScreen(cam, party.site.x, party.site.y);
+        ctx.globalAlpha = areaK * 0.75; ctx.fillStyle = '#d7c58e'; ctx.beginPath(); ctx.arc(s3.x, s3.y, 4, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
       }
     }
     R.stats.frameMs += (performance.now() - t0 - R.stats.frameMs) * 0.1;
@@ -659,9 +671,18 @@ export function createRenderer(canvas) {
       drawSprite(ctx, s, n.x + sa, n.y);
       ctx.filter = 'none';
     }
+    function caravanFigure(c) {
+      const res = c.goods[0].res;
+      return { id: c.id, x: c.x, y: c.y, dir: c.dir, look: c.look, walk: c.walk, state: 'toStore', carry: { type: res === 'wood' || res === 'planks' || res === 'food' ? 'wood' : 'stone', amount: 3 }, born: -10, anim: 0, gatherKind: null };
+    }
     function drawBuilding(b) {
       const s = buildingSprite(b);
       drawSprite(ctx, s, b.x, b.y);
+      if (b.type === 'sawmill' && b.complete && b.active) {
+        // Sagbladet går opp og ned mens sagbruket arbeider.
+        const off = Math.sin(renderTime * 8 + b.id) * 2.6;
+        taper(ctx, b.x - 10, b.y - 7 + off, b.x - 6.2, b.y - 22 + off, 0.9, 0.9, 'rgb(170,172,168)');
+      }
     }
     function drawFall(f) {
       const T = 1.3;

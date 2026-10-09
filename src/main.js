@@ -4,6 +4,7 @@ import { purchase } from './sim/economy.js';
 import { createCamera, clampCamera, setZoomLimits, zoomAt, panBy, glideTo, updateCamera, VIEW } from './view/camera.js';
 import { createRenderer } from './render/renderer.js';
 import { createHud } from './ui/hud.js';
+import { overviewLayout, regionAt } from './view/overview.js';
 
 const SEED = 20261009; // samme grunnverden i hver syklus
 const MAX_STEPS_PER_FRAME = 240;
@@ -13,6 +14,7 @@ const renderer = createRenderer(canvas);
 let state, cam;
 let speed = 1, savedSpeed = 1, acc = 0, renderTime = 0, last = performance.now();
 let hoverId = null, hudTimer = 0, wearTimer = 0, pendingGlide = null;
+let overview = false, hoverRegion = null; // verdensoversikt: samme simulering, ett høyere meningsnivå
 const meta = { prestige: 0, cycles: 0 };
 
 const hud = createHud({
@@ -68,13 +70,23 @@ function newCycle() {
   setZoomLimits(cam, false);
   acc = 0;
   pendingGlide = null;
+  overview = false; hoverRegion = null;
   hud.reset();
   resize();
 }
 
-const currentView = () => (cam.w >= VIEW.semanticAreaW ? 'area' : 'near');
+const currentView = () => (overview ? 'world' : cam.w >= VIEW.semanticAreaW ? 'area' : 'near');
+
+function setOverview(on) {
+  if (on && !state.unlocks.worldView) return;
+  overview = on; hoverRegion = null; down = null;
+  canvas.classList.remove('dragging', 'can-gather');
+  hudTimer = 0;
+}
 
 function goView(v, duration) {
+  if (v === 'world') { setOverview(true); return; }
+  if (overview) setOverview(false);
   const C = state.settlement.center;
   if (v === 'area' && state.unlocks.zoomArea) {
     const S = state.settlements?.find((s) => s.id === 'second');
@@ -146,7 +158,8 @@ function tick(realDt) {
   wearTimer -= realDt;
   if (wearTimer <= 0) { wearTimer = 0.5; renderer.updateWear(state); }
 
-  renderer.render(state, cam, renderTime, hoverId);
+  if (overview) renderer.renderOverview(state, cam, renderTime, hoverRegion);
+  else renderer.render(state, cam, renderTime, hoverId);
 
   hudTimer -= realDt;
   if (hudTimer <= 0) {
@@ -159,10 +172,12 @@ function tick(realDt) {
 // ---------- Input ----------
 let down = null;
 canvas.addEventListener('pointerdown', (e) => {
+  if (overview) return;
   down = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, moved: false, button: e.button };
   canvas.setPointerCapture(e.pointerId);
 });
 canvas.addEventListener('pointermove', (e) => {
+  if (overview) { const r = regionAt(overviewLayout(state, cam.screenW, cam.screenH), state, e.clientX, e.clientY); hoverRegion = r ? r.id : null; return; }
   if (down) {
     if (!down.moved && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) { down.moved = true; canvas.classList.add('dragging'); }
     if (down.moved) panBy(cam, e.clientX - down.lx, e.clientY - down.ly);
@@ -185,6 +200,9 @@ canvas.addEventListener('pointerup', (e) => {
 canvas.addEventListener('pointerleave', () => { hoverId = null; });
 canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
+  // Å zoome forbi områdevisningen åpner oversikten; å zoome inn igjen går tilbake til landskapet.
+  if (overview) { if (e.deltaY < 0) goView('area', 1.2); return; }
+  if (e.deltaY > 0 && state.unlocks.worldView && cam.w >= cam.maxW * 0.97) { setOverview(true); return; }
   zoomAt(cam, e.clientX, e.clientY, Math.exp(e.deltaY * 0.0012));
 }, { passive: false });
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -192,6 +210,7 @@ window.addEventListener('keydown', (e) => {
   if (e.target.closest && e.target.closest('input,textarea')) return;
   if (e.code === 'Space' && e.target.closest && e.target.closest('button')) return; // mellomrom aktiverer knappen
   if (e.code === 'Space') { e.preventDefault(); speed = speed === 0 ? savedSpeed : 0; }
+  if ((e.key === 'v' || e.key === 'V') && state.unlocks.worldView) { if (overview) goView('area', 1.2); else setOverview(true); }
   if (e.key === '1') speed = savedSpeed = 1;
   if (e.key === '2') speed = savedSpeed = 2;
   if (e.key === '3') speed = savedSpeed = 4;
@@ -214,6 +233,8 @@ setTimeout(() => {
       click: (id) => clickNode(state, id),
       view: (x, y, w) => { cam.x = x; cam.y = y; cam.w = w; cam.tween = null; },
       setSpeed: (s) => { speed = s; },
+      overview: (on) => { setOverview(on); return overview; },
+      get isOverview() { return overview; },
       hud,
       renderStats: renderer.stats,
       renderer,

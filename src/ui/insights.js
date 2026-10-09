@@ -73,6 +73,10 @@ export function selectResources(state) {
   ];
   if (state.humans.length) out.push({ id: 'people', value: state.humans.length, rate: null });
   if (state.civilization?.foodUnlocked || state.resources.food > 0) out.push({ id: 'food', value: state.resources.food, rate: null });
+  const refined = state.totals.planks > 0 || state.buildings.some((b) => b.type === 'sawmill');
+  if (refined) out.push({ id: 'planks', value: state.resources.planks, rate: auto ? rate.planks : null });
+  if (state.totals.cutstone > 0 || state.buildings.some((b) => b.type === 'mason')) out.push({ id: 'cutstone', value: state.resources.cutstone, rate: auto ? rate.cutstone : null });
+  if (state.totals.knowledge > 0) out.push({ id: 'knowledge', value: state.resources.knowledge, rate: auto ? rate.knowledge : null });
   return out;
 }
 
@@ -92,5 +96,45 @@ export function currentEpoch(state) {
 export function reachedMilestones(state) {
   return MILESTONES.filter((m) => state.milestones[m.id] != null)
     .sort((a, b) => state.milestones[a.id] - state.milestones[b.id])
-    .map((m) => ({ id: m.id, title: m.title, text: m.text, opens: (m.unlock === 'zoomArea' || m.unlock === 'villageView') ? 'Viser bosettingen i områdevisning' : '' }));
+    .map((m) => ({ id: m.id, title: m.title, text: m.text, opens: (m.unlock === 'zoomArea' || m.unlock === 'villageView') ? 'Viser bosettingen i områdevisning' : m.unlock === 'worldView' ? 'Åpner Verden-oversikten' : '' }));
+}
+
+// ---------- GAMEPLAY-07..10: Rike-panelet ----------
+// Kompakt oversikt over sivilisasjonen. Ren visningsmodell: den leser tilstand og forklarer hva som mangler.
+import { civilizationStage, activeSettlements } from '../sim/civstage.js';
+import { cityRequirements, housingCapacity, settlementById } from '../sim/settlements.js';
+import { foundingReadiness } from '../sim/realm.js';
+import { establishedRoutes } from '../sim/regional.js';
+import { discoveredRegions, outpostRegions, worldReadiness, BIOMES, reachableUnknown } from '../sim/worldmap.js';
+import { techCount } from '../sim/economy.js';
+
+export const realmVisible = (state) => state.milestones.dawn_civilization != null || state.settlements.length >= 2 || state.resources.knowledge > 0;
+
+const REGION_LABEL = { ukjent: 'Ukjent', oppdaget: 'Oppdaget', utpost: 'Utpost', etablert: 'Etablert', hjem: 'Hjemlandet' };
+
+export function selectRealm(state) {
+  const stage = civilizationStage(state);
+  const capital = settlementById(state, 'first');
+  const rate = productionRate(state);
+  const settlements = state.settlements.map((s) => ({
+    id: s.id, name: s.name, stage: s.stage || 'Leir', role: s.role || '', people: s.population.length,
+    housing: housingCapacity(state, s.id), founding: s.state !== 'active',
+  }));
+  const city = capital && !['By', 'Storby'].includes(capital.stage) && state.milestones.dawn_civilization != null ? cityRequirements(state, capital) : null;
+  const expansion = state.realm.autoFounding && state.settlements.length < state.realm.limit ? foundingReadiness(state).filter((c) => c.id !== 'limit') : null;
+  const G = state.globe;
+  const regions = G.regions.filter((r) => !r.home && r.state !== 'ukjent').map((r) => ({
+    id: r.id, name: r.name, state: REGION_LABEL[r.state], biome: BIOMES[r.biome].name, pop: r.pop,
+  }));
+  return {
+    stage: stage.name, next: stage.next?.name || null,
+    knowledge: { value: state.resources.knowledge, rate: rate.knowledge, techs: techCount(state) },
+    settlements, city, expansion,
+    network: { routes: establishedRoutes(state).length, deliveries: state.region.completedDeliveries, trips: state.network.trips, caravans: G.stats.caravanDeliveries },
+    world: {
+      unlocked: G.expeditionsEnabled, regions, unknown: G.regions.length - 1 - discoveredRegions(state).length,
+      reachable: reachableUnknown(state).length, outposts: outpostRegions(state).length,
+      mission: G.mission ? { kind: G.mission.kind, region: G.regions.find((r) => r.id === G.mission.regionId)?.name, phase: G.mission.phase } : null,
+    },
+  };
 }
