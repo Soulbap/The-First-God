@@ -72,7 +72,8 @@ function completeBuilding(state, b) {
     state.buildings.push(fire);
     stampWear(state, fire.x, fire.y, 16, 0.2);
   }
-  if (b.onComplete && b.onComplete.spawnHumans) spawnHumans(state, b.onComplete.spawnHumans, { at: 'edge', building: b });
+  if (b.onComplete && b.onComplete.spawnHumans) spawnHumans(state, b.onComplete.spawnHumans, { at: 'edge', building: b, settlementId: b.settlementId });
+  if (b.onComplete?.regionalPopulation) state.region.nextPopulationAt = Math.min(state.region.nextPopulationAt, state.time + 5);
 }
 
 export function stepConstruction(state, dt) {

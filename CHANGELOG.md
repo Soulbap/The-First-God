@@ -32,6 +32,16 @@ Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på ve
 ## [Unreleased]
 
 ### Added
+- **GAMEPLAY-05 · den levende regionen** (`src/sim/regional.js`, `src/sim/humans.js`, `src/sim/construction.js`): Den andre bosettingen får en avgrenset autonom vekstsløyfe. Materialer reserveres fra den felles beholdningen ved avreise, bæres fysisk til lysningen og brukes først der ved ankomst. Lokalt lager, hjem og fellesplass bygges trinnvis; befolkningsvekst er deterministisk og begrenset av ferdige hjem.
+- **GAMEPLAY-05 · synlig regional utvikling** (`src/render/renderer.js`, `src/data/upgrades.js`): Voksende slekter, Mellom ildstedene og Faste ferdselsårer har lesbare følger i verden. Gjentatte fullførte leveranser forsterker en ujevn jordsti og den unge bosettingen får tydeligere brukt mark. Milepælen **En levende region** krever faktiske prosjekter, leveranser og regional slitasje.
+
+### Tests
+- **GAMEPLAY-05** (`tests/regional.test.js`): dekker reservering og levering uten frie ressurser, lokalt prosjekt etter ankomst, boligbegrenset vekst og ren ny syklus. (Kontroll: `npm test` 41/41 bestått.)
+
+### Docs
+- `docs/gameplay-05/REPORT.md` og ti reproduserbare Canvas-bilder dokumenterer regional flyt; `tools/capture-gui.mjs` gjentar dem med `GAMEPLAY_05=1`. (Kontroll: Edge-røykprøve 33/33, ingen konsollfeil.)
+
+### Added
 - **GAMEPLAY-04 · bortenfor den første landsbyen**: «Nye horisonter» lar utforskeren velge en deterministisk, tørr lysning; «Grunnleggelse» sender tre virkelige innbyggere dit. De bygger første hytte og et beskjedent ildsted, blir en aktiv ung bosetting og sliter fram en naturlig forbindelse til den første landsbyen. Milepælene **Nytt land i sikte** og **De første bosettingene** gir lesbar progresjon og bredere regional kameraramme. (Kontroll: ny målrettet flyttest, `npm test`.)
 
 ### Added

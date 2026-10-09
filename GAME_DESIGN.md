@@ -285,7 +285,8 @@ Prototypen finnes og er spillbar. Denne seksjonen beskriver hva som er bygget og
 - Bosettingen velger fortsatt tomter selv, i deterministiske ringer rundt leirens sentrum. Bygg har avstandskrav mot hverandre, trær, stein og tjern; spilleren velger aldri plassering eller arbeidsordre.
 - **Den første landsbyen** oppnås av faktisk utvikling: fire hjem (inkludert første ly), minst åtte mennesker, ferdig lager og ferdig ildsted. Den gir en kort norsk milepælsmelding og rolig områdezoom uten å stanse simuleringen. Redusert bevegelse hopper over den ikke-essensielle kameraglidningen.
 - Bekreftet (GAMEPLAY-04): Etter **De første stiene** kan **Nye horisonter** la én utforsker finne en deterministisk, tørr lysning med lokale ressurser. **Grunnleggelse** flytter tre virkelige innbyggere dit; de reiser første hytte og ildsted med den delte ressursbeholdningen. Den unge bosettingen bruker samme menneske- og slitasjesimulering som den første, og den gjentatte reisen lar en forbindelse vokse fram uten veiordre.
-- Åpent: hvordan senere bosettinger skal dele eller flytte ressurser er bevisst utsatt. GAMEPLAY-04 har én delt beholdning og ingen handel, jordbruk eller byfase.
+- Bekreftet (GAMEPLAY-05): **Voksende slekter** åpner langsom, boligbegrenset lokal vekst. **Mellom ildstedene** bruker fortsatt den lesbare, felles beholdningen, men reserverer materialer når en bærer drar og lar dem først telle for den unge bosettingens prosjekt ved fysisk ankomst. Lager, hjem og fellesplass bygges etter tur uten plassering eller arbeidsordre. Dette er logistikk, ikke et handelsmarked eller lokale økonomier.
+- Bekreftet (GAMEPLAY-05): Fullførte regionale leveranser forsterker bare den jordstien de faktiske bærerne går. Det er fortsatt nøyaktig to bosettinger; skog, jordbruk, markeder og videre kolonisering er utenfor denne fasen.
 
 ### GAMEPLAY-03 — den levende landsbyen (bekreftet implementasjon)
 

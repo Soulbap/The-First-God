@@ -217,6 +217,13 @@ export function createRenderer(canvas) {
     const storage = state.buildings.find((b) => b.type === 'storage' && b.complete);
     const sp = storage || state.stockpile;
     stamp(state, sp.x, sp.y, 9, 28, 0.22 + activity * 0.54);
+    // Ingen UI-forbindelse: den regionale stien forsterkes bare når reelle
+    // leveringer har fullført. Små avvik holder den som et brukt terrengspor.
+    const other = state.settlements?.find((s) => s.id === 'second');
+    if (other && state.region?.completedDeliveries) {
+      trackTo(state.settlement.center, other, Math.min(0.62, 0.16 + state.region.completedDeliveries * 0.08));
+      stamp(state, other.x, other.y, 18, 58, Math.min(0.76, 0.18 + state.region.completedProjects * 0.16));
+    }
     // Skriv bare der noe er slitt (nå eller forrige gang).
     let minI = cols, maxI = -1, minJ = rows, maxJ = -1;
     for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
@@ -504,8 +511,11 @@ export function createRenderer(canvas) {
         ctx.font = 'italic 15px Georgia, "Palatino Linotype", serif';
         ctx.fillStyle = 'rgba(16,12,8,0.55)'; ctx.fillText(second.name, s2.x + 1, s2.y + 1);
         ctx.fillStyle = '#efe4cc'; ctx.fillText(second.name, s2.x, s2.y);
+        const secondHomes = state.buildings.filter((b) => b.complete && b.settlementId === 'second' && (b.type === 'hut' || b.type === 'shelter')).length;
+        const secondStore = state.buildings.some((b) => b.complete && b.settlementId === 'second' && b.type === 'storage');
+        const localState = secondStore ? `${secondHomes} hjem · lager` : secondHomes > 1 ? `${secondHomes} hjem` : 'nytt hjem';
         ctx.font = '12px "Segoe UI", system-ui, sans-serif'; ctx.fillStyle = 'rgba(236,226,204,0.85)';
-        ctx.fillText(`${second.population.length} mennesker · nytt hjem`, s2.x, s2.y + 17);
+        ctx.fillText(`${second.population.length} mennesker · ${localState}`, s2.x, s2.y + 17);
         ctx.globalAlpha = 1;
       } else if (state.expansion?.discovered && state.expansion.site) {
         const s2 = worldToScreen(cam, state.expansion.site.x, state.expansion.site.y);

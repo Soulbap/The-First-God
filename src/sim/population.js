@@ -3,8 +3,9 @@ import { rand, range } from '../core/rng.js';
 
 const TUNICS = 5, SKINS = 4, HAIRS = 4;
 
-export function spawnHumans(state, count, { at = 'shelter', building = null } = {}) {
-  const C = state.settlement.center;
+export function spawnHumans(state, count, { at = 'shelter', building = null, settlementId = 'first' } = {}) {
+  const S = state.settlements?.find((q) => q.id === settlementId);
+  const C = S || state.settlement.center;
   const home = building || state.buildings.find((b) => b.type === 'shelter' && b.complete);
   const out = [];
   for (let i = 0; i < count; i++) {
@@ -13,7 +14,7 @@ export function spawnHumans(state, count, { at = 'shelter', building = null } = 
       targetId: null, tx: 0, ty: 0, carry: { type: null, amount: 0 },
       deliveries: 0, dir: rand(state.rng) < 0.5 ? -1 : 1, walk: 0, anim: 0,
       born: state.time, gatherKind: null,
-      settlementId: 'first',
+      settlementId,
       look: {
         tunic: Math.floor(rand(state.rng) * TUNICS), skin: Math.floor(rand(state.rng) * SKINS),
         hair: Math.floor(rand(state.rng) * HAIRS), height: range(state.rng, 0.93, 1.06), pace: range(state.rng, 0.92, 1.08),

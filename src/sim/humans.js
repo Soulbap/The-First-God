@@ -8,6 +8,7 @@ import { recordAuto } from './stats.js';
 import { addWear } from './wear.js';
 import { inBounds, inPond, dist } from './world.js';
 import { startConstruction } from './construction.js';
+import { beginDelivery, pickupDelivery, completeDelivery } from './regional.js';
 
 const H = B.human;
 
@@ -55,7 +56,7 @@ function moveTo(state, h, dt) {
   h.x += (dx / d) * stepLen;
   h.y += (dy / d) * stepLen;
   h.walk += stepLen;
-  const traffic = h.state === 'toStore' || h.state === 'toSite' || h.state === 'returning'
+  const traffic = h.state === 'toStore' || h.state === 'toSite' || h.state === 'returning' || h.state === 'toDeliver' || h.state === 'toDeliveryPickup'
     ? B.wear.transportMultiplier : h.state === 'toExplore' ? B.wear.explorationMultiplier : 1;
   addWear(state, h.x, h.y, B.wear.perSecondWalking * traffic * dt);
   return false;
@@ -159,6 +160,7 @@ function chooseTask(state, h) {
     const S = state.settlements.find((s) => s.id === 'second');
     h.tx = S.x + range(state.rng, -95, 95); h.ty = S.y + range(state.rng, -55, 65); h.state = 'wander'; return;
   }
+  if (state.region?.enabled && beginDelivery(state, h)) return;
   // 1) Byggeplasser som trenger hender.
   const site = state.buildings.find((b) => !b.complete && !b.divine && b.builders.length < H.maxBuilders && (b.settlementId === h.settlementId || state.expansion.founders.includes(h.id)));
   if (site) {
@@ -257,6 +259,12 @@ export function stepHuman(state, h, dt) {
     }
     case 'toStore':
       if (moveTo(state, h, dt)) deliver(state, h);
+      break;
+    case 'toDeliveryPickup':
+      if (moveTo(state, h, dt)) pickupDelivery(state, h);
+      break;
+    case 'toDeliver':
+      if (moveTo(state, h, dt)) { completeDelivery(state, h); goIdle(state, h, [0.3, 0.8]); }
       break;
     case 'toSite': {
       const b = buildingById(state, h.targetId);

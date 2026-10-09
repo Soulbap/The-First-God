@@ -20,6 +20,15 @@ export function requirementMet(state, req) {
   if (req.gathered) return state.totals.wood + state.totals.stone >= req.gathered;
   if (req.noPending) return !state.buildings.some((b) => b.type === req.noPending && !b.complete);
   if (req.expansion) return !!state.expansion?.[req.expansion];
+  if (req.delivery) return (state.region?.completedDeliveries || 0) >= req.delivery;
+  if (req.regionalProjects) return (state.region?.completedProjects || 0) >= req.regionalProjects;
+  if (req.regionalWear) {
+    const a = state.settlement.center, b = state.settlements?.find((s) => s.id === 'second');
+    if (!b) return false;
+    let sum = 0, n = 0;
+    for (let t = 0.15; t < 0.9; t += 0.1) { const x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t; const w = state.wear, i = Math.floor(y / w.cell) * w.cols + Math.floor(x / w.cell); sum += w.data[i] || 0; n++; }
+    return n > 0 && sum / n >= req.regionalWear;
+  }
   return false;
 }
 
@@ -71,6 +80,11 @@ function applyAction(state, def, a) {
     state.exploration.nextAt = state.time + a.afterSeconds;
   } else if (a.type === 'beginFounding') {
     state.expansion.founding = true;
+  } else if (a.type === 'enableRegion') {
+    state.region.enabled = true;
+  } else if (a.type === 'enableRegionalPopulation') {
+    state.region.populationUnlocked = true;
+    state.region.nextPopulationAt = state.time + a.afterSeconds;
   }
 }
 

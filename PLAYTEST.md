@@ -32,3 +32,13 @@ Spill fra start til etter den første utzoomingen (ca. 5–10 minutter), og la s
 - Det beste øyeblikket:
 - Det som irriterte eller forvirret mest:
 - Én ting du vil se forbedret først:
+
+## Regional flyt — GAMEPLAY-05
+
+Spill videre etter «Den første landsbyen»: kjøp Utforskertrang, Nye horisonter og Grunnleggelse. Når lysningen har ild, velg Voksende slekter og Mellom ildstedene, og observer minst to leveranser og ett lokalt byggeprosjekt før Ragnarok.
+
+- [ ] Ser du at bæreren tar med seg trevirke eller stein fra den gamle bosettingen og kommer fram ved den nye?
+- [ ] Er den andre bosettingen synlig mindre, men gradvis mer organisert med nytt lager/hjem og brukt mark?
+- [ ] Leser du stien mellom stedene i områdeutsnitt uten en UI-linje?
+- [ ] Beholder den første landsbyen aktivitet mens det går reisende?
+- [ ] Etter Ragnarok: er det ingen ny bosetting, levering eller regional sti igjen?

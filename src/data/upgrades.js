@@ -134,6 +134,30 @@ export const UPGRADES = [
     world: 'En liten følge bærer forsyninger langs sporene. Et nytt ildsted kan få liv.',
     actions: [{ type: 'beginFounding' }],
   },
+  {
+    id: 'growing_kin', name: 'Voksende slekter', category: 'liv', icon: 'sprout',
+    discover: [{ expansion: 'founded' }], cost: { wood: 44, stone: 28 },
+    requires: [{ expansion: 'founded' }], requireText: 'Krever to bosettinger',
+    effect: 'Bosettinger med ledige hjem vokser langsomt og naturlig.',
+    world: 'Nye mennesker kommer til ildstedene når hjemmene har plass.',
+    actions: [{ type: 'enableRegionalPopulation', afterSeconds: 12 }],
+  },
+  {
+    id: 'between_hearths', name: 'Mellom ildstedene', category: 'bosetning', icon: 'storage',
+    discover: [{ upgrade: 'growing_kin' }], cost: { wood: 58, stone: 38 },
+    requires: [{ upgrade: 'growing_kin' }], requireText: 'Krever Voksende slekter',
+    effect: 'Forsyninger bæres til den unge bosettingen, som bygger videre selv.',
+    world: 'Bærere går mellom ildstedene med ved og stein; lager og hjem reises trinnvis.',
+    actions: [{ type: 'enableRegion' }],
+  },
+  {
+    id: 'steady_routes', name: 'Faste ferdselsårer', category: 'liv', icon: 'explore',
+    discover: [{ upgrade: 'between_hearths' }], cost: { wood: 48, stone: 44 },
+    requires: [{ upgrade: 'between_hearths' }, { delivery: 2 }], requireText: 'Krever to fullførte leveranser',
+    effect: 'Reisene blir hyppige nok til at stien mellom ildstedene setter dype spor.',
+    world: 'Den brukte ruten blir en tydelig, men ujevn jordsti gjennom skogen.',
+    actions: [],
+  },
 ];
 
 export const MILESTONES = [
@@ -166,6 +190,7 @@ export const MILESTONES = [
   },
   { id: 'new_land', title: 'Nytt land i sikte', text: 'En vandrer har funnet en lysning bortenfor den kjente skogen. Verden er større enn den første landsbyen.', when: { expansion: 'discovered' } },
   { id: 'first_settlements', title: 'De første bosettingene', text: 'To steder har fått navn og ildsteder. Mellom dem går menneskene en sti som ikke fantes før.', when: { expansion: 'founded' }, unlock: 'regionView' },
+  { id: 'living_region', title: 'En levende region', text: 'To ildsteder er blitt til et fellesskap. Mennesker og forsyninger følger stiene mellom hjemmene, og landet bærer stadig tydeligere spor av dem.', when: { all: [{ expansion: 'founded' }, { regionalProjects: 2 }, { delivery: 2 }, { regionalWear: 0.35 }] } },
 ];
 
 export const upgradeById = (id) => UPGRADES.find((u) => u.id === id);

@@ -32,6 +32,8 @@ export const BALANCE = {
     explorationSeconds: [5, 9],
     explorationCooldown: 42,
     foundingParty: 3,
+    regionalDelivery: 4,
+    regionalPopulationSeconds: 34,
   },
   building: {
     shelter: { radius: 26, work: 16, divine: true, minRing: 60 },
@@ -40,7 +42,7 @@ export const BALANCE = {
     storage: { radius: 32, work: 32, minRing: 105 },
     hearth: { radius: 25, work: 24, minRing: 52 },
   },
-  settlement: { clearRadius: 150 },
+  settlement: { clearRadius: 150, localHomeCapacity: 2 },
   stats: { productionWindow: 60 },
   wear: { cell: 12, perSecondWalking: 0.22, transportMultiplier: 1.45, explorationMultiplier: 0.48, decayPerSecond: 0.0009 },
 };
