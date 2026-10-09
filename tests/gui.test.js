@@ -146,7 +146,7 @@ test('hele tidligspillet: alt som kan kjøpes er oppdaget (ingen softlock), og i
   }
   assert.ok(runUntil(s, () => s.buildings.every((b) => b.complete), 180));
   step(s);
-  assert.deepEqual(ids(s), [], 'alle engangsvalg fullført og hjem maksimert');
+  assert.deepEqual(ids(s), ['shared_storage'], 'neste landsbysteg vises etter at leirinnholdet er fullført');
   assert.equal(s.humans.length, 8);
 });
 

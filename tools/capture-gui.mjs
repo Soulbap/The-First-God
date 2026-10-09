@@ -31,7 +31,7 @@ const SETUP = `
   const set = (w, s) => { T.state.resources.wood = w; T.state.resources.stone = s; };
   const camp = () => T.view(C.x - 10, C.y - 30, 600);
 `;
-const SCENES = [
+const DEFAULT_SCENES = [
   { name: '01-start-closed', w: 1920, h: 1080, js: `camp(); settle(1); quiet(); close();` },
   { name: '02-start-open', w: 1920, h: 1080, js: `camp(); gather(4, 2); settle(1); open('insights'); settle(0.5);` },
   { name: '03-unaffordable', w: 1920, h: 1080, js: `camp(); gather(3, 1); set(12, 6); T.buy('first_shelter'); until(() => T.state.buildings[0].complete); set(7, 2); settle(1); quiet(); open('insights'); settle(0.5);` },
@@ -51,6 +51,20 @@ const SCENES = [
   { name: '09-ragnarok', w: 1920, h: 1080, js: `camp(); gather(3, 1); set(12, 6); T.buy('first_shelter'); until(() => T.state.buildings[0].complete); set(12, 6); T.buy('awakening'); T.advance(30); settle(1); quiet();
       const b = document.querySelector('[data-nav="ragnarok"]') || document.getElementById('ragnarok-btn'); b.click(); settle(0.5);` },
 ];
+
+// GAMEPLAY-02: faktiske, deterministiske progresjonsbilder — ikke arrangerte mockups.
+const GAMEPLAY_02_SCENES = [
+  { name: '01-initial-world', w: 1920, h: 1080, js: `camp(); settle(1); quiet(); close();` },
+  { name: '02-inhabited-camp', w: 1920, h: 1080, js: `camp(); set(12, 6); T.buy('first_shelter'); until(() => T.state.buildings[0].complete); set(12, 6); T.buy('awakening'); set(15, 10); T.buy('common_fire'); until(() => T.state.buildings.some((b) => b.type === 'fire' && b.complete)); T.advance(35); quiet(); close(); settle(1);` },
+  { name: '03-storage-under-construction', w: 1920, h: 1080, js: `camp(); set(12, 6); T.buy('first_shelter'); until(() => T.state.buildings[0].complete); set(12, 6); T.buy('awakening'); set(15, 10); T.buy('common_fire'); until(() => T.state.buildings.some((b) => b.type === 'fire' && b.complete)); set(52, 26); T.buy('shared_storage'); T.advance(9); quiet(); close(); settle(1);` },
+  { name: '04-growing-settlement', w: 1920, h: 1080, js: `camp(); set(12, 6); T.buy('first_shelter'); until(() => T.state.buildings[0].complete); set(12, 6); T.buy('awakening'); set(15, 10); T.buy('common_fire'); until(() => T.state.buildings.some((b) => b.type === 'fire' && b.complete)); set(900, 900); for (let i = 0; i < 2; i++) { T.buy('new_home'); until(() => T.state.buildings.every((b) => b.complete)); } T.buy('shared_storage'); until(() => T.state.buildings.some((b) => b.type === 'storage' && b.complete)); T.advance(45); quiet(); close(); settle(1);` },
+  { name: '05-first-village-milestone', w: 1920, h: 1080, js: `camp(); set(12, 6); T.buy('first_shelter'); until(() => T.state.buildings[0].complete); set(12, 6); T.buy('awakening'); set(15, 10); T.buy('common_fire'); until(() => T.state.buildings.some((b) => b.type === 'fire' && b.complete)); set(900, 900); T.buy('hands_remember'); for (let i = 0; i < 3; i++) { T.buy('new_home'); until(() => T.state.buildings.every((b) => b.complete)); } T.buy('shared_storage'); until(() => T.state.buildings.some((b) => b.type === 'storage' && b.complete)); T.buy('organized_labor'); T.state.events.length = 0; T.hud.reset(); T.buy('village_hearth'); until(() => T.state.milestones.first_village != null); camp(); settle(0.5);` },
+  { name: '06-first-village-area', w: 1920, h: 1080, js: `camp(); set(12, 6); T.buy('first_shelter'); until(() => T.state.buildings[0].complete); set(12, 6); T.buy('awakening'); set(15, 10); T.buy('common_fire'); until(() => T.state.buildings.some((b) => b.type === 'fire' && b.complete)); set(900, 900); T.buy('hands_remember'); for (let i = 0; i < 3; i++) { T.buy('new_home'); until(() => T.state.buildings.every((b) => b.complete)); } T.buy('shared_storage'); until(() => T.state.buildings.some((b) => b.type === 'storage' && b.complete)); T.buy('organized_labor'); T.buy('village_hearth'); until(() => T.state.milestones.first_village != null); T.state.events.length = 0; T.hud.reset(); T.view(C.x, C.y - 40, 1850); T.advance(50); close(); settle(1);` },
+];
+const SCENES = process.env.GAMEPLAY_02 === '1' ? GAMEPLAY_02_SCENES : DEFAULT_SCENES;
+const ACTIVE_SCENES = process.env.CAPTURE_SCENES
+  ? SCENES.filter((s) => process.env.CAPTURE_SCENES.split(',').some((name) => s.name.startsWith(name.trim())))
+  : SCENES;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -102,11 +116,11 @@ try {
   await cdp.send('Runtime.enable');
   await cdp.send('Log.enable');
   await cdp.send('Page.enable');
-  for (const s of (smokeOnly ? [] : SCENES)) {
+  for (const s of (smokeOnly ? [] : ACTIVE_SCENES)) {
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: s.w, height: s.h, deviceScaleFactor: 1, mobile: false });
     await cdp.send('Page.navigate', { url: `${base}/?debug` });
     for (let i = 0; i < 300; i++) {
-      if (await evaluate(cdp, `!!(window.TFG && document.getElementById('loading').hidden)`).catch(() => false)) break;
+      if (await evaluate(cdp, `!!window.TFG`).catch(() => false)) break;
       await sleep(100);
     }
     await evaluate(cdp, `(async () => { ${SETUP} ${s.js}; T.setSpeed(1); T.tick(0.2); })()`); // vis normal fart i bildet
@@ -120,7 +134,7 @@ try {
   // holder nettleser-røyktesten repeterbar uten å gjøre den til en Node-/DOM-test.
   await cdp.send('Page.navigate', { url: `${base}/?debug` });
   for (let i = 0; i < 300; i++) {
-    if (await evaluate(cdp, `!!(window.TFG && document.getElementById('loading').hidden)`).catch(() => false)) break;
+    if (await evaluate(cdp, `!!window.TFG`).catch(() => false)) break;
     await sleep(100);
   }
   const smoke = await evaluate(cdp, `(async () => await (await import('/tools/gui-smoke.js')).run())()`);

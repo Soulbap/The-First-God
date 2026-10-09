@@ -15,6 +15,9 @@ export const gatherInterval = (state) => H.gatherSeconds / state.modifiers.gathe
 const nodeById = (state, id) => state.nodes.find((n) => n.id === id);
 const buildingById = (state, id) => state.buildings.find((b) => b.id === id);
 const fireOf = (state) => state.buildings.find((b) => b.type === 'fire' && b.complete);
+const hearthOf = (state) => state.buildings.find((b) => b.type === 'hearth' && b.complete);
+const storeOf = (state) => state.buildings.find((b) => b.type === 'storage' && b.complete);
+const deliveryPoint = (state) => storeOf(state) || state.stockpile;
 
 export function nodeUsable(n) {
   if (n.kind === 'tree') return n.state === 'alive' && n.growth >= B.tree.harvestMinGrowthHuman && treeAvailable(n) > 0;
@@ -70,9 +73,10 @@ function goIdle(state, h, [a, b] = [0.3, 0.9]) {
 }
 
 function goStore(state, h) {
+  const store = deliveryPoint(state);
   h.state = 'toStore';
-  h.tx = state.stockpile.x + range(state.rng, -14, 14);
-  h.ty = state.stockpile.y + range(state.rng, 8, 14);
+  h.tx = store.x + range(state.rng, -14, 14);
+  h.ty = store.y + (store.type === 'storage' ? store.radius * 0.52 : 10) + range(state.rng, 2, 12);
 }
 
 function chooseTask(state, h) {
@@ -113,12 +117,14 @@ function deliver(state, h) {
     state.resources[type] += amount;
     state.totals[type] += amount;
     recordAuto(state, type, amount);
-    state.events.push({ type: 'gain', res: type, amount, x: state.stockpile.x, y: state.stockpile.y, manual: false });
+    const store = deliveryPoint(state);
+    state.events.push({ type: 'gain', res: type, amount, x: store.x, y: store.y, manual: false });
     h.deliveries++;
   }
   h.carry = { type: null, amount: 0 };
-  const fire = fireOf(state);
-  if (fire && h.deliveries > 0 && h.deliveries % H.restEveryDeliveries === 0) {
+  const fire = hearthOf(state) || fireOf(state);
+  const every = hearthOf(state) ? H.villageRestEveryDeliveries : H.restEveryDeliveries;
+  if (fire && h.deliveries > 0 && h.deliveries % every === 0) {
     const a = (h.id * 2.399) % (Math.PI * 2);
     h.state = 'toFire';
     h.tx = fire.x + Math.cos(a) * 24;
@@ -181,11 +187,11 @@ export function stepHuman(state, h, dt) {
       const b = buildingById(state, h.targetId);
       if (!b || b.complete) { release(state, h); goIdle(state, h, [0.5, 1.2]); break; }
       h.anim += dt;
-      addWork(state, b, dt * H.buildRate);
+      addWork(state, b, dt * H.buildRate * state.modifiers.buildSpeed);
       break;
     }
     case 'toFire': {
-      const fire = fireOf(state);
+      const fire = hearthOf(state) || fireOf(state);
       if (!fire) { goIdle(state, h); break; }
       if (moveTo(state, h, dt)) {
         h.state = 'rest';

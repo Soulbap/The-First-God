@@ -27,6 +27,8 @@ export const EPOCHS = [
       { title: 'Det første lyet', when: [{ built: 'shelter' }] },
       { title: 'Den første leiren', when: [{ upgrade: 'awakening' }] },
       { title: 'Den første bosetningen', when: [{ builtCount: { types: ['shelter', 'hut'], n: 2 } }, { built: 'fire' }] },
+      { title: 'Voksende bosetting', when: [{ built: 'storage' }] },
+      { title: 'Den første landsbyen', when: [{ built: 'hearth' }, { people: 8 }] },
     ],
   },
 ];

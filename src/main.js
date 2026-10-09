@@ -38,7 +38,7 @@ const hud = createHud({
 });
 
 function ragnarokSummary() {
-  const homes = state.buildings.filter((b) => b.complete && b.type !== 'fire').length;
+  const homes = state.buildings.filter((b) => b.complete && (b.type === 'shelter' || b.type === 'hut')).length;
   // Provisorisk formel — balanseres når permanente bonuser finnes.
   const prp = Math.floor(Math.sqrt(state.totals.wood + state.totals.stone) / 4) + homes + Math.floor(state.totals.pp / 10);
   return {
@@ -100,6 +100,10 @@ function handleEvents(events) {
       setZoomLimits(cam, true);
       pendingGlide = 1.4; // kort pause så spilleren rekker å lese meldingen
     }
+    if (e.unlock === 'villageView') {
+      setZoomLimits(cam, true);
+      pendingGlide = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1.4;
+    }
   }
 }
 
@@ -125,7 +129,11 @@ function tick(realDt) {
 
   if (pendingGlide != null) {
     pendingGlide -= realDt;
-    if (pendingGlide <= 0) { pendingGlide = null; goView('area', 4.5); }
+    if (pendingGlide <= 0) {
+      pendingGlide = null;
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      goView('area', reduced ? 0.01 : 4.5);
+    }
   }
   updateCamera(cam, realDt);
   clampCamera(cam, state.world.width, state.world.height);

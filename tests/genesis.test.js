@@ -165,6 +165,29 @@ test('bål og nye hjem bygges av menneskene uten overlapp; milepæl låser opp o
   assert.deepEqual(s.buildings.map((b) => [b.x, b.y]), positions, 'bygg flytter seg aldri');
 });
 
+test('felles lager, ordnet arbeid og landsbyildsted bygges autonomt og utløser første landsby', () => {
+  const s = settledGame();
+  s.resources.wood = 900; s.resources.stone = 900;
+  assert.equal(purchase(s, 'common_fire').ok, true);
+  assert.ok(runUntil(s, () => s.buildings.some((b) => b.type === 'fire' && b.complete), 60));
+  for (let i = 0; i < 3; i++) {
+    assert.equal(purchase(s, 'new_home').ok, true);
+    assert.ok(runUntil(s, () => s.buildings.every((b) => b.complete), 120));
+  }
+  assert.equal(s.humans.length, 8, 'hjemmene gjør leiren til et større samfunn');
+  assert.equal(purchase(s, 'shared_storage').ok, true);
+  assert.ok(runUntil(s, () => s.buildings.some((b) => b.type === 'storage' && b.complete), 120));
+  const storage = s.buildings.find((b) => b.type === 'storage');
+  assert.equal(purchase(s, 'organized_labor').ok, true);
+  assert.equal(purchase(s, 'village_hearth').ok, true);
+  assert.ok(runUntil(s, () => s.buildings.some((b) => b.type === 'hearth' && b.complete), 120));
+  assert.ok(runUntil(s, () => s.milestones.first_village != null, 10));
+  assert.equal(s.unlocks.villageView, true);
+  const h = s.humans[0];
+  assert.ok(runUntil(s, () => h.state === 'toStore', 90));
+  assert.ok(Math.hypot(h.tx - storage.x, h.ty - storage.y) < storage.radius + 28, 'leveransen går til felleslageret');
+});
+
 test('samme seed gir identisk verden og forløp (determinisme)', () => {
   const a = settledGame(), b = settledGame();
   advance(a, 90); advance(b, 90);

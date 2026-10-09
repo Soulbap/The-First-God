@@ -94,7 +94,7 @@ export function createRenderer(canvas) {
           fx.parts.slice(-3).forEach((p) => { p.color = '#8d887c'; });
         }
       } else if (e.type === 'gain') {
-        const sp = state.stockpile;
+        const sp = state.buildings.find((b) => b.type === 'storage' && b.complete) || state.stockpile;
         const off = e.res === 'wood' ? WOOD_PILE_OFFSET : STONE_PILE_OFFSET;
         if (e.manual) {
           flyToPile(fx, e.res, { x: e.x, y: e.y - 10 }, { x: sp.x + off.x, y: sp.y + off.y - 6 });
@@ -148,7 +148,7 @@ export function createRenderer(canvas) {
     }
     const w = wind(0, renderTime);
     for (const b of state.buildings) {
-      if (b.type === 'fire' && b.complete) {
+      if ((b.type === 'fire' || b.type === 'hearth') && b.complete) {
         if (every('smoke' + b.id, 0.22, dt)) emit(fx, 'smoke', b.x + (Math.random() - 0.5) * 2, b.y - 8, 1, { spread: 2, wind: w, z: 2, alpha: 0.2 });
         if (every('spark' + b.id, 0.9, dt)) emit(fx, 'spark', b.x, b.y - 4, 1, { spread: 3 });
       } else if (b.complete && simDt > 0) {
@@ -182,6 +182,7 @@ export function createRenderer(canvas) {
 
   R.updateWear = (state) => {
     const { cols, rows, data } = state.wear;
+    const store = state.buildings.find((b) => b.type === 'storage' && b.complete) || state.stockpile;
     R.exposure.fill(0);
     const activity = clamp(state.humans.length * 0.16 + (state.totals.wood + state.totals.stone) / 130, 0, 1);
     const trackTo = (from, to, strength) => {
@@ -201,19 +202,20 @@ export function createRenderer(canvas) {
     for (const b of state.buildings) {
       const p = b.complete ? 1 : Math.max(0.15, b.progress);
       const occupation = b.complete ? 0.18 + activity * 0.82 : 0.12 + b.progress * 0.32;
-      if (b.type === 'fire') {
+      if (b.type === 'fire' || b.type === 'hearth') {
         stamp(state, b.x, b.y, 8, 30 + activity * 10, occupation * p);
-        trackTo(b, state.stockpile, activity * 0.42);
+        trackTo(b, store, activity * 0.42);
       } else {
         // Kort, avbrutt jord ved inngangen er mindre mekanisk enn en brun ring.
         stamp(state, b.x, b.y, b.radius * 0.65, b.radius * (1.1 + occupation * 0.42), occupation * p);
-        const toward = state.stockpile;
+        const toward = store;
         const dx = toward.x - b.x, dy = toward.y - b.y, d = Math.hypot(dx, dy) || 1;
         stamp(state, b.x + dx / d * (b.radius * 0.8), b.y + dy / d * (b.radius * 0.5), 3, 12, occupation * 0.72);
         trackTo(b, toward, activity * 0.28);
       }
     }
-    const sp = state.stockpile;
+    const storage = state.buildings.find((b) => b.type === 'storage' && b.complete);
+    const sp = storage || state.stockpile;
     stamp(state, sp.x, sp.y, 9, 28, 0.22 + activity * 0.54);
     // Skriv bare der noe er slitt (nå eller forrige gang).
     let minI = cols, maxI = -1, minJ = rows, maxJ = -1;
@@ -390,7 +392,7 @@ export function createRenderer(canvas) {
       shadow(n.x + 0.8, n.y + 0.2, 3.4 + h * 0.03, 1.6, 0.55);
     }
     for (const b of state.buildings) {
-      if (b.type === 'fire' || b.progress < 0.5) continue;
+      if (b.type === 'fire' || b.type === 'hearth' || b.progress < 0.5) continue;
       shadow(b.x + b.radius * 0.45, b.y + b.radius * 0.18, b.radius * 1.3, b.radius * 0.42, 0.55);
     }
     for (const h of state.humans) if (inView(h.x, h.y)) drawHumanShadow(ctx, h);
@@ -431,7 +433,7 @@ export function createRenderer(canvas) {
     drawParticles(ctx, fx, false);
     ctx.globalCompositeOperation = 'lighter';
     for (const b of state.buildings) {
-      if (b.type !== 'fire' || !b.complete) continue;
+      if ((b.type !== 'fire' && b.type !== 'hearth') || !b.complete) continue;
       drawFireGlow(ctx, b.x, b.y, renderTime);
       drawEmbers(ctx, b.x, b.y, renderTime);
       drawFlames(ctx, b.x, b.y - 1, renderTime);
@@ -482,13 +484,14 @@ export function createRenderer(canvas) {
     const areaK = smooth(VIEW.semanticAreaW * 0.9, VIEW.semanticAreaW * 1.25, cam.w);
     if (areaK > 0 && state.buildings.length) {
       const s = worldToScreen(cam, C.x, C.y - 120);
-      const pop = state.humans.length, homes = state.buildings.filter((b) => b.complete && b.type !== 'fire').length;
+      const pop = state.humans.length, homes = state.buildings.filter((b) => b.complete && (b.type === 'shelter' || b.type === 'hut')).length;
       ctx.globalAlpha = areaK;
       ctx.font = 'italic 15px Georgia, "Palatino Linotype", serif';
       ctx.fillStyle = 'rgba(16,12,8,0.55)';
-      ctx.fillText('Den første boplassen', s.x + 1, s.y + 1);
+      const settlementName = state.milestones.first_village != null ? 'Den første landsbyen' : 'Den første boplassen';
+      ctx.fillText(settlementName, s.x + 1, s.y + 1);
       ctx.fillStyle = '#efe4cc';
-      ctx.fillText('Den første boplassen', s.x, s.y);
+      ctx.fillText(settlementName, s.x, s.y);
       ctx.font = '12px "Segoe UI", system-ui, sans-serif';
       ctx.fillStyle = 'rgba(236,226,204,0.85)';
       ctx.fillText(`${pop} mennesker · ${homes} hjem`, s.x, s.y + 17);

@@ -140,6 +140,7 @@ Tallbalanse og endelig trestruktur er åpent. Prototypen skal bruke få valg for
 | Første hjem | Ressurser + autonom bygging | Synlig trygghet og stabilitet | Befolkningsvekst |
 | Første åker | Mat-/utviklingsvalg | Landskapet formes av mennesker | Bygdevekst |
 | Sammenhengende bosetting | Flere samfunnsmilepæler | Områdevisning blir meningsfull | Verdenskart/zoom |
+| Den første landsbyen | Fire hjem, åtte mennesker, felleslager og landsbyildsted | Leiren leses som et hjem for mange | Videre bygdevekst (åpen) |
 | Planetbevissthet | Sivilisasjonsmål | Hele kloden kan leses | Planetvisning |
 | Stjernealder | Sent progresjonsmål | Solsystemet blir relevant | Kosmisk ekspansjon |
 | Galaktisk arv | Langsiktig mål | Syklusen leses i enorm skala | Valgfri Ragnarok/Prestige |
@@ -277,6 +278,13 @@ Hver ny endring må kunne besvare: «Hva kan spilleren se i verden som følge av
 ## 12. Genesis-01 — implementasjonsstatus (2026-10-09)
 
 Prototypen finnes og er spillbar. Denne seksjonen beskriver hva som er bygget og hvilke antakelser som ble gjort. Bekreftede prinsipper over er ikke endret.
+
+### GAMEPLAY-02 — fra leir til landsby (bekreftet implementasjon)
+
+- **Felles lager**, **Ordnet arbeid** og **Landsbyildsted** er menyvalg med synlige, autonome følger. Lageret blir nytt leveringspunkt; ordnet arbeid øker sanking og bygging; ildstedet blir nytt hvilested og bønnesenter.
+- Bosettingen velger fortsatt tomter selv, i deterministiske ringer rundt leirens sentrum. Bygg har avstandskrav mot hverandre, trær, stein og tjern; spilleren velger aldri plassering eller arbeidsordre.
+- **Den første landsbyen** oppnås av faktisk utvikling: fire hjem (inkludert første ly), minst åtte mennesker, ferdig lager og ferdig ildsted. Den gir en kort norsk milepælsmelding og rolig områdezoom uten å stanse simuleringen. Redusert bevegelse hopper over den ikke-essensielle kameraglidningen.
+- Åpent: hva landsbyen åpner etter Genesis-01-spilltesten. Denne iterasjonen viser bare at neste vekstnivå finnes; den legger ikke til byfase, produksjonskjeder eller nye ressurser.
 
 ### Spillflyt slik den er bygget
 

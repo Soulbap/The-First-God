@@ -318,6 +318,82 @@ function paintHut(seed, p) {
   });
 }
 
+// ---------- Felles lager: lavt tømmerbygg med åpen front og tak ----------
+function paintStorage(seed, p) {
+  return paintSprite(88, 60, 44, 51, (ctx) => {
+    const rnd = mulberry(seed), rx = 29, ry = 10, roofY = -31;
+    groundAndStones(ctx, rnd, rx, ry, p, 13);
+    const posts = [-23, -8, 8, 23];
+    const frame = clamp((p - 0.1) / 0.3);
+    for (const x of posts) {
+      const h = 24 * frame;
+      taper(ctx, x, 3, x, 3 - h, 1.45, 1.15, 'rgb(86,66,45)');
+      taper(ctx, x - 0.35, 2, x - 0.35, 3 - h, 0.35, 0.25, 'rgba(180,146,102,0.45)');
+    }
+    if (frame > 0.45) {
+      taper(ctx, -27, -20, 27, -20, 1.2, 1.2, 'rgb(92,70,48)');
+      taper(ctx, -27, -8, 27, -8, 0.9, 0.9, 'rgb(96,74,52)');
+    }
+    const wall = clamp((p - 0.38) / 0.22);
+    if (wall > 0) {
+      ctx.save();
+      ctx.globalAlpha = wall;
+      ctx.fillStyle = 'rgb(102,80,54)';
+      ctx.fillRect(-28, -20, 56, 13);
+      for (let x = -25; x < 27; x += 4) taper(ctx, x, -19, x + 1, -7, 1.1, 1.1, 'rgba(66,48,32,0.7)');
+      ctx.restore();
+    }
+    const roof = clamp((p - 0.58) / 0.32);
+    if (roof > 0) {
+      ctx.save(); ctx.globalAlpha = roof;
+      ctx.beginPath(); ctx.moveTo(-34, -19); ctx.lineTo(-22, roofY); ctx.lineTo(22, roofY); ctx.lineTo(34, -19); ctx.closePath();
+      ctx.fillStyle = 'rgb(120,99,60)'; ctx.fill();
+      for (let i = 0; i < 260; i++) {
+        const x = -28 + rnd() * 56, y = roofY + rnd() * 14;
+        ctx.strokeStyle = rgba(jitter([151, 128, 77], rnd, 0.22), 0.55); ctx.lineWidth = 0.45;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + (rnd() - 0.5) * 2, y + 3 + rnd() * 3); ctx.stroke();
+      }
+      ctx.fillStyle = 'rgba(25,18,10,0.28)'; ctx.fillRect(-34, -19, 68, 3);
+      ctx.restore();
+    }
+    const goods = clamp((p - 0.72) / 0.28);
+    if (goods > 0) {
+      ctx.save(); ctx.globalAlpha = goods;
+      for (let i = 0; i < 11; i++) {
+        const x = -20 + (i % 6) * 8 + (rnd() - 0.5), y = 3 - Math.floor(i / 6) * 3;
+        taper(ctx, x - 3.1, y, x + 3.1, y - 0.4, 1.15, 1.1, i % 2 ? 'rgb(108,78,49)' : 'rgb(89,63,41)');
+      }
+      for (let i = 0; i < 7; i++) dab(ctx, 8 + (i % 4) * 3.2, 2 - Math.floor(i / 4) * 2.1, 1.6, 1.1, rnd(), 'rgb(117,112,100)');
+      ctx.restore();
+    }
+  });
+}
+
+// ---------- Landsbyildsted: steinsatt ild, sitteplasser og permanent samlingsplass ----------
+function paintHearth(seed, p) {
+  return paintSprite(76, 42, 38, 28, (ctx) => {
+    const rnd = mulberry(seed), a = smooth(0, 0.15, p);
+    dab(ctx, 0, 1, 30, 12, 0, rgba([94, 77, 55], 0.48 * a));
+    const stones = Math.floor(clamp(p / 0.42) * 18);
+    for (let i = 0; i < stones; i++) {
+      const t = (i / 18) * Math.PI * 2 + 0.2;
+      const x = Math.cos(t) * 12, y = Math.sin(t) * 5.8;
+      dab(ctx, x + 0.5, y + 0.6, 2.5, 1.35, 0, 'rgba(20,15,10,0.4)');
+      dab(ctx, x, y, 2.35, 1.5, rnd(), rgba(jitter([122, 115, 101], rnd, 0.2), a));
+      dab(ctx, x - 0.5, y - 0.45, 0.9, 0.5, 0, 'rgba(205,196,178,0.45)');
+    }
+    const logs = clamp((p - 0.35) / 0.35);
+    for (const [x, y, rot] of [[-24, 4, -0.08], [24, 3, 0.08], [0, 10, 0]]) {
+      ctx.save(); ctx.globalAlpha = logs; ctx.translate(x, y); ctx.rotate(rot);
+      taper(ctx, -7, 0, 7, 0, 2.2, 2.1, 'rgb(91,65,42)');
+      taper(ctx, -7, 0.7, 7, 0.7, 1, 1, 'rgba(24,16,10,0.32)'); ctx.restore();
+    }
+    const pit = clamp((p - 0.48) / 0.35);
+    dab(ctx, 0, 0, 8, 4, 0, rgba([25, 20, 15], 0.8 * pit));
+    for (let i = 0; i < 4 * pit; i++) taper(ctx, -5 + i * 3.3, 1, 5 - i * 2.2, -1, 1.25, 1.1, 'rgb(68,48,33)');
+  });
+}
+
 // ---------- Bålplass (statisk del; flammer tegnes levende) ----------
 function paintFirePit(seed, p) {
   return paintSprite(36, 22, 18, 13, (ctx) => {
@@ -360,7 +436,10 @@ export function buildingSprite(b) {
   if (entry && entry.level === level) return entry.sprite;
   const p = level / STEPS;
   const seed = b.id * 101 + 7;
-  const sprite = b.type === 'shelter' ? paintShelter(seed, p) : b.type === 'hut' ? paintHut(seed, p) : paintFirePit(seed, p);
+  const sprite = b.type === 'shelter' ? paintShelter(seed, p)
+    : b.type === 'hut' ? paintHut(seed, p)
+      : b.type === 'storage' ? paintStorage(seed, p)
+        : b.type === 'hearth' ? paintHearth(seed, p) : paintFirePit(seed, p);
   cache.set(b.id, { level, sprite });
   return sprite;
 }

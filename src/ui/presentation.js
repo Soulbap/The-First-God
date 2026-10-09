@@ -7,8 +7,9 @@ const IMPORTANT_DISCOVERIES = new Set(['first_shelter', 'awakening', 'common_fir
 
 export function classifyPresentation(event) {
   if (event.type === 'milestone') {
-    return { key: `milestone:${event.id}`, priority: event.id === 'settlement' ? 4 : 3,
-      kind: event.id === 'settlement' ? 'major' : 'significant', icon: 'flag', kicker: 'Milepæl', title: event.title, text: event.text };
+    const major = event.id === 'settlement' || event.id === 'first_village';
+    return { key: `milestone:${event.id}`, priority: major ? 4 : 3,
+      kind: major ? 'major' : 'significant', icon: 'flag', kicker: 'Milepæl', title: event.title, text: event.text };
   }
   if (event.type === 'discovered') {
     const def = upgradeById(event.id);
