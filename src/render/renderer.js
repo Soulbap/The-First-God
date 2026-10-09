@@ -265,7 +265,9 @@ export function createRenderer(canvas) {
 
   // Verdensoversikt: en egen visning av samme tilstand (se render/overview.js).
   R.renderOverview = (state, cam, renderTime, hoverRegionId) => {
+    const t0 = performance.now();
     drawOverview(ctx, R, state, { sw: cam.screenW, sh: cam.screenH, dpr: cam.dpr || 1, time: renderTime, hoverId: hoverRegionId });
+    R.stats.overviewMs = (R.stats.overviewMs || 0) + (performance.now() - t0 - (R.stats.overviewMs || 0)) * 0.1;
   };
 
   // ---------- Treffsjekk for klikking ----------

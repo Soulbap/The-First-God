@@ -96,8 +96,22 @@ function launchParty(state) {
   return true;
 }
 
+// Et følge som ikke kommer fram (blokkert vei, ugyldig sted) oppløses: folk går hjem og forsyningene gis tilbake.
+const PARTY_TIMEOUT = 360;
+function abortParty(state) {
+  const Rm = state.realm, party = Rm.party;
+  state.resources.wood += B.realm.supplies.wood; state.resources.stone += B.realm.supplies.stone;
+  for (const id of party.members) {
+    const m = state.humans.find((q) => q.id === id);
+    if (m) { m.partyId = null; m.waypoints = null; m.state = 'idle'; m.timer = 0.5; }
+  }
+  Rm.party = null; Rm.lastFoundedAt = state.time; Rm.siteCache = null;
+  state.events.push({ type: 'partyAborted', x: party.site.x, y: party.site.y });
+}
+
 export function stepRealm(state) {
   const Rm = state.realm;
+  if (Rm.party && state.time - Rm.party.launchedAt > PARTY_TIMEOUT) abortParty(state);
   if (!Rm.autoFounding || state.time < Rm.nextCheckAt) return;
   Rm.nextCheckAt = state.time + B.realm.checkSeconds;
   if (foundingReadiness(state).every((c) => c.ok)) launchParty(state);

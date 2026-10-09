@@ -119,6 +119,31 @@ Når en utgivelse opprettes, flyttes `Unreleased`-punkter til en datert versjons
 ## [Unreleased]
 
 ### Added
+- **GAMEPLAY-07 · byenes tid** (`src/sim/settlements.js`, `src/sim/production.js`, `src/render/city.js`): Nye trinn **By** og **Storby** avledes av syv uavhengige krav (folk, boligkapasitet, bolighus, mat, infrastruktur, sagbruk/steinhoggeri/torg, foredlede varer og fullførte leveranser) — aldri av én terskel. To nye råvarer, **planker** og **tilhugget stein**, lages autonomt av **Sagbruk** og **Steinhoggeri** (3 tre → 1 planke, 3 stein → 1 blokk), med reserve og lagertak så vanlige byggeprosjekter aldri sultes. **Bolighus** (4 plasser) og **Torg** (større leveranser og dobbelt lagerrom for foredlede varer) bygges av menneskene selv. Milepælen **En by reiser seg**.
+- **GAMEPLAY-08 · den organiserte sivilisasjonen**: **Kunnskap** er en ny ressurs som bare oppstår av faktisk virksomhet (sagbruk, steinhoggeri, verksteder og den nye **Kunnskapshallen**, mer med flere folk). Fem fremskritt (Organisert håndverk, Bedre jordbruk, Byggemetoder, Delt kunnskap, Samfunnsorden) gir målbare evner. Roller (Kunnskapssete, Bysenter, Sagbruksbygd, Steinhoggerbygd, Matbygda, Håndverksbygd, Skogbygd, Steinbygd) gir målbare fordeler (`ROLE_EFFECTS`). Milepælen **Kunnskapens tidsalder**.
+- **GAMEPLAY-09 · det voksende riket** (`src/sim/realm.js`, `src/sim/regional.js`): **Flere ildsteder** lar folk autonomt grunnlegge opptil fire bosettinger når mat, folk, materialer, ledige hender og ro er på plass. Tomtevalget er deterministisk (tørt land, avstand, trygg vei utenom tjernet, fritt areal, lokale ressurser, mangel på roller) og bosettingene vokser fra én hytte via de eksisterende fysiske leveransene, med planer for skog, stein eller jord. Handelsruter oppstår av fullførte turer (`state.network`). **Handelsveier** øker lasten. Milepælen **Et sammenhengende rike**.
+- **GAMEPLAY-10 · verdens daggry** (`src/sim/worldmap.js`, `src/sim/civstage.js`, `src/view/overview.js`, `src/render/overview.js`): En deterministisk 5×3 verdensmodell der hjemmeregionen er den detaljerte verdenen og fjerne land bare er tilstand og tidtakere. **Hinsides de kjente landene** sender ekspedisjoner fysisk ut over kartkanten; **Den store ekspedisjonen** lar nybyggere reise utposter som sender **karavaner** (ekte figurer) inn til lageret; **En forbundet verden** forsterker dem. **Verden-oversikten** (knapp, tasten V eller zoom forbi område) viser bosettinger, ruter, land, ekspedisjoner og mulige mål. Sivilisasjonstrinn avledes av milepæler. Milepælen **Verdens første sivilisasjon**.
+- **UI**: Rike-panelet (sivilisasjonstrinn, kunnskap, bosettinger og roller, byens og utvidelsens krav, forbindelser, verden), nye ressurser i ressurslinjen (tettere visning ved mange), fem nye bygg med malte sprites og arbeidseffekter, bosettingsetiketter for alle bosettinger, nye ikoner og kategoriene Kunnskap og Rike.
+- **Verktøy**: `tools/bot.js` (spillerbot uten snarveier), `tools/playthrough.mjs` (full gjennomspilling i Node), `tools/gui-smoke-realm.js` (Rike/oversikt-røykprøve, `REALM_SMOKE=1`), og scenene `GAMEPLAY_07_10=1` i `tools/capture-gui.mjs`.
+- **Bevis**: Rapporter og faktiske Edge-skjermbilder under `docs/gameplay-07/` … `docs/gameplay-10/` og `docs/gameplay-07-10/INTEGRATION_REPORT.md`.
+
+### Changed
+- **Regional logistikk** er generalisert fra «den andre bosettingen» til et vilkårlig antall (maks to samtidige prosjekter). Leveringer bærer også planker og tilhugget stein.
+- **Boligkapasitet** er per bygg (`B.housing`); sivilisasjonsveksten gjelder alle bosettinger og tar hensyn til rollen. Folk i unge bosettinger bygger først, deretter veksler de mellom sanking og livet ved ilden (tidligere kunne den som startet på 0 leveranser vandre uendelig).
+- **«En levende region»** krever nå en etablert rute (tre fullførte turer) i stedet for målt slitasje ≥ 0,35. Slitasjen forfaller og kunne stå på null for enkelte frø, noe som stoppet hele progresjonen.
+- **Steinhoggeri og Byggemetoder** får stein til å vokse tilbake raskere (steinmangel var flaskehalsen i bysegmentet).
+- **Ragnarok** viser og nullstiller alt nytt; PrP-formelen belønner kunnskap, bosettinger og utposter (fortsatt plassholder, aldri straffende).
+
+### Fixed
+- Mennesker kunne gå i evig sløyfe rundt tjernet når målet lå på den andre siden: omveien legges nå bare én gang per mål.
+- Følger (grunnleggelse og ekspedisjon) som ikke kommer fram, oppløses etter seks minutter og forsyningene gis tilbake.
+- Røykprøven `panelet fanger pekeren (ikke canvas)` var en tidsfeil i testen (panelet glir inn i sanntid); testen venter nå på overgangen. 33/33.
+- `package-lock.json` (uten avhengigheter) kom ved en feil med i en tidligere commit og er fjernet fra indeksen igjen.
+
+### Tests
+- **GAMEPLAY-07..10**: `tests/city.test.js`, `knowledge.test.js`, `realm.test.js`, `world.test.js`, `realm-ui.test.js` (42 nye tester) dekker bykrav, foredling og tak, bolighus, kunnskapskilder, fremskritt, roller, tomtevalg, grunnleggelse uten duplikater, ruter, leveringsregnskap, verdenskart, ekspedisjon og utpost, karavaner, oversiktsmatematikk, sluttmilepælens krav, Ragnarok-nullstilling, deterministisk gjentakelse og fire frø som spilles hele veien. (Kontroll: `npm test` 86/86; Edge: GUI-røykprøve 33/33, Rike-røykprøve 22/22, ingen konsollfeil.)
+
+### Added
 - **GUI-01 · progressiv oppdagelse** (`src/sim/discovery.js`, `discover` i `src/data/upgrades.js`): innsikter blir synlige først når de er relevante, og oppdagelsen er varig i syklusen (`state.discovered`, hendelsen `discovered`). Første ly dukker opp ved første sanking, Vekkelse når lyet står, Felles ild/Hendene husker etter Vekkelse og Nytt hjem når bålet står. Kjøpskrav, kostnader og effekter er uendret. (Kontroll: `tests/gui.test.js`)
 - **GUI-01 · visningsmodell** (`src/ui/insights.js`): ren, DOM-fri utvelgelse av aktive kort (skjult/for dyr/kjøpbar/bygges), manglende ressurser («Mangler 4 trevirke og 2 stein»), fremdrift mot kjøp, kategorier, epokestadium og ressurslinje.
 - **GUI-01 · designsystem** (`src/ui/tokens.css`): Genesis-paletten, 8 px-avstand, radier, typografi (Palatino Linotype til titler, Segoe UI til funksjonell tekst), bevegelse og `prefers-reduced-motion`. Epoker kan overstyre fargene via `data-epoch` uten å endre oppsettet.

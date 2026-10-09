@@ -42,3 +42,30 @@ Spill videre etter «Den første landsbyen»: kjøp Utforskertrang, Nye horisont
 - [ ] Leser du stien mellom stedene i områdeutsnitt uten en UI-linje?
 - [ ] Beholder den første landsbyen aktivitet mens det går reisende?
 - [ ] Etter Ragnarok: er det ingen ny bosetting, levering eller regional sti igjen?
+
+
+# Spilltest — GAMEPLAY-07 → 10 (fra den første byen til en levende verden)
+
+Spill hele forløpet i normal fart (ca. 1,5–2 timer) og noter hvor det går tregt. Svar kort: **ja / delvis / nei** + en setning.
+
+## Byen
+- [ ] Kjennes det som en by (bolighus, torg, sagbruk, steinhoggeri) og ikke bare flere hytter?
+- [ ] Er det tydelig hva som mangler for «En by reiser seg»? (Rike-panelet → Veien til by)
+- [ ] Er steinmangel (flaskehals) en spennende begrensning eller bare frustrerende?
+
+## Kunnskap og organisering
+- [ ] Skjønner du hvor kunnskap kommer fra? Merker du effekten av hvert fremskritt?
+- [ ] Får byen og bygdene tydelig ulik identitet (roller)?
+
+## Riket
+- [ ] Dukker nye bosettinger opp når du forventer det? Forstår du hvorfor ikke (Rike → Nye bosettinger)?
+- [ ] Ser du bærerne og rutene mellom bosettingene? Er etikettene lesbare i områdevisningen?
+
+## Verden
+- [ ] Er det tydelig at Verden-oversikten er et nytt «nivå» (knapp, V, zoom ut)? Kommer du trygt tilbake?
+- [ ] Føles ekspedisjoner, utposter og karavaner meningsfulle? Er det nok å se på mens de er borte?
+- [ ] Er sluttmilepælen «Verdens første sivilisasjon» tilfredsstillende?
+
+## Tempo
+- [ ] Hvor lang tid brukte du til hver milepæl? Hvor ventet du mest? Ble 2×/4× brukt?
+- [ ] Fungerer Ragnarok (forhåndsvisning viser nye ting, ny syklus er ren)?

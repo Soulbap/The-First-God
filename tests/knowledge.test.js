@@ -37,11 +37,11 @@ test('kunnskapshallen gir jevn kunnskap som vokser med folket', () => {
 test('fremskritt kobler seg til målbare evner (og koster kunnskap)', () => {
   const s = createGame(); s.milestones.city_rises = 1;
   assert.equal(purchase(s, 'organized_craft').ok, false, 'uten kunnskap');
-  s.resources.knowledge = 100; s.resources.planks = 100; s.resources.cutstone = 100; s.resources.wood = 500; s.resources.food = 50;
+  s.resources.knowledge = 400; s.resources.planks = 100; s.resources.cutstone = 100; s.resources.wood = 500; s.resources.food = 50;
   const S = s.settlements[0];
   assert.equal(craftSpeed(s, S), 1);
   assert.equal(purchase(s, 'organized_craft').ok, true);
-  assert.equal(s.resources.knowledge, 92, 'nøyaktig kostnad');
+  assert.equal(s.resources.knowledge, 400 - upgradeById('organized_craft').cost.knowledge, 'nøyaktig kostnad');
   assert.ok(Math.abs(craftSpeed(s, S) - 1.3) < 1e-9);
   assert.equal(purchase(s, 'better_tilling').ok, true);
   assert.equal(s.modifiers.foodBonus, 1);

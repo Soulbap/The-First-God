@@ -161,3 +161,36 @@ test('Ragnarok gir et gyldig utgangspunkt: verdenskart, rike og nettverk nullsti
   assert.deepEqual(r.network.routes, {}); assert.deepEqual(r.milestones, {}); assert.equal(r.resources.planks, 0);
   assert.equal(civilizationStage(r).rank, 0);
 });
+
+test('robusthet: andre frø kommer også hele veien (ingen fastlåsing)', () => {
+  for (const seed of [34, 100]) {
+    const s = fresh(seed), bot = makeBot();
+    assert.ok(playTo(s, bot, 'first_world_civilization', 14400), `frø ${seed} stoppet opp ved ${Object.keys(s.milestones).pop()} etter ${Math.round(s.time / 60)} min`);
+  }
+});
+
+test('mennesker går alltid fram forbi tjernet (omveien legges bare én gang per mål)', () => {
+  const s = createGame(); const p = s.world.pond;
+  addPeople(s, 'first', 1);
+  const h = s.humans[0];
+  h.x = p.x - p.rx - 40; h.y = p.y; h.tx = p.x + p.rx + 40; h.ty = p.y; h.state = 'wander'; h.timer = 0;
+  let arrived = false;
+  for (let i = 0; i < 90 / B.dt && !arrived; i++) { step(s); if (h.state === 'idle') arrived = true; }
+  assert.ok(arrived, 'kom fram til målet på andre siden');
+  assert.ok(Math.abs(h.x - (p.x + p.rx + 40)) < 2);
+});
+
+test('et følge som ikke kommer fram oppløses og forsyningene gis tilbake', () => {
+  const s = createGame(); const C = s.settlement.center;
+  s.settlements.push({ id: 'second', name: 'L', x: C.x + 560, y: C.y - 120, state: 'active', population: [], kind: 'farm', projectsDone: 3, role: 'Matbygda', stage: 'Leir' });
+  addPeople(s, 'first', 6);
+  const mem = s.humans.slice(0, 3);
+  s.realm.party = { id: 99, site: { x: 100, y: 100, kind: 'farm' }, members: mem.map((m) => m.id), launchedAt: 0 };
+  for (const m of mem) { m.partyId = 99; m.state = 'toSettle'; m.tx = 100; m.ty = 100; }
+  s.resources.wood = 0; s.resources.stone = 0; s.realm.autoFounding = true; s.realm.nextCheckAt = 0;
+  s.time = 400; step(s);
+  assert.equal(s.realm.party, null);
+  assert.equal(s.resources.wood, B.realm.supplies.wood); assert.equal(s.resources.stone, B.realm.supplies.stone);
+  assert.ok(mem.every((m) => m.partyId == null && m.state === 'idle'));
+  assert.equal(s.settlements.length, 2, 'ingen halv bosetting');
+});

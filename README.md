@@ -15,6 +15,12 @@ Genesis-01 er den første vertikale skiven:
 - Milepælen «Sammenhengende bosetting» glir kameraet ut fra nær- til områdevisning i samme verden.
 - Frivillig Ragnarok som demonstrasjon (forhåndsvisning, kan avbrytes).
 
+## Etter Genesis-01: fra leir til verden (GAMEPLAY-02 → 10)
+
+Spillet har vokst langt forbi den første skiven: landsby, region, tidlig sivilisasjon, **by** (planker, tilhugget stein, bolighus, torg), **kunnskap** og fremskritt, opptil **fire bosettinger** med roller og handelsruter, og en **Verden-oversikt** med ekspedisjoner, utposter og karavaner. Alt skjer autonomt; du velger retning gjennom innsikter. Se `GAME_DESIGN.md` (seksjon 12) og rapportene under `docs/`.
+
+Rask kontroll: `npm test` (86 tester) og `node tools/playthrough.mjs` (spiller hele veien i simuleringen).
+
 ## Forutsetninger
 
 - [Node.js](https://nodejs.org/) 22 eller nyere (utviklet med Node 24; testkommandoen krever filmønster-støtte i `node --test`).

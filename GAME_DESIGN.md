@@ -41,7 +41,7 @@ Zoom er ikke bare optikk; den skifter hva spilleren kan forstå og gjøre.
 |---|---|---|---|
 | Nær | Tre, stein, mennesker, leir | Direkte skapelse og tidlig innsamling | Små spirer, vedhauger, bål, første hytte |
 | Område | Leir, marker, skog, nærområder | Samfunnets rytme og oppgraderingsutfall | Stier, åkrer, verksteder, handel |
-| Verden | Kontinenter og klima | Sivilisasjonens fotavtrykk | Byklynger, skoger, veier, lys om natten |
+| Verden | Kontinenter og klima | Sivilisasjonens fotavtrykk | Byklynger, skoger, veier, lys om natten. **Bekreftet implementasjon (GAMEPLAY-10):** verdensoversikt over et grovt kart; hjemmeregionen er én rute |
 | Planet | Hel klode | Planetarisk helse og epoke | Biomfordeling, hav, polarlys, nattlys |
 | Solsystem | Planeter og baner | Ekspansjon og større mål | Kolonier/objekter, lysfenomener |
 | Galakse | Stjernesystemer | Kosmisk arv og syklusens sluttbilde | Stjernenett, guddommelige spor |
@@ -258,6 +258,7 @@ En funksjon er ikke visuelt klar bare fordi den finnes i data/UI. Følgende port
 - Prestige Points og valgfrie permanente bonuser.
 - Prayer Points kommer fra mennesker.
 - Lav systemkompleksitet er en aktiv designregel.
+- (GAMEPLAY-07..10) Byer, kunnskap, flere bosettinger og en flermåls verdensmodell med utposter er bygget uten byggplassering, mikrostyring eller obligatorisk Ragnarok.
 
 ### Åpne designspørsmål
 
@@ -302,6 +303,35 @@ Prototypen finnes og er spillbar. Denne seksjonen beskriver hva som er bygget og
 - Bosettingenes stadium avledes av befolkning, ferdige hjem, funksjonell infrastruktur og regional forbindelse: Leir, Grend, Landsby, Voksende landsby og Tidlig by. Det finnes fortsatt ingen byggplassering, arbeidsordre eller handelsmarked.
 - Nye milepæler er **Stabil matforsyning**, **Den første byen** og **Sivilisasjonens morgen**. Denne første implementasjonen holder fortsatt to bosettinger og en delt beholdning, med en bevisst liten økonomi.
 
+### GAMEPLAY-07 — byenes tid (bekreftet implementasjon)
+
+- **By** og **Storby** er nye bosettingstrinn. De kommer av ti målbare krav (folk, boligkapasitet, bolighus, mat, infrastruktur, sagbruk, steinhoggeri, torg, foredlede varer, fullførte leveranser) og aldri av én ressursterskel. Rike-panelet viser hva som mangler.
+- **Planker** og **tilhugget stein** er de eneste nye råvarene. Sagbruk og steinhoggeri arbeider av seg selv når bosettingen har folk, med reserve (vanlig bygging sultes aldri) og lagertak (torget dobler taket). De brukes til bolighus, torg, hall og senere prosjekter.
+- **Bolighus** rommer fire; kapasiteten styrer all befolkningsvekst. Ingen eksponentiell vekst: én innbygger per runde per bosetting, bundet av mat og bolig.
+- Milepælen **En by reiser seg**. Bygg velges og plasseres fortsatt av menneskene.
+
+### GAMEPLAY-08 — den organiserte sivilisasjonen (bekreftet implementasjon)
+
+- **Kunnskap** kommer bare fra virksomhet: foredling (sagbruk/steinhoggeri), verksted og **Kunnskapshallen** (mer med flere folk). Roller og fremskritt multipliserer.
+- Fem fremskritt (**Organisert håndverk**, **Bedre jordbruk**, **Byggemetoder**, **Delt kunnskap**, **Samfunnsorden**) låser opp målbare evner. Ingen stort teknologitre.
+- Roller avledes av bygg og lokale forhold (Kunnskapssete, Bysenter, Sagbruksbygd, Steinhoggerbygd, Matbygda, Håndverksbygd, Skogbygd, Steinbygd) og har små, målbare fordeler. Ingen manuell rollevelger.
+- Milepælen **Kunnskapens tidsalder**: fire fremskritt, hall og kunnskap bygget opp.
+
+### GAMEPLAY-09 — det voksende riket (bekreftet implementasjon)
+
+- Opptil **fire** bosettinger. **Flere ildsteder** åpner autonom grunnleggelse; hver gang kreves matsikkerhet, folkeoverskudd, materialer, ledige hender, ro siden sist, en forrige bosetting som har begynt å vokse og et gyldig sted. Spilleren velger aldri sted. Forsyningene for reisen brukes opp, følget (tre mennesker) går fysisk og bosettingen starter som én hytte.
+- Tomtevalg er deterministisk: tørt land, avstand, trygg vei utenom tjernet, fritt areal, nærliggende skog/stein/vann og et bonusledd for roller riket mangler (skog → sagbruk, stein → steinhoggeri, jord → åker).
+- **Handelsruter** er avledet av fullførte turer (hovedstadens leveranser og satellittenes sanketurer). En rute er etablert etter tre turer. Stiene i landskapet er fortsatt menneskenes faktiske slitasje.
+- Milepælen **Et sammenhengende rike**: fire bosettinger, by, leveranser, tre ulike roller, tre ruter og Handelsveier.
+
+### GAMEPLAY-10 — verdens daggry (bekreftet implementasjon)
+
+- **Flermålsmodell** (ærlig, ikke en simulert planet): hjemmeregionen er den detaljerte verdenen (ekte mennesker, bygg, ruter). 14 fjerne land er deterministisk tilstand (ukjent → oppdaget → utpost → etablert) med enkle tidtakere. Ingen enkeltpersoner simuleres utenfor hjemmeregionen.
+- **Hinsides de kjente landene**: følger går ut over kartkanten og kommer hjem med kunnskap. **Den store ekspedisjonen**: nybyggere forlater hjemmeregionen for godt; utposten vokser og sender **karavaner** (ekte figurer som går inn over kanten og leverer). **En forbundet verden**: tyngre karavaner og flere utposter (opptil fire).
+- **Verden-oversikten** låses opp av Et sammenhengende rike. Zoom forbi områdevisningen åpner den, zoom inn eller Område/Nær gir sikker retur.
+- Sivilisasjonstrinn (Spirende samfunn → Regional → Organisert → Sammenhengende rike → Verdensbevisst → Verdens første sivilisasjon) avledes av milepæler og verdenstilstand.
+- Milepælen **Verdens første sivilisasjon** krever virkelig utforskning (fire land), to utposter og seks karavaneleveranser.
+
 ### Spillflyt slik den er bygget
 
 1. Spilleren klikker på bjørka og steinen (og andre trær/steiner) for trevirke og stein.
@@ -314,6 +344,7 @@ Prototypen finnes og er spillbar. Denne seksjonen beskriver hva som er bygget og
 
 ### Antakelser — åpne
 
+- **GAMEPLAY-07..10 (nye antakelser):** Alle byinfrastrukturen bygges i hovedstaden (første bosetting) — andre bosettinger får spesialbygg gjennom planen sin. Kunnskap, planker og tilhugget stein er felles beholdninger (som tre og stein). Utposter og ekspedisjoner er en abstrakt tidtaker, ikke en simulering. Tallbalansen (tider, kostnader, tak) er provisorisk; hele reisen tar ca. 115 min for en grådig bot og er ikke spilltestet av mennesker.
 - **Første ly og Nytt hjem** er lagt til ved siden av designets tre navngitte valg for å vise bygging og bosettingsvekst. Vekkelse er beholdt som eget valg etter lyet.
 - **Stein fornyes sakte** (1 per 35 s per blokk) slik at økonomien ikke stopper. Det er ikke naturtro, og kan erstattes av nye steinkilder senere.
 - **PP har foreløpig ingen bruk.** De vises og skapes av mennesker ved bålet; guddommelige handlinger kommer senere.

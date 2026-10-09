@@ -40,12 +40,20 @@ const hud = createHud({
 });
 
 function ragnarokSummary() {
-  const homes = state.buildings.filter((b) => b.complete && (b.type === 'shelter' || b.type === 'hut')).length;
-  // Provisorisk formel — balanseres når permanente bonuser finnes.
-  const prp = Math.floor(Math.sqrt(state.totals.wood + state.totals.stone) / 4) + homes + Math.floor(state.totals.pp / 10);
+  const homes = state.buildings.filter((b) => b.complete && (b.type === 'shelter' || b.type === 'hut' || b.type === 'townhouse')).length;
+  const outposts = state.globe.regions.filter((r) => r.state === 'utpost' || r.state === 'etablert').length;
+  // Provisorisk formel — balanseres når permanente bonuser finnes. Nye ledd (GAMEPLAY-07..10) belønner
+  // bare det som faktisk er bygget opp: kunnskap, flere bosettinger og utposter. Ingenting trekkes fra.
+  const prp = Math.floor(Math.sqrt(state.totals.wood + state.totals.stone) / 4) + homes + Math.floor(state.totals.pp / 10)
+    + Math.floor(state.totals.knowledge / 40) + (state.settlements.length - 1) + outposts * 2;
+  const extra = [];
+  if (state.settlements.length > 1) extra.push(`${state.settlements.length} bosettinger`);
+  if (state.resources.planks >= 1 || state.resources.cutstone >= 1) extra.push(`${Math.floor(state.resources.planks)} planker og ${Math.floor(state.resources.cutstone)} tilhugget stein`);
+  if (state.totals.knowledge > 0) extra.push(`${Math.floor(state.resources.knowledge)} kunnskap og alle fremskritt`);
+  if (outposts || state.globe.stats.discovered) extra.push(`${state.globe.stats.discovered} oppdagede land og ${outposts} utposter`);
   return {
     prp,
-    lost: `${Math.floor(state.resources.wood)} trevirke, ${Math.floor(state.resources.stone)} stein, ${state.humans.length} mennesker og ${state.buildings.length} bygg`,
+    lost: `${Math.floor(state.resources.wood)} trevirke, ${Math.floor(state.resources.stone)} stein, ${state.humans.length} mennesker og ${state.buildings.length} bygg${extra.length ? ', samt ' + extra.join(', ') : ''}`,
     kept: 'Den samme startverdenen (samme tre, stein og landskap) og alle Prestige Points',
     legacy: 'Plassholder: et varig tegn ved det første treet kommer i en senere iterasjon',
   };

@@ -194,8 +194,21 @@ function stepCaravans(state, dt) {
   if (G.caravans.some((q) => q.arrived)) G.caravans = G.caravans.filter((q) => !q.arrived);
 }
 
+// En ferd som ikke kommer seg ut til kartkanten (blokkert vei) avbrytes, og forsyningene gis tilbake.
+const MISSION_TIMEOUT = 360;
+function abortMission(state) {
+  const G = state.globe, m = G.mission, cost = m.kind === 'outpost' ? B.globe.outpost : B.globe.expedition;
+  for (const [k, n] of Object.entries(cost)) state.resources[k] += n;
+  for (const id of m.members) {
+    const q = state.humans.find((h) => h.id === id);
+    if (q) { q.missionId = null; q.away = false; q.waypoints = null; q.state = 'idle'; q.timer = 0.5; }
+  }
+  G.mission = null; G.nextMissionAt = state.time + 60;
+}
+
 export function stepWorld(state, dt) {
   const G = state.globe; if (!G) return;
+  if (G.mission?.phase === 'out' && state.time - G.mission.launchedAt > MISSION_TIMEOUT) abortMission(state);
   if (G.mission?.phase === 'away' && state.time >= G.mission.eta) completeMission(state);
   else if (!G.mission && state.time >= G.nextMissionAt) {
     if (G.outpostsEnabled && outpostRegions(state).length < outpostLimit(state) && pickOutpostTarget(state)

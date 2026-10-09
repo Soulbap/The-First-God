@@ -23,6 +23,14 @@ export async function run() {
   ok('Rike-knappen vises etter Sivilisasjonens morgen', !$('[data-nav="realm"]').hidden);
   ok('Verden-knappen vises etter Et sammenhengende rike', !$('[data-view="world"]').hidden);
 
+  // Tegnetid i seks synsvinkler (gjennomsnitt over 90 bilder hver) i et sent spill med fire bosettinger.
+  const perf = {};
+  const C0 = T.state.settlement.center;
+  for (const [name, f] of [['nær (820)', () => { T.overview(false); T.view(C0.x, C0.y, 820); }], ['område (2300)', () => { T.overview(false); T.view(C0.x + 40, C0.y - 20, 2300); }], ['verden (oversikt)', () => T.overview(true)]]) {
+    f(); T.tick(1); T.renderStats.frameMs = 0; T.tick(3);
+    perf[name] = Number((name.startsWith('verden') ? T.renderStats.overviewMs : T.renderStats.frameMs).toFixed(2));
+  }
+  T.overview(false); T.view(C0.x, C0.y, 820);
   $('[data-nav="realm"]').click(); T.tick(0.3); await wait(450);
   const txt = $('#realm-panel').innerText;
   ok('Rike-panelet viser sivilisasjonstrinn, bosettinger og forbindelser', /Sammenhengende rike/.test(txt) && /Bosettinger \(4\)/i.test(txt) && /Forbindelser/i.test(txt));
@@ -56,5 +64,19 @@ export async function run() {
   ok('Ragnarok fra oversikten gir en ny syklus uten oversikt, Rike-knapp eller verdensknapp', !T.isOverview && T.state.settlements.length === 1 && $('[data-nav="realm"]').hidden && $('[data-view="world"]').hidden);
   ok('ny syklus: verdenskartet er nullstilt', T.state.globe.regions.filter((q) => !q.home && q.state !== 'ukjent').length === 0 && T.state.resources.knowledge === 0);
 
-  return { pass: results.filter((x) => x.ok).length, fail: results.filter((x) => !x.ok).map((x) => x.name), results };
+  // Normal og akselerert fart gir samme simulering (hovedløkka tar bare flere faste steg per bilde).
+  const snap = () => { const st = T.state; return JSON.stringify({ t: Math.round(st.time * 60), trees: st.nodes.filter((n) => n.kind === 'tree').length, growth: Math.round(st.nodes.reduce((a, n) => a + (n.growth || 0), 0) * 1000), w: st.resources.wood, st: st.resources.stone }); };
+  const play = (speed, seconds) => { T.setSpeed(speed); T.tick(seconds); T.setSpeed(0); return snap(); };
+  $('[data-nav="ragnarok"]').click(); T.tick(0.2); $('#ragnarok-confirm').click(); T.tick(0.2);
+  const a = play(1, 90);
+  $('[data-nav="ragnarok"]').click(); T.tick(0.2); $('#ragnarok-confirm').click(); T.tick(0.2);
+  const b = play(4, 22.5);
+  ok('1× og 4× gir samme verdenstilstand etter like lang spilltid', a === b);
+  $('[data-nav="ragnarok"]').click(); T.tick(0.2); $('#ragnarok-confirm').click(); T.tick(0.2);
+  const t1 = performance.now(); T.setSpeed(4); T.tick(30); T.setSpeed(0);
+  const perFrame = (performance.now() - t1) / (30 * 30);
+  T.__perFrame = perFrame;
+  ok(`4× i hovedløkka holder bildetiden under 16 ms (målt ${perFrame.toFixed(1)} ms/bilde inkl. tegning)`, perFrame < 16);
+
+  return { perf, pass: results.filter((x) => x.ok).length, fail: results.filter((x) => !x.ok).map((x) => x.name), results };
 }

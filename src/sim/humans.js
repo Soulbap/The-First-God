@@ -55,9 +55,10 @@ function moveTo(state, h, dt) {
   // En liten lokal styring: gå rundt tjernet og ikke gjennom et bygg. Dette er
   // bevisst ikke et eget pathfinding-system; den brukes bare når direkte kurs er blokkert.
   if (!h.waypoints?.length) {
-    const p = state.world.pond;
+    const p = state.world.pond, sig = `${Math.round(h.tx)},${Math.round(h.ty)}`;
     const crossesPond = (h.x - p.x) * (h.tx - p.x) < 0 && Math.abs((h.y + h.ty) / 2 - p.y) < p.ry + 36;
-    if (crossesPond) h.waypoints = [{ x: p.x + (h.x < p.x ? -p.rx - 55 : p.rx + 55), y: p.y - p.ry - 45 }];
+    // Omveien legges bare én gang per mål; ellers kunne en som står ved omveiens punkt legge en ny i det uendelige.
+    if (crossesPond && h.pondSig !== sig) { h.waypoints = [{ x: p.x + (h.x < p.x ? -p.rx - 55 : p.rx + 55), y: p.y - p.ry - 45 }]; h.pondSig = sig; }
   }
   const goal = h.waypoints?.[0] || { x: h.tx, y: h.ty };
   const dx = goal.x - h.x, dy = goal.y - h.y;

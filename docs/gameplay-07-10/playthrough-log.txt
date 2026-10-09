@@ -1,0 +1,65 @@
+  0:08 kjøp first_shelter
+  0:24 MILEPÆL first_home
+  0:24 kjøp awakening
+  0:29 kjøp common_fire
+  0:44 MILEPÆL first_fire
+  1:17 kjøp hands_remember
+  3:40 kjøp new_home
+  4:09 MILEPÆL settlement
+  5:33 kjøp new_home
+  6:48 kjøp shared_storage
+  8:29 kjøp organized_labor
+ 10:13 kjøp new_home
+ 12:39 kjøp village_hearth
+ 13:01 MILEPÆL first_village
+ 15:02 kjøp explorer_urge
+ 15:02 MILEPÆL first_paths
+ 19:11 kjøp new_horizons
+ 19:18 MILEPÆL new_land
+ 22:15 kjøp founding
+ 22:52 MILEPÆL first_settlements
+ 23:25 kjøp growing_kin
+ 26:54 kjøp between_hearths
+ 29:41 MILEPÆL living_region
+ 32:23 kjøp seed_promise
+ 33:03 MILEPÆL stable_food
+ 35:46 kjøp steady_routes
+ 39:10 kjøp division_labor
+ 43:31 kjøp regional_exchange
+ 43:31 MILEPÆL first_town
+ 44:53 MILEPÆL dawn_civilization
+ 47:56 kjøp sawmill_up
+ 53:16 kjøp stonecutter_up
+ 56:21 kjøp townhouses
+ 59:23 kjøp townhouses
+ 61:16 kjøp town_square
+ 61:48 MILEPÆL city_rises
+ 61:49 kjøp organized_craft
+ 61:50 kjøp construction_methods
+ 64:13 kjøp townhouses
+ 65:16 kjøp better_tilling
+ 68:50 kjøp knowledge_hall
+ 71:41 kjøp shared_knowledge
+ 71:41 MILEPÆL age_of_knowledge
+ 73:41 kjøp civic_order
+ 74:45 kjøp new_hearths
+ 87:32 kjøp trade_roads
+ 96:15 MILEPÆL connected_realm
+ 96:15 kjøp beyond_known
+100:21 kjøp great_expedition
+104:55 kjøp connected_world
+113:36 MILEPÆL first_world_civilization
+
+Slutt 113:36 · trinn: Verdens første sivilisasjon · folk 39 · bosettinger 4
+ressurser {
+  wood: 1901,
+  stone: 1342,
+  food: 2572,
+  planks: 101,
+  cutstone: 148,
+  knowledge: 563,
+  pp: 1032
+}
+bosettinger first:Storby/Kunnskapssete/23 | second:Landsby/Matbygda/4 | third:Voksende landsby/Sagbruksbygd/6 | fourth:Voksende landsby/Steinhoggerbygd/6
+regioner Høyfjell:etablert:12 | Bredmark:etablert:12 | Gullsletta:utpost:5 | Steinrike:oppdaget:0
+regnetid 3715 ms

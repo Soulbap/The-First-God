@@ -114,6 +114,7 @@ const GAMEPLAY_07_10_SCENES = [
   { name: '08-caravan-from-outpost', w: 1920, h: 1080, js: `${BOT} to('connected_realm'); to((s) => s.globe.stats.outposts >= 1 && s.globe.caravans.some((c) => Math.hypot(c.x - s.stockpile.x, c.y - s.stockpile.y) < 330)); const c = T.state.globe.caravans.find((q) => Math.hypot(q.x - T.state.stockpile.x, q.y - T.state.stockpile.y) < 330); calm(); T.view(c.x, c.y, 700); settle(1.0);` },
   { name: '09-final-milestone', w: 1920, h: 1080, js: `${BOT} to('first_world_civilization'); T.cancelGlide(); T.state.events = T.state.events.filter((e) => e.id === 'first_world_civilization'); T.hud.reset(); T.tick(6); T.hud.openPanel('insights'); T.tick(0.3); T.hud.openPanel(null); T.overview(true); settle(1);` },
 ];
+GAMEPLAY_07_10_SCENES.push({ name: '10-ragnarok-late-game', w: 1920, h: 1080, js: `${BOT} to('first_world_civilization'); T.cancelGlide(); T.state.events.length = 0; T.hud.reset(); T.tick(0.4); close(); T.view(C.x + 40, C.y - 20, 2300); document.querySelector('[data-nav="ragnarok"]').click(); settle(0.4);` });
 const SCENES = process.env.GAMEPLAY_07_10 === '1' ? GAMEPLAY_07_10_SCENES : process.env.GAMEPLAY_06 === '1' ? GAMEPLAY_06_SCENES : process.env.GAMEPLAY_05 === '1' ? GAMEPLAY_05_SCENES : process.env.GAMEPLAY_04 === '1' ? GAMEPLAY_04_SCENES : process.env.GAMEPLAY_03 === '1' ? GAMEPLAY_03_SCENES : process.env.GAMEPLAY_02 === '1' ? GAMEPLAY_02_SCENES : DEFAULT_SCENES;
 const ACTIVE_SCENES = process.env.CAPTURE_SCENES
   ? SCENES.filter((s) => process.env.CAPTURE_SCENES.split(',').some((name) => s.name.startsWith(name.trim())))
@@ -200,6 +201,7 @@ try {
     }
     const realm = await evaluate(cdp, `(async () => await (await import('/tools/gui-smoke-realm.js')).run())()`);
     console.log(`Rike-røykprøve: ${realm.pass}/${realm.results.length}; feil: ${realm.fail.join(', ') || 'ingen'}`);
+    console.log('Tegnetid (ms/bilde, sent spill):', JSON.stringify(realm.perf));
   }
   const renderStats = await evaluate(cdp, `({ frameMs: window.TFG.renderStats.frameMs, ecologyRefreshMs: window.TFG.renderStats.ecologyRefreshMs })`);
   console.log(`Rendermåling (nåværende scene): ${renderStats.frameMs.toFixed(2)} ms/bilde; miljøoppdatering ${renderStats.ecologyRefreshMs.toFixed(2)} ms.`);

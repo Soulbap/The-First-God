@@ -217,7 +217,7 @@ export const UPGRADES = [
   // ---------- GAMEPLAY-08: Den organiserte sivilisasjonen ----------
   {
     id: 'organized_craft', name: 'Organisert håndverk', category: 'kunnskap', icon: 'book',
-    discover: [{ milestone: 'city_rises' }], cost: { knowledge: 8, planks: 6 },
+    discover: [{ milestone: 'city_rises' }], cost: { knowledge: 14, planks: 6 },
     requires: [{ milestone: 'city_rises' }], requireText: 'Krever En by reiser seg',
     effect: 'Sagbruk og steinhoggeri arbeider 30 % raskere.',
     world: 'Håndverkerne deler grep og redskap. Stablene vokser raskere.',
@@ -225,7 +225,7 @@ export const UPGRADES = [
   },
   {
     id: 'better_tilling', name: 'Bedre jordbruk', category: 'kunnskap', icon: 'sprout',
-    discover: [{ upgrade: 'organized_craft' }], cost: { knowledge: 12, wood: 60 },
+    discover: [{ upgrade: 'organized_craft' }], cost: { knowledge: 20, wood: 60 },
     requires: [{ upgrade: 'organized_craft' }], requireText: 'Krever Organisert håndverk',
     effect: 'Hver åker gir +1 mat per innhøsting.',
     world: 'Åkrene pløyes i jevnere striper, og avlingen blir tyngre.',
@@ -233,7 +233,7 @@ export const UPGRADES = [
   },
   {
     id: 'construction_methods', name: 'Byggemetoder', category: 'kunnskap', icon: 'townhouse',
-    discover: [{ upgrade: 'organized_craft' }], cost: { knowledge: 16, planks: 10, cutstone: 6 },
+    discover: [{ upgrade: 'organized_craft' }], cost: { knowledge: 26, planks: 10, cutstone: 6 },
     requires: [{ upgrade: 'organized_craft' }], requireText: 'Krever Organisert håndverk',
     effect: 'Bygging 25 % raskere, bolighus rommer ett menneske mer og bruddene gir 20 % raskere stein.',
     world: 'Tømmermennene bruker mål og lodd. Husene reises raskere og rommer mer.',
@@ -241,7 +241,7 @@ export const UPGRADES = [
   },
   {
     id: 'knowledge_hall', name: 'Kunnskapshall', category: 'bosetning', icon: 'hall',
-    discover: [{ upgrade: 'construction_methods' }], cost: { wood: 120, stone: 60, planks: 16, cutstone: 12, knowledge: 10 },
+    discover: [{ upgrade: 'construction_methods' }], cost: { wood: 120, stone: 60, planks: 16, cutstone: 12, knowledge: 20 },
     requires: [{ upgrade: 'construction_methods' }, { noPending: 'hall' }], requireText: 'Krever Byggemetoder',
     effect: 'Et sivilt bygg der folk møtes og lærer. Gir jevn kunnskap og gjør byen til et kunnskapssete.',
     world: 'En lang hall av tømmer og stein reises sentralt. Rundt den samles folk for å lære og fortelle.',
@@ -249,7 +249,7 @@ export const UPGRADES = [
   },
   {
     id: 'shared_knowledge', name: 'Delt kunnskap', category: 'kunnskap', icon: 'book',
-    discover: [{ built: 'hall' }], cost: { knowledge: 24, planks: 8 },
+    discover: [{ built: 'hall' }], cost: { knowledge: 40, planks: 8 },
     requires: [{ built: 'hall' }], requireText: 'Kunnskapshallen må stå ferdig',
     effect: 'Kunnskap fra alle virksomheter øker med 50 %.',
     world: 'Folk fra bygdene kommer til hallen og tar erfaringene med hjem.',
@@ -257,7 +257,7 @@ export const UPGRADES = [
   },
   {
     id: 'civic_order', name: 'Samfunnsorden', category: 'kunnskap', icon: 'road',
-    discover: [{ upgrade: 'shared_knowledge' }], cost: { knowledge: 30, planks: 12, cutstone: 10, food: 10 },
+    discover: [{ upgrade: 'shared_knowledge' }], cost: { knowledge: 50, planks: 12, cutstone: 10, food: 10 },
     requires: [{ upgrade: 'shared_knowledge' }], requireText: 'Krever Delt kunnskap',
     effect: 'Faste regler for ferdsel og lass: bærerne tar med 2 mer på hver tur mellom bosettingene.',
     world: 'Sporene får faste stopp og lasteplasser. Færre turer går tapt.',
@@ -267,7 +267,7 @@ export const UPGRADES = [
   // ---------- GAMEPLAY-09: Det voksende riket ----------
   {
     id: 'new_hearths', name: 'Flere ildsteder', category: 'rike', icon: 'hut',
-    discover: [{ upgrade: 'civic_order' }], cost: { wood: 140, stone: 70, planks: 16, food: 16, knowledge: 12 },
+    discover: [{ upgrade: 'civic_order' }], cost: { wood: 140, stone: 70, planks: 16, food: 16, knowledge: 25 },
     requires: [{ upgrade: 'civic_order' }, { milestone: 'age_of_knowledge' }], requireText: 'Krever Kunnskapens tidsalder',
     effect: 'Når maten, folket og materialene er der, drar nye følger av sted og grunnlegger bosettinger — opptil fire.',
     world: 'Små følger bryter opp fra byen og velger selv sted ved skog, stein eller åkerjord.',
@@ -275,7 +275,7 @@ export const UPGRADES = [
   },
   {
     id: 'trade_roads', name: 'Handelsveier', category: 'rike', icon: 'road',
-    discover: [{ settlements: 3 }], cost: { wood: 100, planks: 20, cutstone: 14, knowledge: 20 },
+    discover: [{ settlements: 3 }], cost: { wood: 100, planks: 20, cutstone: 14, knowledge: 35 },
     requires: [{ settlements: 3 }], requireText: 'Krever tre bosettinger',
     effect: 'Faste handelsruter: leveranser bærer 2 mer per tur.',
     world: 'Stiene mellom bygdene jevnes og merkes. Kjerrer og bærere møtes ved veikryss.',
@@ -285,7 +285,7 @@ export const UPGRADES = [
   // ---------- GAMEPLAY-10: Verdens daggry ----------
   {
     id: 'beyond_known', name: 'Hinsides de kjente landene', category: 'rike', icon: 'globe',
-    discover: [{ milestone: 'connected_realm' }], cost: { food: 20, planks: 20, cutstone: 14, knowledge: 30 },
+    discover: [{ milestone: 'connected_realm' }], cost: { food: 20, planks: 20, cutstone: 14, knowledge: 50 },
     requires: [{ milestone: 'connected_realm' }], requireText: 'Krever Et sammenhengende rike',
     effect: 'Følger drar ut over kartkanten for å oppdage nabolandene.',
     world: 'Små følger forlater de kjente stiene med proviant og vender tilbake med nytt kunnskapsstoff.',
@@ -293,7 +293,7 @@ export const UPGRADES = [
   },
   {
     id: 'great_expedition', name: 'Den store ekspedisjonen', category: 'rike', icon: 'compass',
-    discover: [{ regions: 1 }], cost: { wood: 200, stone: 90, planks: 28, food: 30, knowledge: 40 },
+    discover: [{ regions: 1 }], cost: { wood: 200, stone: 90, planks: 28, food: 30, knowledge: 70 },
     requires: [{ regions: 2 }], requireText: 'Krever to oppdagede land',
     effect: 'Nybyggere drar til oppdagede land og reiser utposter som sender varer hjem.',
     world: 'Fullastede følger forlater riket for godt. Senere kommer karavaner tilbake med varer.',
@@ -301,7 +301,7 @@ export const UPGRADES = [
   },
   {
     id: 'connected_world', name: 'En forbundet verden', category: 'rike', icon: 'globe',
-    discover: [{ outposts: 1 }], cost: { planks: 30, cutstone: 24, food: 30, knowledge: 60 },
+    discover: [{ outposts: 1 }], cost: { planks: 30, cutstone: 24, food: 30, knowledge: 100 },
     requires: [{ outposts: 1 }, { caravans: 2 }], requireText: 'Krever en utpost og to karavaner',
     effect: 'Karavanene bærer 50 % mer, utpostene vokser større, og opptil fire utposter kan reises.',
     world: 'Veier møter hav og fjell. Fra alle kanter kommer lass til torget.',
@@ -339,12 +339,12 @@ export const MILESTONES = [
   },
   { id: 'new_land', title: 'Nytt land i sikte', text: 'En vandrer har funnet en lysning bortenfor den kjente skogen. Verden er større enn den første landsbyen.', when: { expansion: 'discovered' } },
   { id: 'first_settlements', title: 'De første bosettingene', text: 'To steder har fått navn og ildsteder. Mellom dem går menneskene en sti som ikke fantes før.', when: { expansion: 'founded' }, unlock: 'regionView' },
-  { id: 'living_region', title: 'En levende region', text: 'To ildsteder er blitt til et fellesskap. Mennesker og forsyninger følger stiene mellom hjemmene, og landet bærer stadig tydeligere spor av dem.', when: { all: [{ expansion: 'founded' }, { regionalProjects: 2 }, { delivery: 2 }, { regionalWear: 0.1 }] } },
+  { id: 'living_region', title: 'En levende region', text: 'To ildsteder er blitt til et fellesskap. Mennesker og forsyninger følger stiene mellom hjemmene, og landet bærer stadig tydeligere spor av dem.', when: { all: [{ expansion: 'founded' }, { regionalProjects: 2 }, { delivery: 2 }, { routes: 1 }] } },
   { id: 'stable_food', title: 'Stabil matforsyning', text: 'Dyrket mark gir mer enn en enkelt god dag. Veksten kan nå bæres av landet.', when: { all: [{ upgrade: 'seed_promise' }, { foodHarvest: 1 }] } },
   { id: 'first_town', title: 'Den første byen', text: 'En av bygdene har blitt en tidlig by: hjem, felles arbeid og forbindelser bærer et større samfunn.', when: { all: [{ upgrade: 'regional_exchange' }, { settlementStage: 'Tidlig by' }] }, unlock: 'townView' },
   { id: 'dawn_civilization', title: 'Sivilisasjonens morgen', text: 'Mark, verksteder og ferdselsårer binder bosettingene sammen til begynnelsen på en sivilisasjon.', when: { all: [{ milestone: 'first_town' }, { regionalProjects: 5 }, { delivery: 6 }] } },
   { id: 'city_rises', title: 'En by reiser seg', text: 'Sagbruk, steinhoggeri og tette hus bærer et større samfunn. Planker og tilhugget stein har gjort landsbyen til en by.', when: { stageMin: 'By' } },
-  { id: 'age_of_knowledge', title: 'Kunnskapens tidsalder', text: 'Det folk lærer, deles nå på tvers av håndverk og hjem. Kunnskapshallen samler det som før gikk tapt.', when: { all: [{ milestone: 'city_rises' }, { techs: 4 }, { built: 'hall' }, { knowledge: 70 }] } },
+  { id: 'age_of_knowledge', title: 'Kunnskapens tidsalder', text: 'Det folk lærer, deles nå på tvers av håndverk og hjem. Kunnskapshallen samler det som før gikk tapt.', when: { all: [{ milestone: 'city_rises' }, { techs: 4 }, { built: 'hall' }, { knowledge: 120 }] } },
   { id: 'connected_realm', title: 'Et sammenhengende rike', text: 'Flere bosettinger med hver sin rolle er bundet sammen av stier og leveranser. Verden har blitt for stor til å sees fra ett sted.', when: { all: [{ milestone: 'age_of_knowledge' }, { settlements: 4 }, { stageMin: 'By' }, { delivery: 14 }, { roles: 3 }, { routes: 3 }, { upgrade: 'trade_roads' }] }, unlock: 'worldView' },
   { id: 'first_world_civilization', title: 'Verdens første sivilisasjon', text: 'Utposter i fjerne land sender varer hjem. En sivilisasjon som begynte med ett ly, kjenner nå verden.', when: { all: [{ milestone: 'connected_realm' }, { upgrade: 'connected_world' }, { regions: 4 }, { outposts: 2 }, { caravans: 6 }] } },
 ];
