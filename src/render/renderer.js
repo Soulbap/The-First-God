@@ -162,7 +162,8 @@ export function createRenderer(canvas) {
   };
 
   // Bosettingen preger bakken: slitasje fra gange (simuleringen) pluss bar jord rundt bygg, bål og lager.
-  // Alt leses fra spilltilstanden; ingenting her påvirker regler.
+  // Alt leses fra spilltilstanden; ingenting her påvirker regler.  De faste merkene
+  // starter svakt ved bygging og blir tydelige først når leiren faktisk brukes.
   const stamp = (state, x, y, r0, r1, v) => {
     const { cols, rows, cell } = state.wear;
     const i0 = Math.max(0, Math.floor((x - r1) / cell)), i1 = Math.min(cols - 1, Math.ceil((x + r1) / cell));
@@ -182,13 +183,38 @@ export function createRenderer(canvas) {
   R.updateWear = (state) => {
     const { cols, rows, data } = state.wear;
     R.exposure.fill(0);
+    const activity = clamp(state.humans.length * 0.16 + (state.totals.wood + state.totals.stone) / 130, 0, 1);
+    const trackTo = (from, to, strength) => {
+      // En kort rekke ujevne avtrykk kobler virkelige samlingspunkter. Den
+      // kompletterer, men erstatter aldri, sporene som mennesker faktisk går.
+      const dx = to.x - from.x, dy = to.y - from.y, len = Math.hypot(dx, dy);
+      if (len < 8 || strength < 0.04) return;
+      const steps = Math.min(7, Math.max(2, Math.round(len / 22)));
+      for (let n = 1; n < steps; n++) {
+        const t = n / steps;
+        const wobble = Math.sin((from.x * 0.031 + from.y * 0.017 + n * 4.31)) * 5;
+        const x = from.x + dx * t - dy / len * wobble;
+        const y = from.y + dy * t + dx / len * wobble * 0.45;
+        stamp(state, x, y, 3, 11 + (n % 2) * 3, strength * (0.55 + 0.45 * Math.sin(t * Math.PI)));
+      }
+    };
     for (const b of state.buildings) {
       const p = b.complete ? 1 : Math.max(0.15, b.progress);
-      if (b.type === 'fire') stamp(state, b.x, b.y, 10, 38, 0.95 * p);
-      else stamp(state, b.x, b.y, b.radius * 0.8, b.radius * 1.9, 0.85 * p);
+      const occupation = b.complete ? 0.18 + activity * 0.82 : 0.12 + b.progress * 0.32;
+      if (b.type === 'fire') {
+        stamp(state, b.x, b.y, 8, 30 + activity * 10, occupation * p);
+        trackTo(b, state.stockpile, activity * 0.42);
+      } else {
+        // Kort, avbrutt jord ved inngangen er mindre mekanisk enn en brun ring.
+        stamp(state, b.x, b.y, b.radius * 0.65, b.radius * (1.1 + occupation * 0.42), occupation * p);
+        const toward = state.stockpile;
+        const dx = toward.x - b.x, dy = toward.y - b.y, d = Math.hypot(dx, dy) || 1;
+        stamp(state, b.x + dx / d * (b.radius * 0.8), b.y + dy / d * (b.radius * 0.5), 3, 12, occupation * 0.72);
+        trackTo(b, toward, activity * 0.28);
+      }
     }
     const sp = state.stockpile;
-    stamp(state, sp.x, sp.y, 12, 34, 0.55 * Math.min(1, 0.3 + state.totals.wood / 30));
+    stamp(state, sp.x, sp.y, 9, 28, 0.22 + activity * 0.54);
     // Skriv bare der noe er slitt (nå eller forrige gang).
     let minI = cols, maxI = -1, minJ = rows, maxJ = -1;
     for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
@@ -210,7 +236,7 @@ export function createRenderer(canvas) {
         const n = nz[py * Wp + pxx];
         const o = (py * Wp + pxx) * 4;
         // Gresset slites først i flekker; ved mye slitasje blir jorda sammenhengende bar.
-        const a = smooth(0.38, 0.62, w * 1.15 + (n - 0.5) * 0.7);
+        const a = smooth(0.26, 0.62, w * 1.12 + (n - 0.5) * 0.7);
         const shade = 0.78 + n * 0.5;
         px[o] = 112 * shade; px[o + 1] = 94 * shade; px[o + 2] = 68 * shade; px[o + 3] = a * 215;
       }
@@ -481,6 +507,7 @@ export function createRenderer(canvas) {
       ctx.globalAlpha = 1;
     }
     function drawWorkLitter(st) {
+      const livedIn = clamp(st.humans.length * 0.16 + (st.totals.wood + st.totals.stone) / 130, 0, 1);
       const lit = (key, count, rx, ry, seed, cx, cy, wood) => {
         const L = litterFor(key, count, rx, ry, seed);
         for (let i = 0; i < count; i++) {
@@ -499,10 +526,14 @@ export function createRenderer(canvas) {
       // Ved lageret: spon og kvister øker med innhøstet trevirke; steingrus med brutt stein.
       lit('sp-w', Math.min(46, Math.floor(st.totals.wood / 2.5)), 38, 15, 11, sp.x - 6, sp.y + 4, true);
       lit('sp-s', Math.min(34, Math.floor(st.totals.stone / 2.5)), 30, 11, 23, sp.x + 22, sp.y + 4, false);
-      // Rundt byggeplasser og bygg: sagflis og avkapp.
+      // Rundt byggeplasser og bygg: byggeavfall er tydeligst mens noe reises.
+      // Etterpå blir bare et fåtall bruksspor liggende, og det øker med aktivitet.
       for (const b of st.buildings) {
-        const k = b.complete ? 1 : 0.4 + b.progress * 0.6;
-        lit('b' + b.id, Math.round((b.type === 'fire' ? 8 : 22) * k), b.radius * 1.5, b.radius * 0.6, b.id * 53, b.x, b.y + b.radius * 0.35, true);
+        const base = b.type === 'fire' ? 6 : 16;
+        const count = b.complete
+          ? Math.round(base * (0.24 + livedIn * 0.42))
+          : Math.round(base * (0.32 + b.progress * 0.68));
+        lit('b' + b.id, count, b.radius * 1.35, b.radius * 0.52, b.id * 53, b.x, b.y + b.radius * 0.35, true);
       }
       // Ved felte trær: bark og flis rundt stubben.
       for (const n of st.nodes) {

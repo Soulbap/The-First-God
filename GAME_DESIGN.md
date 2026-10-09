@@ -296,6 +296,7 @@ Prototypen finnes og er spillbar. Denne seksjonen beskriver hva som er bygget og
 - Alle balanseverdier i `src/data/balance.js` og `src/data/upgrades.js` er provisoriske.
 - **Teknisk grunnlag:** vanilla JavaScript + Canvas 2D med prosedyralt malt grafikk og ingen avhengigheter. Pakking som portabel Windows-app (Electron) er ikke gjort.
 - **VISUAL-02 · levende miljølag:** skogbunn og forstyrret jord avledes fra gjeldende trær, bygg og slitasje, og oppdateres høyst hvert tiende spillsekund. Det er bare presentasjon: ressursøkonomi, kollisjon, tomtevalg og menneskenes oppgaver endres ikke.
+- **VISUAL-03 · bosettingen setter spor:** bygg gir først beskjedne, ujevne arbeidsmerker; marken ved innganger, lager og bål blir gradvis mer brukt når mennesker, leveranser og samlingssteder finnes. Menneskenes faktiske gange er fortsatt hovedkilden til stier. Ingen vei-bygging, arbeidsordrer eller ny navigasjon er lagt til; se `docs/visual-03/REPORT.md`.
 
 ### Kjent avstand til visuell målsetting
 

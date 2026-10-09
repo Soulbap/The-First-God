@@ -32,6 +32,8 @@ Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på ve
 ## [Unreleased]
 
 ### Added
+- **VISUAL-03 · levende bosetting** (`src/render/renderer.js`, `src/render/decor.js`): bruksavhengig, ujevn markslitasje ved innganger, lager og bål, med diskrete forbindelser mellom virkelige samlingspunkter. Byggeavfall er nå mest synlig under arbeid og går over i få bruksspor når leiren tas i bruk. Lysningskanten får busker og enkelte unge trær som ren presentasjon; økonomi, kollisjon og menneskelig atferd er urørt. (Kontroll: `npm test` 36/36; hodeløs Edge-røykprøve 33/33; ingen konsollfeil.)
+- **VISUAL-03 · bilder og rapport** (`docs/visual-03/`): ni faste nettleserbilder viser urørt landskap, første ly, første mennesker, bosetting, områdezoom og Ragnarok, med kort visuell vurdering.
 - **VISUAL-02 · skogstruktur og levende miljø** (`src/sim/world.js`, `src/sim/ecology.js`, `src/render/environment.js`, `src/render/terrain.js`, `src/render/renderer.js`): deterministiske, artsdominerte lunder rammer inn en spillbar, uregelmessig startlysning. Et avledet miljølag leser trær, stubber og bygg og fornyer skogbunn/eksponert jord høyst hvert tiende spillsekund uten å endre spillregler.
 - **VISUAL-02 · kontroll og bilder** (`tests/visual.test.js`, `tools/capture-gui.mjs`, `docs/visual-02/`): to miljø-/plasseringstester, kjørbar Edge-røyktest og ni faste browserbilder. (Kontroll: `npm test` 36/36; GUI-røykprøve 33/33; ingen konsollfeil.)
 

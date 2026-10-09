@@ -266,13 +266,16 @@ export function generateDecor(state, env) {
     const e = envAt(env, x, y);
     if (rnd() < 0.05 + e.soil * 0.55) ground.push({ kind: 'stones', x, y, v: Math.floor(rnd() * 4), s: 0.8 + rnd() * 0.5, flip: rnd() < 0.5 });
   }
-  // Busker på skogkanten.
+  // Busker på skogkanten, med et tynt overgangsbelt inn mot lysningen.
+  // Det bryter den harde «skog mot gress»-linjen uten å fylle den spillbare leiren.
   for (let i = 0; i < 600 && upright.filter((u) => u.kind === 'bush').length < 130; i++) {
     const x = 30 + rnd() * (W - 60), y = 30 + rnd() * (H - 60);
-    if (inPond(state, x, y, 20) || dCamp(x, y) < 130 || tooClose(x, y, 14)) continue;
+    const campD = dCamp(x, y);
+    if (inPond(state, x, y, 20) || campD < 130 || tooClose(x, y, 14)) continue;
     const e = envAt(env, x, y);
     const edge = smooth(0.08, 0.3, e.canopy) * (1 - smooth(0.55, 0.85, e.canopy));
-    if (rnd() > edge * 1.1 + 0.03) continue;
+    const clearingEdge = smooth(130, 190, campD) * (1 - smooth(250, 360, campD));
+    if (rnd() > Math.max(edge * 1.1 + 0.03, clearingEdge * 0.18)) continue;
     const v = e.moisture > 0.55 && rnd() < 0.7 ? 4 + Math.floor(rnd() * 4) : e.soil > 0.4 && rnd() < 0.7 ? 8 + Math.floor(rnd() * 3) : Math.floor(rnd() * 4);
     upright.push({ kind: 'bush', x, y, v });
   }
@@ -285,12 +288,16 @@ export function generateDecor(state, env) {
     upright.push({ kind: 'log', x, y, v: Math.floor(rnd() * 4), flip: rnd() < 0.5 });
     n++;
   }
-  // Undervegetasjon: unge trær og småplanter i ulik alder ved siden av de modne.
+  // Undervegetasjon: unge trær og småplanter i ulik alder ved siden av de modne,
+  // samt noen få pionerer langs lysningskanten.
   for (let i = 0, n = 0; i < 1400 && n < 240; i++) {
     const x = 30 + rnd() * (W - 60), y = 30 + rnd() * (H - 60);
-    if (inPond(state, x, y, 28) || dCamp(x, y) < 170 || tooClose(x, y, 16)) continue;
+    const campD = dCamp(x, y);
+    if (inPond(state, x, y, 28) || campD < 140 || tooClose(x, y, 16)) continue;
     const e = envAt(env, x, y);
-    if (rnd() > smooth(0.15, 0.5, e.canopy) * (1 - smooth(0.75, 1.0, e.canopy) * 0.5) * 0.9) continue;
+    const forestUnderstory = smooth(0.15, 0.5, e.canopy) * (1 - smooth(0.75, 1.0, e.canopy) * 0.5) * 0.9;
+    const clearingEdge = smooth(145, 220, campD) * (1 - smooth(265, 390, campD)) * 0.16;
+    if (rnd() > Math.max(forestUnderstory, clearingEdge)) continue;
     upright.push({ kind: 'sapling', x, y, species: rnd() < e.conifer * 0.9 + 0.05 ? 'spruce' : 'birch', variant: Math.floor(rnd() * 8), k: Math.floor(rnd() * 3), flip: rnd() < 0.5 });
     n++;
   }
