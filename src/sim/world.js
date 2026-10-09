@@ -61,6 +61,8 @@ export function createWorld(seed = 20261009) {
     version: 1, seed, rng, time: 0, nextId: 1,
     world: { width: W, height: H, pond: { x: C.x - 360, y: C.y + 210, rx: 130, ry: 64 } },
     settlement: { center: C, angleOffset: 0 },
+    settlements: [{ id: 'first', name: 'Den første landsbyen', x: C.x, y: C.y, state: 'active', population: [] }],
+    expansion: { enabled: false, site: null, discovered: false, founding: false, founded: false, founders: [] },
     stockpile: { x: C.x + 4, y: C.y + 48 },
     resources: { wood: 0, stone: 0, pp: 0 },
     totals: { wood: 0, stone: 0, pp: 0, manualClicks: 0 },

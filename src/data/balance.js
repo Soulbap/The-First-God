@@ -31,6 +31,7 @@ export const BALANCE = {
     maintenanceSeconds: [2.5, 5],
     explorationSeconds: [5, 9],
     explorationCooldown: 42,
+    foundingParty: 3,
   },
   building: {
     shelter: { radius: 26, work: 16, divine: true, minRing: 60 },

@@ -34,14 +34,14 @@ export function findBuildSite(state, type) {
   return null;
 }
 
-export function startConstruction(state, type, { onComplete = null, source = null } = {}) {
-  const site = findBuildSite(state, type);
+export function startConstruction(state, type, { onComplete = null, source = null, site: forcedSite = null, settlementId = 'first' } = {}) {
+  const site = forcedSite || findBuildSite(state, type);
   if (!site) return null;
   const def = B.building[type];
   const b = {
     id: state.nextId++, type, x: site.x, y: site.y, radius: def.radius,
     progress: 0, work: 0, workNeeded: def.work, complete: false, divine: !!def.divine,
-    builders: [], onComplete, source, startedAt: state.time,
+    builders: [], onComplete, source, startedAt: state.time, settlementId,
   };
   state.buildings.push(b);
   state.events.push({ type: 'constructionStarted', id: b.id, buildingType: type, x: b.x, y: b.y });
@@ -61,6 +61,17 @@ function completeBuilding(state, b) {
   b.builders = [];
   stampWear(state, b.x, b.y + b.radius * 0.5, b.radius * 0.9, 0.35);
   state.events.push({ type: 'constructionComplete', id: b.id, buildingType: b.type, x: b.x, y: b.y });
+  if (b.source === 'founding') {
+    state.expansion.founded = true;
+    const settlement = state.settlements.find((s) => s.id === 'second');
+    if (settlement) settlement.state = 'active';
+    // Et beskjedent ildsted gjør den unge bosettingen lesbar uten en ny økonomikjede.
+    const fire = { id: state.nextId++, type: 'fire', x: b.x - 34, y: b.y + 18, radius: B.building.fire.radius,
+      progress: 1, work: B.building.fire.work, workNeeded: B.building.fire.work, complete: true, divine: false,
+      builders: [], source: 'second_fire', startedAt: state.time, settlementId: 'second' };
+    state.buildings.push(fire);
+    stampWear(state, fire.x, fire.y, 16, 0.2);
+  }
   if (b.onComplete && b.onComplete.spawnHumans) spawnHumans(state, b.onComplete.spawnHumans, { at: 'edge', building: b });
 }
 

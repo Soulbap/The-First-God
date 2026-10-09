@@ -212,6 +212,25 @@ test('landsbyen får korte vedlikeholdsbesøk og Utforskertrang sender én innby
   assert.ok(s.humans.some((h) => h.state === 'maintain' || h.state === 'toMaintain') || s.humans.every((h) => h.deliveries > 0), 'landsbyen fortsetter daglig rytme uten arbeidsordre');
 });
 
+test('nye horisonter finner deterministisk lysning og grunnleggelse bygger en andre boplass', () => {
+  const s = settledGame();
+  s.resources.wood = 2000; s.resources.stone = 2000;
+  purchase(s, 'common_fire'); assert.ok(runUntil(s, () => s.buildings.some((b) => b.type === 'fire' && b.complete), 60));
+  for (let i = 0; i < 3; i++) { purchase(s, 'new_home'); assert.ok(runUntil(s, () => s.buildings.every((b) => b.complete), 120)); }
+  purchase(s, 'shared_storage'); assert.ok(runUntil(s, () => s.buildings.every((b) => b.complete), 120));
+  purchase(s, 'organized_labor'); purchase(s, 'village_hearth'); assert.ok(runUntil(s, () => s.milestones.first_village != null, 120));
+  purchase(s, 'explorer_urge'); assert.ok(runUntil(s, () => s.milestones.first_paths != null, 120));
+  assert.equal(purchase(s, 'new_horizons').ok, true);
+  assert.ok(runUntil(s, () => s.expansion.discovered, 180), 'lysningen oppdages');
+  const site = { ...s.expansion.site };
+  assert.ok(Math.hypot(site.x - s.settlement.center.x, site.y - s.settlement.center.y) > 550);
+  assert.equal(purchase(s, 'founding').ok, true);
+  assert.ok(runUntil(s, () => s.expansion.founded, 180), 'det andre lyet står ferdig');
+  assert.equal(s.settlements.filter((q) => q.id === 'second').length, 1);
+  assert.equal(s.humans.filter((h) => h.settlementId === 'second').length, B.human.foundingParty);
+  assert.ok(s.milestones.first_settlements != null);
+});
+
 test('samme seed gir identisk verden og forløp (determinisme)', () => {
   const a = settledGame(), b = settledGame();
   advance(a, 90); advance(b, 90);

@@ -118,6 +118,22 @@ export const UPGRADES = [
     world: 'En enslig vandrer drar ut fra landsbyen og kommer tilbake med nye veier i tankene.',
     actions: [{ type: 'enableExploration', afterSeconds: 5 }],
   },
+  {
+    id: 'new_horizons', name: 'Nye horisonter', category: 'liv', icon: 'explore',
+    discover: [{ milestone: 'first_paths' }], cost: { wood: 76, stone: 52 },
+    requires: [{ milestone: 'first_paths' }], requireText: 'Krever De første stiene',
+    effect: 'Utforskeren søker etter en lysning der et nytt hjem kan vokse fram.',
+    world: 'En vandrer følger terrenget mot et sted med rom for ild, ly og nye spor.',
+    actions: [{ type: 'enableHorizons', afterSeconds: 4 }],
+  },
+  {
+    id: 'founding', name: 'Grunnleggelse', category: 'bosetning', icon: 'hut',
+    discover: [{ expansion: 'discovered' }], cost: { wood: 58, stone: 36 },
+    requires: [{ expansion: 'discovered' }], requireText: 'Krever Nytt land i sikte',
+    effect: 'Tre mennesker drar mot lysningen og reiser det første lyet.',
+    world: 'En liten følge bærer forsyninger langs sporene. Et nytt ildsted kan få liv.',
+    actions: [{ type: 'beginFounding' }],
+  },
 ];
 
 export const MILESTONES = [
@@ -148,6 +164,8 @@ export const MILESTONES = [
     text: 'Folkets fotspor strekker seg forbi leiren. Verden er større enn hjemmet deres.',
     when: { upgrade: 'explorer_urge' },
   },
+  { id: 'new_land', title: 'Nytt land i sikte', text: 'En vandrer har funnet en lysning bortenfor den kjente skogen. Verden er større enn den første landsbyen.', when: { expansion: 'discovered' } },
+  { id: 'first_settlements', title: 'De første bosettingene', text: 'To steder har fått navn og ildsteder. Mellom dem går menneskene en sti som ikke fantes før.', when: { expansion: 'founded' }, unlock: 'regionView' },
 ];
 
 export const upgradeById = (id) => UPGRADES.find((u) => u.id === id);

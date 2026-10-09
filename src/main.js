@@ -76,7 +76,11 @@ const currentView = () => (cam.w >= VIEW.semanticAreaW ? 'area' : 'near');
 
 function goView(v, duration) {
   const C = state.settlement.center;
-  if (v === 'area' && state.unlocks.zoomArea) glideTo(cam, C.x, C.y - 40, VIEW.area.w, duration || 2.4);
+  if (v === 'area' && state.unlocks.zoomArea) {
+    const S = state.settlements?.find((s) => s.id === 'second');
+    if (state.unlocks.regionView && S) glideTo(cam, (C.x + S.x) / 2, (C.y + S.y) / 2, VIEW.region.w, duration || 2.4);
+    else glideTo(cam, C.x, C.y - 40, VIEW.area.w, duration || 2.4);
+  }
   if (v === 'near') glideTo(cam, C.x - 10, C.y - 30, VIEW.near.w, 2.0);
 }
 
@@ -104,6 +108,7 @@ function handleEvents(events) {
       setZoomLimits(cam, true);
       pendingGlide = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1.4;
     }
+    if (e.unlock === 'regionView') { setZoomLimits(cam, true); pendingGlide = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1.4; }
   }
 }
 

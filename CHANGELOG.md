@@ -32,6 +32,9 @@ Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på ve
 ## [Unreleased]
 
 ### Added
+- **GAMEPLAY-04 · bortenfor den første landsbyen**: «Nye horisonter» lar utforskeren velge en deterministisk, tørr lysning; «Grunnleggelse» sender tre virkelige innbyggere dit. De bygger første hytte og et beskjedent ildsted, blir en aktiv ung bosetting og sliter fram en naturlig forbindelse til den første landsbyen. Milepælene **Nytt land i sikte** og **De første bosettingene** gir lesbar progresjon og bredere regional kameraramme. (Kontroll: ny målrettet flyttest, `npm test`.)
+
+### Added
 - **GAMEPLAY-03 · levende landsby** (`src/sim/humans.js`, `src/data/balance.js`, `src/render/people.js`): Leveringer og byggearbeid skaper sterkere slitasje enn tilfeldig gange, mens menneskene etter ferdig landsbyildsted veksler mellom produktivt arbeid, korte sosiale pauser og små vedlikeholdsbesøk ved hjem, lager og ildsted. Arbeid på uferdige bygg beholder prioritet; spilleren får ingen arbeidsordre eller plassering. (Kontroll: målrettet simuleringsflyt.)
 - **GAMEPLAY-03 · Utforskertrang** (`src/data/upgrades.js`, `src/sim/economy.js`, `src/sim/world.js`): En valgfri, datadrevet innsikt etter «Den første landsbyen» slipper én autonom utforsker ut på tørt, tilgjengelig terreng og tilbake igjen. «De første stiene» viser den eksisterende ikke-blokkerende milepælspresentasjonen; ingen ny ressurs, kartoppdagelse, bosetting eller zoomnivå er lagt til.
 

@@ -19,6 +19,7 @@ export function requirementMet(state, req) {
   if (req.people) return state.humans.length >= req.people;
   if (req.gathered) return state.totals.wood + state.totals.stone >= req.gathered;
   if (req.noPending) return !state.buildings.some((b) => b.type === req.noPending && !b.complete);
+  if (req.expansion) return !!state.expansion?.[req.expansion];
   return false;
 }
 
@@ -65,6 +66,11 @@ function applyAction(state, def, a) {
   } else if (a.type === 'enableExploration') {
     state.modifiers.exploration = true;
     state.exploration.nextAt = state.time + a.afterSeconds;
+  } else if (a.type === 'enableHorizons') {
+    state.expansion.enabled = true;
+    state.exploration.nextAt = state.time + a.afterSeconds;
+  } else if (a.type === 'beginFounding') {
+    state.expansion.founding = true;
   }
 }
 

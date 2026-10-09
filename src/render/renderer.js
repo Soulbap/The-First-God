@@ -484,7 +484,8 @@ export function createRenderer(canvas) {
     const areaK = smooth(VIEW.semanticAreaW * 0.9, VIEW.semanticAreaW * 1.25, cam.w);
     if (areaK > 0 && state.buildings.length) {
       const s = worldToScreen(cam, C.x, C.y - 120);
-      const pop = state.humans.length, homes = state.buildings.filter((b) => b.complete && (b.type === 'shelter' || b.type === 'hut')).length;
+      const pop = state.settlements?.find((q) => q.id === 'first')?.population.length ?? state.humans.length;
+      const homes = state.buildings.filter((b) => b.complete && b.settlementId !== 'second' && (b.type === 'shelter' || b.type === 'hut')).length;
       ctx.globalAlpha = areaK;
       ctx.font = 'italic 15px Georgia, "Palatino Linotype", serif';
       ctx.fillStyle = 'rgba(16,12,8,0.55)';
@@ -496,6 +497,20 @@ export function createRenderer(canvas) {
       ctx.fillStyle = 'rgba(236,226,204,0.85)';
       ctx.fillText(`${pop} mennesker · ${homes} hjem`, s.x, s.y + 17);
       ctx.globalAlpha = 1;
+      const second = state.settlements?.find((q) => q.id === 'second');
+      if (second && state.expansion.founded) {
+        const s2 = worldToScreen(cam, second.x, second.y - 90);
+        ctx.globalAlpha = areaK;
+        ctx.font = 'italic 15px Georgia, "Palatino Linotype", serif';
+        ctx.fillStyle = 'rgba(16,12,8,0.55)'; ctx.fillText(second.name, s2.x + 1, s2.y + 1);
+        ctx.fillStyle = '#efe4cc'; ctx.fillText(second.name, s2.x, s2.y);
+        ctx.font = '12px "Segoe UI", system-ui, sans-serif'; ctx.fillStyle = 'rgba(236,226,204,0.85)';
+        ctx.fillText(`${second.population.length} mennesker · nytt hjem`, s2.x, s2.y + 17);
+        ctx.globalAlpha = 1;
+      } else if (state.expansion?.discovered && state.expansion.site) {
+        const s2 = worldToScreen(cam, state.expansion.site.x, state.expansion.site.y);
+        ctx.globalAlpha = areaK * 0.75; ctx.fillStyle = '#d7c58e'; ctx.beginPath(); ctx.arc(s2.x, s2.y, 4, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
+      }
     }
     R.stats.frameMs += (performance.now() - t0 - R.stats.frameMs) * 0.1;
 

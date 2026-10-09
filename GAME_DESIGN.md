@@ -284,14 +284,15 @@ Prototypen finnes og er spillbar. Denne seksjonen beskriver hva som er bygget og
 - **Felles lager**, **Ordnet arbeid** og **Landsbyildsted** er menyvalg med synlige, autonome følger. Lageret blir nytt leveringspunkt; ordnet arbeid øker sanking og bygging; ildstedet blir nytt hvilested og bønnesenter.
 - Bosettingen velger fortsatt tomter selv, i deterministiske ringer rundt leirens sentrum. Bygg har avstandskrav mot hverandre, trær, stein og tjern; spilleren velger aldri plassering eller arbeidsordre.
 - **Den første landsbyen** oppnås av faktisk utvikling: fire hjem (inkludert første ly), minst åtte mennesker, ferdig lager og ferdig ildsted. Den gir en kort norsk milepælsmelding og rolig områdezoom uten å stanse simuleringen. Redusert bevegelse hopper over den ikke-essensielle kameraglidningen.
-- Åpent: hva landsbyen åpner etter Genesis-01-spilltesten. Denne iterasjonen viser bare at neste vekstnivå finnes; den legger ikke til byfase, produksjonskjeder eller nye ressurser.
+- Bekreftet (GAMEPLAY-04): Etter **De første stiene** kan **Nye horisonter** la én utforsker finne en deterministisk, tørr lysning med lokale ressurser. **Grunnleggelse** flytter tre virkelige innbyggere dit; de reiser første hytte og ildsted med den delte ressursbeholdningen. Den unge bosettingen bruker samme menneske- og slitasjesimulering som den første, og den gjentatte reisen lar en forbindelse vokse fram uten veiordre.
+- Åpent: hvordan senere bosettinger skal dele eller flytte ressurser er bevisst utsatt. GAMEPLAY-04 har én delt beholdning og ingen handel, jordbruk eller byfase.
 
 ### GAMEPLAY-03 — den levende landsbyen (bekreftet implementasjon)
 
 - Leveranser, byggereiser og returer sliter bakken mer enn tilfeldig gange. De samme, faktiske reisene bygger gradvis opp smale, ujevne jordspor; ildsted, lager og hjem har fortsatt bare diskret brukt mark rundt inngangene.
 - Etter at lager og landsbyildsted står, veksler menneskene mellom produktive oppgaver, korte hvil ved ilden og korte vedlikeholdsbesøk ved hjem, lager eller ildsted. Uferdig bygging har alltid prioritet, og ingen arbeidsordre gis av spilleren.
 - **Utforskertrang** er en valgfri innsikt etter **Den første landsbyen**. Én ledig innbygger går av og til ut på tilgjengelig terreng, blir kort borte og vender tilbake; den lette slitasjen gjør de første utgående sporene synlige. Dette utløser **De første stiene**.
-- Avgrensning: Utforskning avdekker ikke kart, gir ingen ny ressurs, oppretter ingen ny bosetting og tilfører ingen zoomnivå. Valget er en reversibel bro mot videre utvidelse.
+- Avgrensning: Utforskning avslører ikke kart eller nye ressurser. GAMEPLAY-04 bygger videre med nøyaktig én andre bosetting og en regional kameraramme, ikke et verdenskart eller en koloniseringssløyfe.
 
 ### Spillflyt slik den er bygget
 

@@ -3,6 +3,7 @@
 export const VIEW = {
   near: { w: 600, minW: 340, maxW: 820 },
   area: { w: 1850, maxW: 2300 },
+  region: { w: 2250 },
   semanticAreaW: 1150, // over denne bredden leses verden som «område»
 };
 

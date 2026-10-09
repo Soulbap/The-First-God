@@ -13,6 +13,7 @@ export function spawnHumans(state, count, { at = 'shelter', building = null } = 
       targetId: null, tx: 0, ty: 0, carry: { type: null, amount: 0 },
       deliveries: 0, dir: rand(state.rng) < 0.5 ? -1 : 1, walk: 0, anim: 0,
       born: state.time, gatherKind: null,
+      settlementId: 'first',
       look: {
         tunic: Math.floor(rand(state.rng) * TUNICS), skin: Math.floor(rand(state.rng) * SKINS),
         hair: Math.floor(rand(state.rng) * HAIRS), height: range(state.rng, 0.93, 1.06), pace: range(state.rng, 0.92, 1.08),
@@ -31,6 +32,7 @@ export function spawnHumans(state, count, { at = 'shelter', building = null } = 
       h.y = home.y + home.radius * 0.45 + 4;
     }
     state.humans.push(h);
+    state.settlements?.find((s) => s.id === h.settlementId)?.population.push(h.id);
     out.push(h);
   }
   if (state.stats.autoStart == null && out.length) state.stats.autoStart = state.time;

@@ -6,6 +6,8 @@ import { treeAvailable, harvestTree, harvestRock } from './nature.js';
 import { addWork } from './construction.js';
 import { recordAuto } from './stats.js';
 import { addWear } from './wear.js';
+import { inBounds, inPond, dist } from './world.js';
+import { startConstruction } from './construction.js';
 
 const H = B.human;
 
@@ -37,11 +39,19 @@ function release(state, h) {
 }
 
 function moveTo(state, h, dt) {
-  const dx = h.tx - h.x, dy = h.ty - h.y;
+  // En liten lokal styring: gå rundt tjernet og ikke gjennom et bygg. Dette er
+  // bevisst ikke et eget pathfinding-system; den brukes bare når direkte kurs er blokkert.
+  if (!h.waypoints?.length) {
+    const p = state.world.pond;
+    const crossesPond = (h.x - p.x) * (h.tx - p.x) < 0 && Math.abs((h.y + h.ty) / 2 - p.y) < p.ry + 36;
+    if (crossesPond) h.waypoints = [{ x: p.x + (h.x < p.x ? -p.rx - 55 : p.rx + 55), y: p.y - p.ry - 45 }];
+  }
+  const goal = h.waypoints?.[0] || { x: h.tx, y: h.ty };
+  const dx = goal.x - h.x, dy = goal.y - h.y;
   const d = Math.hypot(dx, dy);
   const stepLen = H.speed * h.look.pace * dt;
   if (Math.abs(dx) > 0.5) h.dir = dx > 0 ? 1 : -1;
-  if (d <= stepLen) { h.x = h.tx; h.y = h.ty; return true; }
+  if (d <= stepLen) { h.x = goal.x; h.y = goal.y; if (h.waypoints?.length) { h.waypoints.shift(); return false; } return true; }
   h.x += (dx / d) * stepLen;
   h.y += (dy / d) * stepLen;
   h.walk += stepLen;
@@ -110,10 +120,27 @@ function explorationTarget(state) {
   return { x: C.x + 420, y: C.y - 190 };
 }
 
+function settlementSite(state) {
+  if (state.expansion.site) return state.expansion.site;
+  const C = state.settlement.center;
+  let best = null;
+  // Fast kandidatnett + enkel egnethet: avstand, tørr lysning, lokale ressurser og fri plass.
+  for (let y = 180; y < state.world.height - 180; y += 90) for (let x = 180; x < state.world.width - 180; x += 90) {
+    const d = dist(x, y, C.x, C.y); if (d < 560 || d > 980 || inPond(state, x, y, 100)) continue;
+    if (state.buildings.some((b) => dist(x, y, b.x, b.y) < 120)) continue;
+    const near = state.nodes.filter((n) => dist(x, y, n.x, n.y) < 240).length;
+    const crowded = state.nodes.filter((n) => dist(x, y, n.x, n.y) < 72).length;
+    const score = near * 20 - crowded * 36 - Math.abs(d - 740) * 0.08 - y * 0.001;
+    if (!best || score > best.score) best = { x, y, score };
+  }
+  state.expansion.site = best || { x: C.x + 700, y: C.y - 260 };
+  return state.expansion.site;
+}
+
 function maybeExplore(state, h) {
   if (!state.modifiers.exploration || state.time < state.exploration.nextAt || state.exploration.activeId != null) return false;
   if (state.buildings.some((b) => !b.complete) || h.carry.amount) return false;
-  const target = explorationTarget(state);
+  const target = state.expansion.enabled && !state.expansion.discovered ? settlementSite(state) : explorationTarget(state);
   state.exploration.activeId = h.id;
   state.exploration.nextAt = state.time + B.human.explorationCooldown;
   h.exploreTarget = target;
@@ -122,8 +149,18 @@ function maybeExplore(state, h) {
 }
 
 function chooseTask(state, h) {
+  if (state.expansion.founding && !state.expansion.founded && !state.expansion.founders.length && state.humans.length >= B.human.foundingParty) {
+    const founders = state.humans.slice(0, B.human.foundingParty);
+    state.expansion.founders = founders.map((q) => q.id);
+    for (const q of founders) { q.state = 'toFound'; q.tx = settlementSite(state).x; q.ty = settlementSite(state).y; q.waypoints = null; }
+    return;
+  }
+  if (h.settlementId === 'second' && state.expansion.founded && h.deliveries % 2 === 0) {
+    const S = state.settlements.find((s) => s.id === 'second');
+    h.tx = S.x + range(state.rng, -95, 95); h.ty = S.y + range(state.rng, -55, 65); h.state = 'wander'; return;
+  }
   // 1) Byggeplasser som trenger hender.
-  const site = state.buildings.find((b) => !b.complete && !b.divine && b.builders.length < H.maxBuilders);
+  const site = state.buildings.find((b) => !b.complete && !b.divine && b.builders.length < H.maxBuilders && (b.settlementId === h.settlementId || state.expansion.founders.includes(h.id)));
   if (site) {
     site.builders.push(h.id);
     h.targetId = site.id;
@@ -257,6 +294,11 @@ export function stepHuman(state, h, dt) {
     case 'explore':
       h.timer -= dt;
       if (h.timer <= 0) {
+        if (state.expansion.enabled && !state.expansion.discovered) {
+          state.expansion.discovered = true;
+          const S = settlementSite(state);
+          state.events.push({ type: 'siteDiscovered', x: S.x, y: S.y });
+        }
         const C = state.settlement.center;
         h.tx = C.x + range(state.rng, -24, 24); h.ty = C.y + range(state.rng, 8, 34);
         h.state = 'returning';
@@ -264,6 +306,25 @@ export function stepHuman(state, h, dt) {
       break;
     case 'returning':
       if (moveTo(state, h, dt)) { state.exploration.activeId = null; h.exploreTarget = null; goIdle(state, h, [0.4, 1.1]); }
+      break;
+    case 'toFound':
+      if (moveTo(state, h, dt)) {
+        h.state = 'foundingWait'; h.timer = 2.2;
+      }
+      break;
+    case 'foundingWait':
+      h.timer -= dt;
+      if (h.timer <= 0) {
+        const allThere = state.expansion.founders.every((id) => ['foundingWait', 'toFound'].includes(state.humans.find((q) => q.id === id)?.state));
+        if (allThere && !state.buildings.some((b) => b.source === 'founding')) {
+          const S = settlementSite(state);
+          state.settlements.push({ id: 'second', name: 'Lysningen', x: S.x, y: S.y, state: 'founding', population: [...state.expansion.founders] });
+          for (const id of state.expansion.founders) { const q = state.humans.find((z) => z.id === id); q.settlementId = 'second'; q.state = 'idle'; q.timer = 0.1; }
+          const first = state.settlements.find((s) => s.id === 'first');
+          if (first) first.population = first.population.filter((id) => !state.expansion.founders.includes(id));
+          startConstruction(state, 'hut', { source: 'founding', site: S, settlementId: 'second' });
+        } else goIdle(state, h);
+      }
       break;
     case 'rest':
       h.timer -= dt;
