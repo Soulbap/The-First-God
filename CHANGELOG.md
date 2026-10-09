@@ -31,6 +31,9 @@ Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på ve
 ```md
 ## [Unreleased]
 
+### Docs
+- La til `docs/HOME_PC_HANDOFF.md` for synkronisert hjemme-PC-overlevering: aktiv spillbar gren, commit, grenoversikt, teststatus, begrensninger, lokale referansefiler og Windows-kommandoer. (Kontroll: `npm test` 41/41 bestått.)
+
 ### Added
 - **GAMEPLAY-05 · den levende regionen** (`src/sim/regional.js`, `src/sim/humans.js`, `src/sim/construction.js`): Den andre bosettingen får en avgrenset autonom vekstsløyfe. Materialer reserveres fra den felles beholdningen ved avreise, bæres fysisk til lysningen og brukes først der ved ankomst. Lokalt lager, hjem og fellesplass bygges trinnvis; befolkningsvekst er deterministisk og begrenset av ferdige hjem.
 - **GAMEPLAY-05 · synlig regional utvikling** (`src/render/renderer.js`, `src/data/upgrades.js`): Voksende slekter, Mellom ildstedene og Faste ferdselsårer har lesbare følger i verden. Gjentatte fullførte leveranser forsterker en ujevn jordsti og den unge bosettingen får tydeligere brukt mark. Milepælen **En levende region** krever faktiske prosjekter, leveranser og regional slitasje.
