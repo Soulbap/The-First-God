@@ -26,9 +26,9 @@ export async function run() {
   // Tegnetid i seks synsvinkler (gjennomsnitt over 90 bilder hver) i et sent spill med fire bosettinger.
   const perf = {};
   const C0 = T.state.settlement.center;
-  for (const [name, f] of [['nær (820)', () => { T.overview(false); T.view(C0.x, C0.y, 820); }], ['område (2300)', () => { T.overview(false); T.view(C0.x + 40, C0.y - 20, 2300); }], ['verden (oversikt)', () => T.overview(true)]]) {
+  for (const [name, f] of [['nær (820)', () => { T.overview(false); T.view(C0.x, C0.y, 820); }], ['område (2300)', () => { T.overview(false); T.view(C0.x + 40, C0.y - 20, 2300); }], ['verden (planet)', () => T.overview(true)]]) {
     f(); T.tick(1); T.renderStats.frameMs = 0; T.tick(3);
-    perf[name] = Number((name.startsWith('verden') ? T.renderStats.overviewMs : T.renderStats.frameMs).toFixed(2));
+    perf[name] = Number((name.startsWith('verden') ? (T.isGlobe ? T.renderStats.globeMs : T.renderStats.overviewMs) : T.renderStats.frameMs).toFixed(2));
   }
   T.overview(false); T.view(C0.x, C0.y, 820);
   $('[data-nav="realm"]').click(); T.tick(0.3); await wait(450);
@@ -46,19 +46,30 @@ export async function run() {
   const t0 = T.state.time; T.setSpeed(1); T.tick(2); T.setSpeed(0);
   ok('simuleringen går videre i oversikten', T.state.time > t0 + 1.5);
   ok('klikk på verdenskartet klikker ikke bort ressurser (ingen sanking)', (() => { const n = T.state.totals.manualClicks; const c = $('#world'); c.dispatchEvent(new PointerEvent('pointerdown', { clientX: 600, clientY: 400, button: 0, pointerId: 1, bubbles: true })); c.dispatchEvent(new PointerEvent('pointerup', { clientX: 600, clientY: 400, button: 0, pointerId: 1, bubbles: true })); return T.state.totals.manualClicks === n; })());
-  wheel(-120); T.tick(0.3);
-  ok('å zoome inn forlater oversikten', !T.isOverview);
+  // OPUS-01: planetvisningen zoomer sammenhengende; rull inn til kameraet når bakken og den detaljerte verdenen tar over.
+  for (let i = 0; i < 60 && T.isOverview; i++) { wheel(-120); T.tick(0.1); }
+  T.tick(3);
+  ok('å zoome inn forlater planetvisningen (sammenhengende zoom tilbake til landskapet)', !T.isOverview);
+  ok('etter retur står kameraet over hjemmet i områdevisning', Math.hypot(T.cam.x - T.state.settlement.center.x, T.cam.y - T.state.settlement.center.y) < 400 && T.cam.w > 1500);
   key('v'); T.tick(0.3);
   ok('V åpner oversikten', T.isOverview);
-  $('[data-view="area"]').click(); T.tick(0.3);
+  ok('V åpner planeten (WebGL)', T.isGlobe === T.hasWebGL);
+  T.tick(4); // la kameraet løfte seg
+  const hUp = T.globe ? T.globe.h : 0;
+  for (let i = 0; i < 4; i++) { wheel(240); T.tick(0.1); }
+  ok('rulling ut i planetvisningen løfter kameraet høyere (mot hele kloden)', !T.hasWebGL || T.globe.h > hUp);
+  $('[data-view="area"]').click(); T.tick(3.5);
   ok('Område-knappen gir trygg retur til landskapet', !T.isOverview);
   $('[data-view="near"]').click(); T.tick(0.3);
   ok('Nær-knappen virker etter oversikten', !T.isOverview);
   T.view(T.state.settlement.center.x, T.state.settlement.center.y, 2300); T.tick(0.2);
   wheel(120); T.tick(0.3);
-  ok('å zoome ut forbi områdevisningen åpner oversikten', T.isOverview);
+  ok('å zoome ut forbi områdevisningen løfter kameraet til planeten', T.isOverview);
+  T.tick(4);
+  ok('planetvisningen tegner uten feil og bruker under 16 ms per bilde', (T.renderStats.globeMs || 0) < 16);
 
   T.overview(false); T.tick(0.3);
+  ok('debug-retur fra planeten gir landskapet', !T.isOverview);
   $('[data-nav="ragnarok"]').click(); T.tick(0.3);
   $('#ragnarok-confirm').click(); T.tick(0.5);
   ok('Ragnarok fra oversikten gir en ny syklus uten oversikt, Rike-knapp eller verdensknapp', !T.isOverview && T.state.settlements.length === 1 && $('[data-nav="realm"]').hidden && $('[data-view="world"]').hidden);

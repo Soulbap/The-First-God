@@ -32,6 +32,8 @@ const P = {
   pause: '<path d="M9 5.5v13M15 5.5v13"/>',
   plus: '<path d="M12 5.5v13M5.5 12h13"/>',
   minus: '<path d="M5.5 12h13"/>',
+  sound: '<path class="f" d="M4 9.5h3.2L12 5.6v12.8l-4.8-3.9H4z"/><path d="M15.2 9.2a4 4 0 0 1 0 5.6M17.8 6.8a7.4 7.4 0 0 1 0 10.4"/>',
+  mute: '<path class="f" d="M4 9.5h3.2L12 5.6v12.8l-4.8-3.9H4z"/><path d="m15.5 9.5 5 5M20.5 9.5l-5 5"/>',
 };
 
 export const icon = (name, cls = '') =>

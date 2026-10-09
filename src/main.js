@@ -12,6 +12,8 @@ import { bakePlanet } from './render/planetTexture.js';
 import { serialize, deserialize } from './sim/save.js';
 import { ragnarokAward, cycleMemory, buyPrestige, emptyMeta } from './sim/legacy.js';
 import { PRESTIGE, prestigeCost } from './data/prestige.js';
+import { createAmbience } from './audio/ambience.js';
+import { icon } from './ui/icons.js';
 
 const SEED = 20261009; // samme grunnverden i hver syklus
 const MAX_STEPS_PER_FRAME = 240;
@@ -25,6 +27,7 @@ let hoverId = null, hudTimer = 0, wearTimer = 0, pendingGlide = null;
 // Planetvisningen (OPUS-01): samme simulering, sett fra økende høyde. Reserve uten WebGL: den gamle kartoversikten.
 let overview = false, hoverRegion = null; // reserveoversikt (bare uten WebGL)
 let globeMode = false, gcam = null, exitAfterGlide = null, snapTimer = 0;
+let pendingReveal = null, revealStage = 0; // planetavsløringen ved milepælen som låser opp planetvisningen
 let planet = null, baked = null;
 const globeR = createGlobeRenderer(globeCanvas);
 // Lagring: syklusen og metaprogresjonen (PrP) i nettleseren. Ingen tid går mens spillet er lukket.
@@ -39,6 +42,20 @@ const store = {
 };
 const meta = (() => { try { return { ...emptyMeta(), ...(PERSIST ? JSON.parse(store.get(META_KEY) || '{}') : {}) }; } catch { return emptyMeta(); } })();
 let saveTimer = 20;
+// Lyd: prosedyrisk stemning, starter ved første klikk/tast. Valget (på/av) huskes.
+const ambience = createAmbience({ muted: store.get('tfg.audio') === 'off' || params.has('debug') });
+const soundBtn = document.getElementById('sound-btn');
+function refreshSoundBtn() {
+  soundBtn.innerHTML = icon(ambience.muted ? 'mute' : 'sound');
+  soundBtn.setAttribute('aria-pressed', String(!ambience.muted));
+  soundBtn.setAttribute('aria-label', ambience.muted ? 'Slå på lyd (M)' : 'Slå av lyd (M)');
+}
+function toggleSound() { ambience.setMuted(!ambience.muted); store.set('tfg.audio', ambience.muted ? 'off' : 'on'); refreshSoundBtn(); }
+soundBtn.addEventListener('click', toggleSound);
+refreshSoundBtn();
+const wake = () => { if (!ambience.muted) ambience.start(); };
+window.addEventListener('pointerdown', wake, { once: true });
+window.addEventListener('keydown', wake, { once: true });
 function saveNow() { if (!PERSIST || !state) return; store.set(SAVE_KEY, serialize(state)); store.set(META_KEY, JSON.stringify(meta)); }
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -225,6 +242,7 @@ function setOverview(on) {
 }
 
 function goView(v, duration) {
+  revealStage = 0; pendingReveal = null;
   if (v === 'world') {
     if (!globeR) { setOverview(true); return; }
     if (globeMode) { const L = toLatLon(planet.home.dir); globeGlide(gcam, L.lat, L.lon, gcam.h < GLOBE.continentH * 1.5 ? GLOBE.maxH * 0.92 : GLOBE.continentH, reducedMotion() ? 0.01 : 2.6); }
@@ -268,6 +286,8 @@ function handleEvents(events) {
       pendingGlide = reducedMotion() ? 0 : 1.4;
     }
     if (e.unlock === 'regionView') { setZoomLimits(cam, true); pendingGlide = reducedMotion() ? 0 : 1.4; }
+    // Planetavsløringen: kameraet løfter seg selv fra byen til kontinentet og videre til hele kloden — én gang.
+    if ((e.unlock === 'worldView' || e.id === 'first_world_civilization') && globeR) { pendingReveal = reducedMotion() ? 0.5 : 3.2; pendingGlide = null; }
   }
 }
 
@@ -291,6 +311,21 @@ function tick(realDt) {
   renderer.handleEvents(state, events, cam);
   renderer.update(state, realDt, realDt * speed, renderTime);
 
+  if (pendingReveal != null) {
+    pendingReveal -= realDt;
+    if (pendingReveal <= 0) {
+      pendingReveal = null;
+      if (!globeMode) { const C = state.settlement.center; cam.x = C.x; cam.y = C.y; cam.w = maxWorldW(); enterGlobe({ glide: false }); }
+      const L = toLatLon(planet.home.dir);
+      globeGlide(gcam, L.lat, L.lon, GLOBE.continentH, reducedMotion() ? 0.01 : 4.5);
+      revealStage = 1;
+    }
+  }
+  if (revealStage === 1 && globeMode && !gcam.tween) {
+    revealStage = 2;
+    const L = toLatLon(planet.home.dir);
+    globeGlide(gcam, L.lat - 0.05, L.lon, GLOBE.maxH * 0.9, reducedMotion() ? 0.01 : 6);
+  } else if (revealStage && (!globeMode || (revealStage === 2 && !gcam.tween))) revealStage = 0;
   if (pendingGlide != null && !globeMode) {
     pendingGlide -= realDt;
     if (pendingGlide <= 0) {
@@ -318,6 +353,12 @@ function tick(realDt) {
     const view = currentView();
     hud.update(state, { speed, view: globeMode ? 'world' : view, areaUnlocked: state.unlocks.zoomArea, scale: SCALE_NAMES[view] });
     updateHint();
+    const near = globeMode || overview ? 0 : 1 - Math.min(1, Math.max(0, (cam.w - 650) / 1500));
+    ambience.update({
+      near, globe: globeMode ? 1 : 0, active: speed > 0 ? 1 : 0.25,
+      fires: state.buildings.filter((b) => b.complete && (b.type === 'fire' || b.type === 'hearth')).length,
+      builders: state.humans.filter((h) => h.state === 'build').length,
+    });
   }
 }
 
@@ -352,6 +393,7 @@ canvas.addEventListener('pointermove', (e) => {
   if (down) {
     if (!down.moved && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) { down.moved = true; canvas.classList.add('dragging'); }
     if (down.moved) {
+      revealStage = 0; pendingReveal = null;
       if (globeMode) { dragGlobe(gcam, e.clientX - down.lx, e.clientY - down.ly, cam.screenW, cam.screenH); exitAfterGlide = null; }
       else panBy(cam, e.clientX - down.lx, e.clientY - down.ly);
     }
@@ -382,7 +424,8 @@ canvas.addEventListener('pointerup', (e) => {
 canvas.addEventListener('pointerleave', () => { hoverId = null; });
 canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
-  if (globeMode) { globeZoom(Math.exp(e.deltaY * 0.0022)); exitAfterGlide = null; return; }
+  revealStage = 0; pendingReveal = null; // spilleren tar over kameraet
+  if (globeMode) { exitAfterGlide = null; globeZoom(Math.exp(e.deltaY * 0.0022)); return; }
   // Reserve: kartoversikten åpnes/lukkes som før.
   if (overview) { if (e.deltaY < 0) goView('area', 1.2); return; }
   // Å zoome ut forbi områdevisningen løfter kameraet opp fra den samme verdenen mot planeten.
@@ -400,6 +443,7 @@ window.addEventListener('keydown', (e) => {
     else if (globeR) enterGlobe();
     else setOverview(true);
   }
+  if (e.key === 'm' || e.key === 'M') toggleSound();
   if (e.key === '1') speed = savedSpeed = 1;
   if (e.key === '2') speed = savedSpeed = 2;
   if (e.key === '3') speed = savedSpeed = 4;
@@ -436,10 +480,11 @@ setTimeout(() => {
       // Lagring i feilsøking: eksplisitt, under egne nøkler (rører aldri spillerens lagring).
       saveAs: (key) => { localStorage.setItem('tfg.dev.' + key, serialize(state)); return true; },
       loadFrom: (key) => { const st = deserialize(localStorage.getItem('tfg.dev.' + key) || '', { seed: SEED }); if (!st) return false; newCycle(st); return true; },
-      cancelGlide: () => { pendingGlide = null; },
+      cancelGlide: () => { pendingGlide = null; pendingReveal = null; revealStage = 0; },
       get isOverview() { return globeMode || overview; },
       get isGlobe() { return globeMode; },
       get hasWebGL() { return !!globeR; },
+      ambience,
       hud,
       renderStats: renderer.stats,
       renderer,
