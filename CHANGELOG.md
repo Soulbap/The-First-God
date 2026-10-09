@@ -32,6 +32,28 @@ Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på ve
 ## [Unreleased]
 
 ### Added
+- **VISUAL-01 · miljøfelt** (`src/render/environment.js`): deterministisk rutenett (fukt, kronedekke, bart jordsmonn) avledet fra seed, trær, stein og tjern. Terreng og dekor leser det, så bakken henger sammen med skogen, vannet og leiren. (Kontroll: enhetstester for determinisme, verdiområde og at feltet speiler verden.)
+- **VISUAL-01 · bakkedetalj**: terrenget males nå med lagdelte strøk, barnåler/løv/kvister etter kronedekke, mose i fuktige skyggepartier, bart jord i uregelmessige flekker og småstein i grupper (2 px/enhet). Et sømløst finkornslag (`buildGrain`) holder bakken levende ved nærzoom, og terrenget har mip-nivåer (2×, 1×, 0,5×) slik at utzoomet visning er rask og uskarp-fri.
+- **VISUAL-01 · dekor**: bregner i skyggen, kvister, steingrupper, lyng/ener/bærbusker på skogkanten, falne stammer og opptil 240 unge trær som undervegetasjon; gress i flekker som tynnes under tett skog og i leiren. Alt plasseres deterministisk fra miljøfeltet.
+- **VISUAL-01 · bosettingen preger bakken**: slitasje fra gange tegnes nå som ujevn, bar jord (høyere oppløsning, kornet kant), og bygg, bål og lager gir i tillegg bar jord rundt seg. Spon, kvister og avkapp samler seg ved lageret (følger totalt innhøstet trevirke/stein), rundt byggeplasser og ved stubber.
+- **VISUAL-01 · verktøy**: `tools/scenes.js` kjører en fast sekvens (scene A–E) og sender canvas-bildet til en lokal mottaker for før/etter-sammenligning; `TFG.renderStats` og `TFG.renderer` i `?debug`. Skjermbilder i `docs/visual-01/`, vurdering i `docs/visual-01/REPORT.md`.
+- **Tests**: `tests/visual.test.js` (7 tester): miljøfelt, deterministisk dekor, ingen dekor i vann/oppå trær/midt i leiren, bregner i skygge, sortering, lagerhauger og trevarianter.
+
+### Changed
+- **VISUAL-01 · trær**: gran og bjørk har nå 8 utseender (simuleringens variant 0–3 utvidet med id, uten å endre simuleringens tilfeldighet). Gran varierer i bredde, profil, kransetetthet, nakne stammepartier, hengende grener, døde greiner, krumning og fargetone; unge trær er lysere og smalere. Bjørk har asymmetriske, luftige kroner langs grenene med hengende bladstrenger i stedet for kuler, tre fargetoner og synlige grener.
+- **VISUAL-01 · bygg**: ly med paneler av ulik hudtone, regnstriper, sot og smusset kant; hytte med stråtak i kurser, frynset takkant, mose og steinfundament; bålplass med bar jord, aske, sot og forkullet ved; steinring med sot og mose.
+- **VISUAL-01 · lager**: vedhaugen består av enkeltstokker (side- og endevisning, synlige kappflater, ujevn stabling), steinhaugen av fasetterte steiner med kontaktskygge. Posisjonene er faste pr. indeks, så haugen vokser uten å stokkes om og fortsatt speiler beholdningen.
+- **VISUAL-01 · bål**: tre lag flammer, glør i asken, varm lyspytt som lander flatt på bakken, mykere røyk (forhåndstegnet puff) og færre gnister.
+- **VISUAL-01 · mennesker**: kontur og lyskant, belte, valgfri skinnkappe, tre hårfasonger, omvikling og sko, større øks-/hammerhode, tyngre vedbyrde, hvilende holdning med vektforskyvning eller hånd på hoften; blant annet utledet fra id (urørt simulering).
+- **VISUAL-01 · lys og dybde**: lange, myke kastskygger mot nedre høyre i stedet for runde flekker, tettere kontaktskygge ved foten, svakt varmt løft rundt leiren og svak nedtoning av ytterskogen. Fjernet skyskygge-flekkene; vignetten er svakere (0,3 → 0,18).
+- **VISUAL-01 · felling**: felte trær blir liggende med krone og greiner og går så over i en kappet stokk med kappflate og greinstubber (før: tynn «lanse»). Stubber har rotfeste og årringer.
+- **VISUAL-01 · ytelse**: sprites tegnes med bilineær filtrering ved vanlig zoom, gress/bregner bruker forhåndsskjærte svairammer, trær svaier via aksejusterte skiver, og binærsøk på y begrenser dekortegningen. Målt i forhåndsvisningen: område-zoom ~71 → ~14 ms/bilde; nær ~12 → ~13 ms; terrengbilde 3600×2400 → 4800×3200 (+~25 MB).
+
+### Docs
+- `docs/visual-01/REPORT.md`: audit (Fase A), tekniske valg, før/etter-sammenligning og gjenstående begrensninger. `AGENTS.md` §10 nevner scene-verktøyet.
+
+
+### Added
 - Kort, konkret beskrivelse av nyheten og dens hensikt. (Kontroll: ...)
 ```
 
