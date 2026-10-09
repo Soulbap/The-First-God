@@ -33,7 +33,7 @@ npm start
 
 Åpne deretter http://localhost:5173.
 
-Kontroller: klikk på trær og stein, åpne **Innsikter** øverst til høyre, dra for å panorere, musehjul for zoom, mellomrom for pause og 1/2/3 for fart.
+Kontroller: klikk på trær og stein, åpne **Innsikter** i menyen nederst (Escape lukker), dra for å panorere, musehjul eller −/+ for zoom, mellomrom for pause og 1/2/3 for fart. Nye innsikter dukker opp etter hvert som verden utvikler seg.
 
 ## Kjøre tester
 

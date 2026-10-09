@@ -299,3 +299,23 @@ Prototypen finnes og er spillbar. Denne seksjonen beskriver hva som er bygget og
 ### Kjent avstand til visuell målsetting
 
 Grafikken er prosedyralt malt i koden, ikke håndmalte assets. Den står opp mot «realistisk painterly 2.5D» i tone, palett og forankring, men terrenget blir mykt/uskarpt på nært hold, felte stokker er enkle former, og menneskene er forenklede figurer. Visual quality gate 6 (stilmessig samsvar) regnes derfor som **delvis oppfylt**.
+
+## 13. Grensesnitt — guddommelig minimalisme (GUI-01, 2026-10-09)
+
+Grensesnittet skal oppleves som en stille, guddommelig intelligens som observerer og leder. Verden er fortsatt blikkfanget. Tekniske detaljer og skjermbilder: `docs/gui-01/REPORT.md`.
+
+### Bekreftet (prosjektansvarlig, GUI-01-spesifikasjonen)
+
+- **Progressiv oppdagelse.** Innsikter som ikke er relevante ennå, er helt skjult — ingen grå kort, plassholdere eller fremtidige priser. En oppdaget innsikt forblir synlig i syklusen; for dyre kort er fullt lesbare og viser hva som mangler.
+- **Ingen historikk.** Fullførte engangsvalg forlater listen; effektene står igjen i verden. Det finnes ingen historikkknapp eller arkiv over kjøpte valg.
+- **Faste plasseringer på tvers av epoker:** ressurser øverst til venstre, guddommelig kraft øverst til høyre, hovedmeny nederst i midten, fart/zoom nederst til høyre, Innsikter som panel fra høyre. Senere epoker endrer uttrykk (farger, ikoner, kategorier), ikke oppsett.
+- **Ingen døde knapper.** Navigasjon vises bare når et system står bak (Milepæler etter første milepæl; «Verden» er utelatt til det finnes et verdenskart).
+- Panelet pauser ikke simuleringen. Ragnarok er alltid frivillig og kan avbrytes.
+
+### Antakelser — åpne
+
+- **Oppdagelsesutløsere:** Første ly ved første sanking; Vekkelse når lyet står; Felles ild og Hendene husker etter Vekkelse; Nytt hjem når bålet står. Ellers gjelder kjøpskravene.
+- **Kategorier** (Liv, Bosetning, Tro) vises som faner først når minst to har aktive innsikter. Tildelingen per innsikt står i `src/data/upgrades.js`.
+- **Undertittel etter stadium:** Skapelsens morgen → Det første lyet → Den første leiren → Den første bosetningen.
+- Merket på Innsikter-knappen teller valg som kan kjøpes nå; «NY» markerer innsikter spilleren ikke har sett i panelet.
+- Typografi bruker systemfonter (Palatino Linotype / Segoe UI) for å unngå nye avhengigheter; en lisensiert visningsfont kan vurderes senere.

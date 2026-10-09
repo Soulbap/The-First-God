@@ -165,6 +165,7 @@ Alt som ikke styrker disse punktene, skal vurderes som senere arbeid.
 - **Tester:** `npm test` (Node sin innebygde testløper). Alle tester skal bestå før commit.
 - **Feilsøking og skjermbilder:** åpne `?debug` for `window.TFG` (`advance`, `give`, `buy`, `click`, `view`, `tick`). Nettleserpanel som er skjult pauser `requestAnimationFrame`; bruk da `TFG.tick(sekunder)` for å drive hovedløkken.
 - **Før/etter-skjermbilder:** `tools/scenes.js` kjører faste scener (A–E) og POSTer canvas til en lokal mottaker (se toppen av filen). Sammenlign mot `main` i en egen `git worktree` med `PORT=5180 node tools/serve.mjs`. `TFG.renderStats.frameMs` gir gjennomsnittlig tegnetid.
+- **GUI:** farger, avstand og typografi hentes fra `src/ui/tokens.css`; ikoner fra `src/ui/icons.js`. Hva panelet viser, avgjøres i `src/ui/insights.js` (testbart uten DOM), aldri i DOM-koden. `node tools/capture-gui.mjs <url> <mappe> [suffiks]` tar fullskjermbilder (verden + HUD) av faste scener via hodeløs Edge; `await (await import('/tools/gui-smoke.js')).run()` i `?debug` kontrollerer samhandling.
 - **Git:** `main` på https://github.com/Soulbap/The-First-God er referansen. Én tydelig commit per sammenhengende endring, aldri force push, og ingen hemmeligheter, `node_modules/` eller byggfiler i repoet.
 - **Nye avhengigheter** (f.eks. Electron) krever godkjenning fra prosjektansvarlig først.
 - **Neste milepæl** er spilltesting av Genesis-01 (`PLAYTEST.md`). Ikke start Genesis-02 før prototypen er vurdert.
