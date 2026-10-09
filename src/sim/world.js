@@ -66,10 +66,11 @@ export function createWorld(seed = 20261009) {
     totals: { wood: 0, stone: 0, pp: 0, manualClicks: 0 },
     upgrades: {},
     discovered: {}, // innsikt-id → spilltid da den ble synlig (se discovery.js)
-    modifiers: { gatherSpeed: 1, carry: 0, buildSpeed: 1 },
+    modifiers: { gatherSpeed: 1, carry: 0, buildSpeed: 1, exploration: false },
     nodes: [], buildings: [], humans: [],
     milestones: {}, unlocks: { zoomArea: false, villageView: false },
     timers: { seed: B.tree.seedIntervalSeconds, wearDecay: 0 },
+    exploration: { nextAt: Infinity, activeId: null },
     stats: { log: [], autoStart: null },
     wear: { cell, cols, rows, data: new Float32Array(cols * rows) },
     // Renderer-avledet økologi. Ingen ressurs- eller navigasjonstilstand ligger her;

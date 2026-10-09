@@ -188,6 +188,30 @@ test('felles lager, ordnet arbeid og landsbyildsted bygges autonomt og utløser 
   assert.ok(Math.hypot(h.tx - storage.x, h.ty - storage.y) < storage.radius + 28, 'leveransen går til felleslageret');
 });
 
+test('landsbyen får korte vedlikeholdsbesøk og Utforskertrang sender én innbygger ut og hjem', () => {
+  const s = settledGame();
+  s.resources.wood = 1200; s.resources.stone = 1200;
+  assert.equal(purchase(s, 'common_fire').ok, true);
+  assert.ok(runUntil(s, () => s.buildings.some((b) => b.type === 'fire' && b.complete), 60));
+  for (let i = 0; i < 3; i++) {
+    assert.equal(purchase(s, 'new_home').ok, true);
+    assert.ok(runUntil(s, () => s.buildings.every((b) => b.complete), 120));
+  }
+  assert.equal(purchase(s, 'shared_storage').ok, true);
+  assert.ok(runUntil(s, () => s.buildings.some((b) => b.type === 'storage' && b.complete), 120));
+  assert.equal(purchase(s, 'organized_labor').ok, true);
+  assert.equal(purchase(s, 'village_hearth').ok, true);
+  assert.ok(runUntil(s, () => s.milestones.first_village != null, 120));
+  step(s);
+  assert.equal(upgradeStatus(s, upgradeById('explorer_urge')), 'available');
+  assert.equal(purchase(s, 'explorer_urge').ok, true);
+  assert.ok(runUntil(s, () => s.humans.some((h) => h.state === 'toExplore' || h.state === 'explore'), 120), 'en innbygger drar ut');
+  assert.equal(s.humans.filter((h) => ['toExplore', 'explore', 'returning'].includes(h.state)).length, 1, 'bare én utforsker om gangen');
+  assert.ok(s.milestones.first_paths != null, 'den nye milepælen presenteres');
+  assert.ok(runUntil(s, () => s.exploration.activeId == null, 120), 'utforskeren vender tilbake');
+  assert.ok(s.humans.some((h) => h.state === 'maintain' || h.state === 'toMaintain') || s.humans.every((h) => h.deliveries > 0), 'landsbyen fortsetter daglig rytme uten arbeidsordre');
+});
+
 test('samme seed gir identisk verden og forløp (determinisme)', () => {
   const a = settledGame(), b = settledGame();
   advance(a, 90); advance(b, 90);

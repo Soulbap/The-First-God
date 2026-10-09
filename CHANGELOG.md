@@ -32,6 +32,17 @@ Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på ve
 ## [Unreleased]
 
 ### Added
+- **GAMEPLAY-03 · levende landsby** (`src/sim/humans.js`, `src/data/balance.js`, `src/render/people.js`): Leveringer og byggearbeid skaper sterkere slitasje enn tilfeldig gange, mens menneskene etter ferdig landsbyildsted veksler mellom produktivt arbeid, korte sosiale pauser og små vedlikeholdsbesøk ved hjem, lager og ildsted. Arbeid på uferdige bygg beholder prioritet; spilleren får ingen arbeidsordre eller plassering. (Kontroll: målrettet simuleringsflyt.)
+- **GAMEPLAY-03 · Utforskertrang** (`src/data/upgrades.js`, `src/sim/economy.js`, `src/sim/world.js`): En valgfri, datadrevet innsikt etter «Den første landsbyen» slipper én autonom utforsker ut på tørt, tilgjengelig terreng og tilbake igjen. «De første stiene» viser den eksisterende ikke-blokkerende milepælspresentasjonen; ingen ny ressurs, kartoppdagelse, bosetting eller zoomnivå er lagt til.
+
+### Tests
+- **GAMEPLAY-03** (`tests/genesis.test.js`): ny deterministisk flyt dekker landsbyens vedlikeholdsrytme, låsing/opplåsing av Utforskertrang, én utforsker om gangen, retur og milepæl. (Kontroll: `npm test` 38/38 bestått.)
+
+### Docs
+- `GAME_DESIGN.md`: dokumenterer GAMEPLAY-03 som en avgrenset, observerbar vekstetappe og markerer utforskningens strenge grense mot neste fase.
+- `docs/gameplay-03/REPORT.md` og seks deterministiske Canvas-bilder dokumenterer start, leir, vekst, daglig landsbyliv, områdeoversikt og utforskning. `tools/capture-gui.mjs` kan gjenta dem med `GAMEPLAY_03=1`. (Kontroll: Edge-røykprøve 33/33, ingen konsollfeil.)
+
+### Added
 - **GAMEPLAY-02 · fra leir til landsby** (`src/data/upgrades.js`, `src/sim/`, `src/render/`): Felles lager, Ordnet arbeid og Landsbyildsted gir én komplett, menybasert vekstetappe. Menneskene bygger selv, leverer nå til ferdig lager og samles ved ildstedet. De nye byggene har egne painterly silhuetter og synlige byggetrinn; eksisterende slitasje og materialspor følger aktiviteten. (Kontroll: `npm test` 37/37.)
 - **GAMEPLAY-02 · første landsby** (`src/data/upgrades.js`, `src/main.js`, `src/ui/`): Milepælen «Den første landsbyen» krever fire hjem, åtte mennesker, lager og ildsted. Den viser en ikke-blokkerende norsk melding og et områdeutsnitt av hele bosettingen; redusert bevegelse respekteres. Ragnarok og den seedede startverdenen er uendret. (Kontroll: målrettet simuleringsflyt og eksisterende Ragnarok-test.)
 - **GAMEPLAY-02 · skjermbilder og rapport** (`docs/gameplay-02/`, `tools/capture-gui.mjs`): seks deterministiske nettleserscener dekker start, bebodd leir, bygging, voksende bosetting, landsbymilepæl og bredt landsbyutsnitt.

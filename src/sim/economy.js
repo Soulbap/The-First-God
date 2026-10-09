@@ -15,6 +15,7 @@ export function requirementMet(state, req) {
   if (req.upgrade) return upgradeCount(state, req.upgrade) > 0;
   if (req.built) return builtCount(state, req.built) > 0;
   if (req.builtCount) return builtCount(state, req.builtCount.types) >= req.builtCount.n;
+  if (req.milestone) return state.milestones[req.milestone] != null;
   if (req.people) return state.humans.length >= req.people;
   if (req.gathered) return state.totals.wood + state.totals.stone >= req.gathered;
   if (req.noPending) return !state.buildings.some((b) => b.type === req.noPending && !b.complete);
@@ -61,6 +62,9 @@ function applyAction(state, def, a) {
   else if (a.type === 'modify') {
     if (a.mult) state.modifiers[a.key] *= a.mult;
     if (a.add) state.modifiers[a.key] += a.add;
+  } else if (a.type === 'enableExploration') {
+    state.modifiers.exploration = true;
+    state.exploration.nextAt = state.time + a.afterSeconds;
   }
 }
 

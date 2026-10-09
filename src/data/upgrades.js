@@ -105,6 +105,19 @@ export const UPGRADES = [
     world: 'En steinsatt ildplass med sitteplasser samler folk mellom arbeid og bønn.',
     actions: [{ type: 'construct', building: 'hearth' }],
   },
+  {
+    id: 'explorer_urge',
+    name: 'Utforskertrang',
+    category: 'liv',
+    icon: 'explore',
+    discover: [{ milestone: 'first_village' }],
+    cost: { wood: 64, stone: 44 },
+    requires: [{ milestone: 'first_village' }],
+    requireText: 'Krever Den første landsbyen',
+    effect: 'Én innbygger følger av og til sporene forbi den nære skogen.',
+    world: 'En enslig vandrer drar ut fra landsbyen og kommer tilbake med nye veier i tankene.',
+    actions: [{ type: 'enableExploration', afterSeconds: 5 }],
+  },
 ];
 
 export const MILESTONES = [
@@ -128,6 +141,12 @@ export const MILESTONES = [
       { people: 8 },
     ] },
     unlock: 'villageView',
+  },
+  {
+    id: 'first_paths',
+    title: 'De første stiene',
+    text: 'Folkets fotspor strekker seg forbi leiren. Verden er større enn hjemmet deres.',
+    when: { upgrade: 'explorer_urge' },
   },
 ];
 

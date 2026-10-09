@@ -286,6 +286,13 @@ Prototypen finnes og er spillbar. Denne seksjonen beskriver hva som er bygget og
 - **Den første landsbyen** oppnås av faktisk utvikling: fire hjem (inkludert første ly), minst åtte mennesker, ferdig lager og ferdig ildsted. Den gir en kort norsk milepælsmelding og rolig områdezoom uten å stanse simuleringen. Redusert bevegelse hopper over den ikke-essensielle kameraglidningen.
 - Åpent: hva landsbyen åpner etter Genesis-01-spilltesten. Denne iterasjonen viser bare at neste vekstnivå finnes; den legger ikke til byfase, produksjonskjeder eller nye ressurser.
 
+### GAMEPLAY-03 — den levende landsbyen (bekreftet implementasjon)
+
+- Leveranser, byggereiser og returer sliter bakken mer enn tilfeldig gange. De samme, faktiske reisene bygger gradvis opp smale, ujevne jordspor; ildsted, lager og hjem har fortsatt bare diskret brukt mark rundt inngangene.
+- Etter at lager og landsbyildsted står, veksler menneskene mellom produktive oppgaver, korte hvil ved ilden og korte vedlikeholdsbesøk ved hjem, lager eller ildsted. Uferdig bygging har alltid prioritet, og ingen arbeidsordre gis av spilleren.
+- **Utforskertrang** er en valgfri innsikt etter **Den første landsbyen**. Én ledig innbygger går av og til ut på tilgjengelig terreng, blir kort borte og vender tilbake; den lette slitasjen gjør de første utgående sporene synlige. Dette utløser **De første stiene**.
+- Avgrensning: Utforskning avdekker ikke kart, gir ingen ny ressurs, oppretter ingen ny bosetting og tilfører ingen zoomnivå. Valget er en reversibel bro mot videre utvidelse.
+
 ### Spillflyt slik den er bygget
 
 1. Spilleren klikker på bjørka og steinen (og andre trær/steiner) for trevirke og stein.
@@ -294,6 +301,7 @@ Prototypen finnes og er spillbar. Denne seksjonen beskriver hva som er bygget og
 4. **Felles ild** (15/10) og **Hendene husker** (20/14): menneskene bygger et bål, hviler og ber der (PP); sanking blir raskere og børene større.
 5. **Nytt hjem** (30/20, ×1,45 per kjøp, maks 3): menneskene bygger et rundhus; to nye mennesker vandrer inn når det står.
 6. Milepælen **Sammenhengende bosetting** (bål + to hjem) låser opp områdezoom og glir kameraet ut over samme verden.
+7. Etter **Den første landsbyen** kan spilleren velge **Utforskertrang** (64 trevirke, 44 stein). En autonom utforsker går periodisk utenfor bosettingen og vender hjem; milepælen **De første stiene** markerer retningen videre.
 
 ### Antakelser — åpne
 

@@ -28,6 +28,9 @@ export const BALANCE = {
     prayerPP: 1,
     idleSeconds: [1.5, 3.5],
     villageRestEveryDeliveries: 2,
+    maintenanceSeconds: [2.5, 5],
+    explorationSeconds: [5, 9],
+    explorationCooldown: 42,
   },
   building: {
     shelter: { radius: 26, work: 16, divine: true, minRing: 60 },
@@ -38,5 +41,5 @@ export const BALANCE = {
   },
   settlement: { clearRadius: 150 },
   stats: { productionWindow: 60 },
-  wear: { cell: 12, perSecondWalking: 0.22, decayPerSecond: 0.0009 },
+  wear: { cell: 12, perSecondWalking: 0.22, transportMultiplier: 1.45, explorationMultiplier: 0.48, decayPerSecond: 0.0009 },
 };

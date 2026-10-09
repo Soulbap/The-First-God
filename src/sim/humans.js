@@ -45,7 +45,9 @@ function moveTo(state, h, dt) {
   h.x += (dx / d) * stepLen;
   h.y += (dy / d) * stepLen;
   h.walk += stepLen;
-  addWear(state, h.x, h.y, B.wear.perSecondWalking * dt);
+  const traffic = h.state === 'toStore' || h.state === 'toSite' || h.state === 'returning'
+    ? B.wear.transportMultiplier : h.state === 'toExplore' ? B.wear.explorationMultiplier : 1;
+  addWear(state, h.x, h.y, B.wear.perSecondWalking * traffic * dt);
   return false;
 }
 
@@ -79,6 +81,46 @@ function goStore(state, h) {
   h.ty = store.y + (store.type === 'storage' ? store.radius * 0.52 : 10) + range(state.rng, 2, 12);
 }
 
+function completedHomes(state) {
+  return state.buildings.filter((b) => b.complete && (b.type === 'shelter' || b.type === 'hut'));
+}
+
+function goMaintenance(state, h) {
+  const homes = completedHomes(state);
+  const choices = [deliveryPoint(state), ...homes, hearthOf(state) || fireOf(state)].filter(Boolean);
+  if (!choices.length) return false;
+  const target = choices[(h.id + h.deliveries) % choices.length];
+  h.targetId = target.id || null;
+  h.tx = target.x + range(state.rng, -target.radius * 0.45, target.radius * 0.45);
+  h.ty = target.y + target.radius * 0.52 + range(state.rng, 3, 10);
+  h.state = 'toMaintain';
+  return true;
+}
+
+function explorationTarget(state) {
+  const C = state.settlement.center;
+  for (let tries = 0; tries < 10; tries++) {
+    const a = range(state.rng, -Math.PI, Math.PI);
+    const d = range(state.rng, 390, 610);
+    const x = C.x + Math.cos(a) * d, y = C.y + Math.sin(a) * d * 0.72;
+    const pond = state.world.pond;
+    const dry = ((x - pond.x) / (pond.rx + 35)) ** 2 + ((y - pond.y) / (pond.ry + 35)) ** 2 >= 1;
+    if (x > 90 && y > 90 && x < state.world.width - 90 && y < state.world.height - 90 && dry) return { x, y };
+  }
+  return { x: C.x + 420, y: C.y - 190 };
+}
+
+function maybeExplore(state, h) {
+  if (!state.modifiers.exploration || state.time < state.exploration.nextAt || state.exploration.activeId != null) return false;
+  if (state.buildings.some((b) => !b.complete) || h.carry.amount) return false;
+  const target = explorationTarget(state);
+  state.exploration.activeId = h.id;
+  state.exploration.nextAt = state.time + B.human.explorationCooldown;
+  h.exploreTarget = target;
+  h.tx = target.x; h.ty = target.y; h.state = 'toExplore';
+  return true;
+}
+
 function chooseTask(state, h) {
   // 1) Byggeplasser som trenger hender.
   const site = state.buildings.find((b) => !b.complete && !b.divine && b.builders.length < H.maxBuilders);
@@ -91,6 +133,7 @@ function chooseTask(state, h) {
     h.state = 'toSite';
     return;
   }
+  if (maybeExplore(state, h)) return;
   // 2) Sanking.
   const kind = chooseResourceKind(state);
   const n = findNode(state, h, kind) || findNode(state, h, kind === 'tree' ? 'rock' : 'tree');
@@ -122,6 +165,7 @@ function deliver(state, h) {
     h.deliveries++;
   }
   h.carry = { type: null, amount: 0 };
+  if (!state.buildings.some((b) => !b.complete) && hearthOf(state) && h.deliveries % 3 === 1 && goMaintenance(state, h)) return;
   const fire = hearthOf(state) || fireOf(state);
   const every = hearthOf(state) ? H.villageRestEveryDeliveries : H.restEveryDeliveries;
   if (fire && h.deliveries > 0 && h.deliveries % every === 0) {
@@ -200,6 +244,27 @@ export function stepHuman(state, h, dt) {
       }
       break;
     }
+    case 'toMaintain':
+      if (moveTo(state, h, dt)) { h.state = 'maintain'; h.timer = range(state.rng, B.human.maintenanceSeconds[0], B.human.maintenanceSeconds[1]); }
+      break;
+    case 'maintain':
+      h.timer -= dt;
+      if (h.timer <= 0) { release(state, h); goIdle(state, h, [0.3, 0.9]); }
+      break;
+    case 'toExplore':
+      if (moveTo(state, h, dt)) { h.state = 'explore'; h.timer = range(state.rng, B.human.explorationSeconds[0], B.human.explorationSeconds[1]); }
+      break;
+    case 'explore':
+      h.timer -= dt;
+      if (h.timer <= 0) {
+        const C = state.settlement.center;
+        h.tx = C.x + range(state.rng, -24, 24); h.ty = C.y + range(state.rng, 8, 34);
+        h.state = 'returning';
+      }
+      break;
+    case 'returning':
+      if (moveTo(state, h, dt)) { state.exploration.activeId = null; h.exploreTarget = null; goIdle(state, h, [0.4, 1.1]); }
+      break;
     case 'rest':
       h.timer -= dt;
       if (h.timer <= 0) {
