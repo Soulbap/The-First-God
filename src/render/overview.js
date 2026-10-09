@@ -82,7 +82,8 @@ function bakeBackground(state, layout, R, dpr) {
 
 export function drawOverview(ctx, R, state, { sw, sh, dpr, time, hoverId }) {
   const layout = overviewLayout(state, sw, sh);
-  const sig = overviewSignature(state, layout) + '|' + dpr;
+  // Bakgrunnen (inkl. hjemmeregionens slitasje) bakes på nytt når kartet endres og ellers hvert 15. sekund.
+  const sig = overviewSignature(state, layout) + '|' + dpr + '|' + Math.floor(time / 15);
   if (!R.overviewBg || R.overviewSig !== sig) { R.overviewBg = bakeBackground(state, layout, R, dpr); R.overviewSig = sig; }
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.drawImage(R.overviewBg, 0, 0);
