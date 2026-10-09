@@ -51,7 +51,7 @@ export function stepNature(state, dt) {
       }
     } else if (n.stone < n.maxStone) {
       n.regenTimer += dt;
-      if (n.regenTimer >= B.rock.regenSeconds) { n.regenTimer = 0; n.stone++; }
+      if (n.regenTimer >= B.rock.regenSeconds * (state.modifiers.rockRegen || 1)) { n.regenTimer = 0; n.stone++; }
     } else {
       n.regenTimer = 0;
     }

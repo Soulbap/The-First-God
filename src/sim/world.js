@@ -65,7 +65,7 @@ export function createWorld(seed = 20261009) {
     settlements: [{ id: 'first', name: 'Den første landsbyen', x: C.x, y: C.y, state: 'active', population: [], kind: 'capital', projectsDone: 0, role: 'Skogbygd', stage: 'Leir' }],
     expansion: { enabled: false, site: null, discovered: false, founding: false, founded: false, founders: [] },
     region: { enabled: false, populationUnlocked: false, deliveries: [], reserved: { wood: 0, stone: 0, food: 0, planks: 0, cutstone: 0 }, completedDeliveries: 0, completedProjects: 0, projects: {}, nextPopulationAt: Infinity },
-    realm: { autoFounding: false, limit: 2, party: null, lastFoundedAt: -Infinity, nextCheckAt: Infinity, foundedCount: 0 },
+    realm: { autoFounding: false, limit: 2, party: null, lastFoundedAt: -Infinity, nextCheckAt: Infinity, foundedCount: 0, siteCache: null },
     network: { routes: {}, trips: 0 },
     globe: createGlobe(seed),
     civilization: { foodUnlocked: false, exchangeUnlocked: false, nextFoodAt: Infinity, nextPopulationAt: Infinity, foodHarvests: 0, exchangeDeliveries: 0 },
@@ -74,7 +74,7 @@ export function createWorld(seed = 20261009) {
     totals: { wood: 0, stone: 0, food: 0, planks: 0, cutstone: 0, knowledge: 0, pp: 0, manualClicks: 0 },
     upgrades: {},
     discovered: {}, // innsikt-id → spilltid da den ble synlig (se discovery.js)
-    modifiers: { gatherSpeed: 1, carry: 0, buildSpeed: 1, exploration: false, craftSpeed: 1, knowledge: 1, foodBonus: 0, townhouseBonus: 0, regionalCarry: 0 },
+    modifiers: { gatherSpeed: 1, carry: 0, buildSpeed: 1, exploration: false, craftSpeed: 1, knowledge: 1, foodBonus: 0, townhouseBonus: 0, regionalCarry: 0, rockRegen: 1 },
     nodes: [], buildings: [], humans: [],
     milestones: {}, unlocks: { zoomArea: false, villageView: false },
     timers: { seed: B.tree.seedIntervalSeconds, wearDecay: 0, roles: 0 },

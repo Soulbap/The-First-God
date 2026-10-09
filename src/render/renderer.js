@@ -517,7 +517,7 @@ export function createRenderer(canvas) {
         if (S.id !== 'first' && S.state === 'founding' && !state.buildings.some((q) => q.settlementId === S.id)) continue;
         const isFirst = S.id === 'first';
         const s = worldToScreen(cam, S.x, S.y - (isFirst ? 120 : 90));
-        const name = isFirst ? (state.milestones.first_village != null ? 'Den første landsbyen' : 'Den første boplassen') : S.name;
+        const name = isFirst ? (['By', 'Storby'].includes(S.stage) ? 'Den første byen' : state.milestones.first_village != null ? 'Den første landsbyen' : 'Den første boplassen') : S.name;
         const homes = state.buildings.filter((q) => q.complete && q.settlementId === S.id && (q.type === 'hut' || q.type === 'shelter' || q.type === 'townhouse')).length;
         ctx.font = 'italic 15px Georgia, "Palatino Linotype", serif';
         ctx.fillStyle = 'rgba(16,12,8,0.55)'; ctx.fillText(name, s.x + 1, s.y + 1);

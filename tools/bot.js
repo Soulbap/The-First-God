@@ -27,13 +27,14 @@ export function makeBot() {
   };
 }
 
-// Spill fram til en milepæl er nådd (eller tiden går ut). Returnerer sann når milepælen ble nådd.
-export function playTo(s, bot, milestone, maxSeconds = 14400) {
+// Spill fram til en milepæl (id) eller en betingelse (funksjon) er nådd, eller tiden går ut. Sann når målet ble nådd.
+export function playTo(s, bot, goal, maxSeconds = 14400) {
   const end = s.time + maxSeconds;
-  while (s.milestones[milestone] == null && s.time < end) {
+  const reachedGoal = typeof goal === 'function' ? () => !!goal(s) : () => s.milestones[goal] != null;
+  while (!reachedGoal() && s.time < end) {
     step(s);
     if (s.events.length > 256) s.events = s.events.filter((e) => e.type === 'milestone');
     bot.act(s);
   }
-  return s.milestones[milestone] != null;
+  return reachedGoal();
 }

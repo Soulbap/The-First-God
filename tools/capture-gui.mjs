@@ -100,7 +100,21 @@ const GAMEPLAY_06_SCENES = [
   { name: '05-first-town', w: 1920, h: 1080, js: `village();T.buy('explorer_urge');until(()=>T.state.milestones.first_paths!=null);T.buy('new_horizons');until(()=>T.state.expansion.discovered);T.buy('founding');until(()=>T.state.expansion.founded);set(3000,3000);T.buy('growing_kin');T.buy('between_hearths');until(()=>T.state.milestones.living_region!=null,500);T.buy('seed_promise');until(()=>T.state.buildings.some(b=>b.type==='field'&&b.complete),180);until(()=>T.state.civilization.foodHarvests>=2,80);set(3000,3000);T.buy('division_labor');T.buy('regional_exchange');until(()=>T.state.milestones.first_town!=null,500);camp();quiet();close();settle(1);` },
   { name: '06-civilization-region', w: 1920, h: 1080, js: `village();T.buy('explorer_urge');until(()=>T.state.milestones.first_paths!=null);T.buy('new_horizons');until(()=>T.state.expansion.discovered);T.buy('founding');until(()=>T.state.expansion.founded);set(3000,3000);T.buy('growing_kin');T.buy('between_hearths');until(()=>T.state.milestones.living_region!=null,500);T.buy('seed_promise');until(()=>T.state.buildings.some(b=>b.type==='field'&&b.complete),180);until(()=>T.state.civilization.foodHarvests>=2,80);set(3000,3000);T.buy('division_labor');T.buy('regional_exchange');until(()=>T.state.region.completedProjects>=5,600);const S=T.state.expansion.site;T.view((C.x+S.x)/2,(C.y+S.y)/2,2250);quiet();close();settle(1);` },
 ];
-const SCENES = process.env.GAMEPLAY_06 === '1' ? GAMEPLAY_06_SCENES : process.env.GAMEPLAY_05 === '1' ? GAMEPLAY_05_SCENES : process.env.GAMEPLAY_04 === '1' ? GAMEPLAY_04_SCENES : process.env.GAMEPLAY_03 === '1' ? GAMEPLAY_03_SCENES : process.env.GAMEPLAY_02 === '1' ? GAMEPLAY_02_SCENES : DEFAULT_SCENES;
+
+// GAMEPLAY-07..10: ekte spilling med boten (tools/bot.js) frem til hvert stadium — ingen snarveier.
+const BOT = `const { makeBot, playTo } = await import('/tools/bot.js'); const bot = makeBot(); const to = (g) => playTo(T.state, bot, g, 14400); const clean = () => { T.state.events.length = 0; T.hud.reset(); }; const calm = () => { T.tick(0.2); clean(); T.tick(0.3); close(); T.cancelGlide(); }; const first = (t) => T.state.buildings.find((b) => b.type === t && b.complete);`;
+const GAMEPLAY_07_10_SCENES = [
+  { name: '01-developed-city', w: 1920, h: 1080, js: `${BOT} to('city_rises'); T.advance(60); calm(); T.view(C.x, C.y + 10, 820); close(); settle(1.5);` },
+  { name: '02-refined-production', w: 1920, h: 1080, js: `${BOT} to('city_rises'); T.advance(90); const m = first('sawmill'); calm(); T.view(m.x + 20, m.y - 10, 440); close(); settle(2);` },
+  { name: '03-civic-infrastructure', w: 1920, h: 1080, js: `${BOT} to('age_of_knowledge'); T.advance(40); const h = first('hall'); calm(); T.view(h.x + 30, h.y - 10, 560); close(); settle(2);` },
+  { name: '04-knowledge-and-realm-panel', w: 1920, h: 1080, js: `${BOT} to('age_of_knowledge'); T.advance(40); calm(); T.view(C.x, C.y - 20, 1000); open('realm'); settle(1.5);` },
+  { name: '05-regional-settlement-network', w: 1920, h: 1080, js: `${BOT} to('connected_realm'); T.advance(90); calm(); T.view(C.x + 40, C.y - 20, 2300); close(); settle(2);` },
+  { name: '06-overview-network', w: 1920, h: 1080, js: `${BOT} to('connected_realm'); T.advance(40); calm(); T.tick(6); close(); T.overview(true); settle(1.5);` },
+  { name: '07-beyond-start-exploration', w: 1920, h: 1080, js: `${BOT} to('connected_realm'); to((s) => s.globe.mission && s.globe.mission.phase === 'away' && s.globe.stats.discovered >= 3); calm(); T.tick(6); T.overview(true); open('realm'); settle(1.5);` },
+  { name: '08-caravan-from-outpost', w: 1920, h: 1080, js: `${BOT} to('connected_realm'); to((s) => s.globe.stats.outposts >= 1 && s.globe.caravans.some((c) => Math.hypot(c.x - s.stockpile.x, c.y - s.stockpile.y) < 330)); const c = T.state.globe.caravans.find((q) => Math.hypot(q.x - T.state.stockpile.x, q.y - T.state.stockpile.y) < 330); calm(); T.view(c.x, c.y, 700); settle(1.0);` },
+  { name: '09-final-milestone', w: 1920, h: 1080, js: `${BOT} to('first_world_civilization'); T.cancelGlide(); T.state.events = T.state.events.filter((e) => e.id === 'first_world_civilization'); T.hud.reset(); T.tick(6); T.hud.openPanel('insights'); T.tick(0.3); T.hud.openPanel(null); T.overview(true); settle(1);` },
+];
+const SCENES = process.env.GAMEPLAY_07_10 === '1' ? GAMEPLAY_07_10_SCENES : process.env.GAMEPLAY_06 === '1' ? GAMEPLAY_06_SCENES : process.env.GAMEPLAY_05 === '1' ? GAMEPLAY_05_SCENES : process.env.GAMEPLAY_04 === '1' ? GAMEPLAY_04_SCENES : process.env.GAMEPLAY_03 === '1' ? GAMEPLAY_03_SCENES : process.env.GAMEPLAY_02 === '1' ? GAMEPLAY_02_SCENES : DEFAULT_SCENES;
 const ACTIVE_SCENES = process.env.CAPTURE_SCENES
   ? SCENES.filter((s) => process.env.CAPTURE_SCENES.split(',').some((name) => s.name.startsWith(name.trim())))
   : SCENES;
@@ -178,6 +192,15 @@ try {
   }
   const smoke = await evaluate(cdp, `(async () => await (await import('/tools/gui-smoke.js')).run())()`);
   console.log(`GUI-røykprøve: ${smoke.pass}/${smoke.results.length}; feil: ${smoke.fail.join(', ') || 'ingen'}`);
+  if (process.env.REALM_SMOKE === '1') {
+    await cdp.send('Page.navigate', { url: `${base}/?debug` });
+    for (let i = 0; i < 300; i++) {
+      if (await evaluate(cdp, `!!window.TFG`).catch(() => false)) break;
+      await sleep(100);
+    }
+    const realm = await evaluate(cdp, `(async () => await (await import('/tools/gui-smoke-realm.js')).run())()`);
+    console.log(`Rike-røykprøve: ${realm.pass}/${realm.results.length}; feil: ${realm.fail.join(', ') || 'ingen'}`);
+  }
   const renderStats = await evaluate(cdp, `({ frameMs: window.TFG.renderStats.frameMs, ecologyRefreshMs: window.TFG.renderStats.ecologyRefreshMs })`);
   console.log(`Rendermåling (nåværende scene): ${renderStats.frameMs.toFixed(2)} ms/bilde; miljøoppdatering ${renderStats.ecologyRefreshMs.toFixed(2)} ms.`);
   cdp.close();

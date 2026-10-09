@@ -75,6 +75,8 @@ export async function run() {
 
   // Pekerhendelser lekker ikke gjennom panelet til verden.
   navIns.click(); settle();
+  // Panelet glir inn med en CSS-overgang i sanntid; treffsjekken må vente til den er ferdig (ellers ligger panelet fortsatt utenfor skjermen).
+  await new Promise((res) => setTimeout(res, 450));
   const r = $('#drawer').getBoundingClientRect();
   const hit = document.elementFromPoint(r.left + r.width / 2, r.top + 40);
   ok('panelet fanger pekeren (ikke canvas)', hit && hit.closest('#drawer'));

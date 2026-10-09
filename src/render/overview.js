@@ -184,7 +184,7 @@ export function drawOverview(ctx, R, state, { sw, sh, dpr, time, hoverId }) {
   ctx.fillStyle = '#f0e2b8'; ctx.fillText(stage.name, sw / 2, 88);
   ctx.font = `12px ${FONT_UI}`; ctx.fillStyle = 'rgba(230,222,200,0.8)';
   const disc = G.regions.filter((q) => !q.home && q.state !== 'ukjent').length;
-  ctx.fillText(`${state.settlements.length} bosettinger · ${disc} av ${G.regions.length - 1} land oppdaget · ${G.stats.outposts} utposter`, sw / 2, 82);
+  ctx.fillText(`${state.settlements.length} bosettinger · ${disc} av ${G.regions.length - 1} land oppdaget · ${G.stats.outposts} utposter`, sw / 2, 108);
   ctx.fillStyle = 'rgba(230,222,200,0.6)';
   ctx.fillText('Rull inn eller velg Område for å gå tilbake til landskapet', sw / 2, sh - 14 - 74);
 

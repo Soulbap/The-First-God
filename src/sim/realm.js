@@ -57,6 +57,13 @@ export function findSettlementSite(state, { ignore = [] } = {}) {
 
 const idleMembers = (state) => state.humans.filter((h) => h.settlementId === 'first' && (h.state === 'idle' || h.state === 'wander') && !h.carry.amount && !h.away && h.partyId == null);
 
+// Tomtesøk er ikke gratis; resultatet gjenbrukes noen sekunder (panelet spør ofte, simuleringen sjelden).
+function cachedSite(state) {
+  const Rm = state.realm;
+  if (!Rm.siteCache || state.time - Rm.siteCache.t > 10) Rm.siteCache = { t: state.time, site: findSettlementSite(state) };
+  return Rm.siteCache.site;
+}
+
 // Hva mangler før neste bosetting kan grunnlegges? Brukes både av simuleringen og av Rike-panelet.
 export function foundingReadiness(state) {
   const Rm = state.realm, R = B.realm, first = settlementById(state, 'first');
@@ -70,6 +77,7 @@ export function foundingReadiness(state) {
     { id: 'materials', label: 'Byggematerialer til reisen', ok: state.resources.wood >= R.supplies.wood && state.resources.stone >= R.supplies.stone },
     { id: 'hands', label: 'Ledige hender', ok: idleMembers(state).length >= R.party },
     { id: 'idle', label: 'Ingen følge underveis', ok: !Rm.party },
+    { id: 'site', label: 'Egnet sted i landskapet', ok: state.settlements.length >= Rm.limit || !!cachedSite(state) },
   ];
   return checks;
 }

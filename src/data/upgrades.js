@@ -191,11 +191,11 @@ export const UPGRADES = [
   },
   {
     id: 'stonecutter_up', name: 'Steinhoggeri', category: 'bosetning', icon: 'mason',
-    discover: [{ built: 'sawmill' }], cost: { wood: 80, stone: 90, planks: 4 },
+    discover: [{ built: 'sawmill' }], cost: { wood: 80, stone: 70, planks: 4 },
     requires: [{ built: 'sawmill' }, { noPending: 'mason' }], requireText: 'Sagbruket må stå ferdig',
-    effect: 'Steinhoggerne hugger stein til jevne blokker som bygger bedre hus.',
+    effect: 'Steinhoggerne hugger stein til jevne blokker og åpner bruddene bedre: stein vokser tilbake 40 % raskere.',
     world: 'Blokker og hammerslag: tilhugget stein stables i rekker ved hoggeriet.',
-    actions: [{ type: 'construct', building: 'mason' }],
+    actions: [{ type: 'construct', building: 'mason' }, { type: 'modify', key: 'rockRegen', mult: 0.6 }],
   },
   {
     id: 'townhouses', name: 'Bolighus', category: 'bosetning', icon: 'townhouse',
@@ -207,7 +207,7 @@ export const UPGRADES = [
   },
   {
     id: 'town_square', name: 'Torg', category: 'bosetning', icon: 'market',
-    discover: [{ built: 'townhouse' }], cost: { wood: 70, stone: 60, planks: 14, cutstone: 10 },
+    discover: [{ built: 'townhouse' }], cost: { wood: 70, stone: 45, planks: 14, cutstone: 10 },
     requires: [{ built: 'townhouse' }, { noPending: 'market' }], requireText: 'Krever et ferdig bolighus',
     effect: 'Torget samler handel og møter. Bæreevnen på regionale leveranser øker med 2.',
     world: 'Stein legges i en åpen plass med boder og lass. Her bytter folk varer og nyheter.',
@@ -235,13 +235,13 @@ export const UPGRADES = [
     id: 'construction_methods', name: 'Byggemetoder', category: 'kunnskap', icon: 'townhouse',
     discover: [{ upgrade: 'organized_craft' }], cost: { knowledge: 16, planks: 10, cutstone: 6 },
     requires: [{ upgrade: 'organized_craft' }], requireText: 'Krever Organisert håndverk',
-    effect: 'Bygging 25 % raskere. Bolighus rommer ett menneske mer.',
+    effect: 'Bygging 25 % raskere, bolighus rommer ett menneske mer og bruddene gir 20 % raskere stein.',
     world: 'Tømmermennene bruker mål og lodd. Husene reises raskere og rommer mer.',
-    actions: [{ type: 'modify', key: 'buildSpeed', mult: 1.25 }, { type: 'modify', key: 'townhouseBonus', add: 1 }],
+    actions: [{ type: 'modify', key: 'buildSpeed', mult: 1.25 }, { type: 'modify', key: 'townhouseBonus', add: 1 }, { type: 'modify', key: 'rockRegen', mult: 0.8 }],
   },
   {
     id: 'knowledge_hall', name: 'Kunnskapshall', category: 'bosetning', icon: 'hall',
-    discover: [{ upgrade: 'construction_methods' }], cost: { wood: 120, stone: 80, planks: 16, cutstone: 12, knowledge: 10 },
+    discover: [{ upgrade: 'construction_methods' }], cost: { wood: 120, stone: 60, planks: 16, cutstone: 12, knowledge: 10 },
     requires: [{ upgrade: 'construction_methods' }, { noPending: 'hall' }], requireText: 'Krever Byggemetoder',
     effect: 'Et sivilt bygg der folk møtes og lærer. Gir jevn kunnskap og gjør byen til et kunnskapssete.',
     world: 'En lang hall av tømmer og stein reises sentralt. Rundt den samles folk for å lære og fortelle.',
@@ -267,7 +267,7 @@ export const UPGRADES = [
   // ---------- GAMEPLAY-09: Det voksende riket ----------
   {
     id: 'new_hearths', name: 'Flere ildsteder', category: 'rike', icon: 'hut',
-    discover: [{ upgrade: 'civic_order' }], cost: { wood: 140, stone: 100, planks: 16, food: 16, knowledge: 12 },
+    discover: [{ upgrade: 'civic_order' }], cost: { wood: 140, stone: 70, planks: 16, food: 16, knowledge: 12 },
     requires: [{ upgrade: 'civic_order' }, { milestone: 'age_of_knowledge' }], requireText: 'Krever Kunnskapens tidsalder',
     effect: 'Når maten, folket og materialene er der, drar nye følger av sted og grunnlegger bosettinger — opptil fire.',
     world: 'Små følger bryter opp fra byen og velger selv sted ved skog, stein eller åkerjord.',
@@ -293,7 +293,7 @@ export const UPGRADES = [
   },
   {
     id: 'great_expedition', name: 'Den store ekspedisjonen', category: 'rike', icon: 'compass',
-    discover: [{ regions: 1 }], cost: { wood: 200, stone: 120, planks: 28, food: 30, knowledge: 40 },
+    discover: [{ regions: 1 }], cost: { wood: 200, stone: 90, planks: 28, food: 30, knowledge: 40 },
     requires: [{ regions: 2 }], requireText: 'Krever to oppdagede land',
     effect: 'Nybyggere drar til oppdagede land og reiser utposter som sender varer hjem.',
     world: 'Fullastede følger forlater riket for godt. Senere kommer karavaner tilbake med varer.',

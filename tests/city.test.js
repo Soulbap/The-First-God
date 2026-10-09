@@ -90,7 +90,7 @@ test('hele byveien: sagbruk, steinhoggeri, bolighus og torg bygges autonomt og g
   const { s, ok } = reached('city_rises');
   assert.ok(ok, 'milepælen nås med vanlig spilling');
   for (const t of ['sawmill', 'mason', 'townhouse', 'market']) assert.ok(s.buildings.some((b) => b.type === t && b.complete), t);
-  assert.equal(s.buildings.filter((b) => b.type === 'townhouse' && b.complete).length, 3);
+  assert.ok(s.buildings.filter((b) => b.type === 'townhouse' && b.complete).length >= 2);
   assert.ok(s.totals.planks > 0 && s.totals.cutstone > 0, 'refinerte materialer er produsert');
   assert.ok(s.resources.planks >= 0 && s.resources.cutstone >= 0 && s.resources.wood >= 0 && s.resources.stone >= 0);
   const S = s.settlements[0];

@@ -35,7 +35,7 @@ test('grunnleggelse krever mat, folk, materialer, ledige hender og ro — og for
   assert.ok(['food', 'people', 'materials', 'hands'].every((id) => missing().includes(id)));
   addPeople(s, 'first', 10); s.civilization.foodUnlocked = true; s.civilization.foodHarvests = 5; s.resources.food = 10;
   s.resources.wood = 200; s.resources.stone = 200; s.realm.lastFoundedAt = -999;
-  assert.deepEqual(missing(), [], 'alle forutsetninger oppfylt');
+  assert.deepEqual(missing(), [], 'alle forutsetninger oppfylt (inkl. et egnet sted)');
   s.realm.limit = 2;
   assert.deepEqual(missing(), ['limit'], 'taket på antall bosettinger gjelder');
 });

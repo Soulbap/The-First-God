@@ -234,6 +234,7 @@ setTimeout(() => {
       view: (x, y, w) => { cam.x = x; cam.y = y; cam.w = w; cam.tween = null; },
       setSpeed: (s) => { speed = s; },
       overview: (on) => { setOverview(on); return overview; },
+      cancelGlide: () => { pendingGlide = null; },
       get isOverview() { return overview; },
       hud,
       renderStats: renderer.stats,
