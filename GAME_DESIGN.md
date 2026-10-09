@@ -295,6 +295,7 @@ Prototypen finnes og er spillbar. Denne seksjonen beskriver hva som er bygget og
 - **Ragnarok** er en demonstrasjon: forhåndsvisning, frivillig bekreftelse og samme startverden. PrP-formelen og varig avtrykk er plassholdere; permanente bonuser kan ikke kjøpes ennå.
 - Alle balanseverdier i `src/data/balance.js` og `src/data/upgrades.js` er provisoriske.
 - **Teknisk grunnlag:** vanilla JavaScript + Canvas 2D med prosedyralt malt grafikk og ingen avhengigheter. Pakking som portabel Windows-app (Electron) er ikke gjort.
+- **VISUAL-02 · levende miljølag:** skogbunn og forstyrret jord avledes fra gjeldende trær, bygg og slitasje, og oppdateres høyst hvert tiende spillsekund. Det er bare presentasjon: ressursøkonomi, kollisjon, tomtevalg og menneskenes oppgaver endres ikke.
 
 ### Kjent avstand til visuell målsetting
 

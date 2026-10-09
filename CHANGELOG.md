@@ -32,6 +32,13 @@ Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på ve
 ## [Unreleased]
 
 ### Added
+- **VISUAL-02 · skogstruktur og levende miljø** (`src/sim/world.js`, `src/sim/ecology.js`, `src/render/environment.js`, `src/render/terrain.js`, `src/render/renderer.js`): deterministiske, artsdominerte lunder rammer inn en spillbar, uregelmessig startlysning. Et avledet miljølag leser trær, stubber og bygg og fornyer skogbunn/eksponert jord høyst hvert tiende spillsekund uten å endre spillregler.
+- **VISUAL-02 · kontroll og bilder** (`tests/visual.test.js`, `tools/capture-gui.mjs`, `docs/visual-02/`): to miljø-/plasseringstester, kjørbar Edge-røyktest og ni faste browserbilder. (Kontroll: `npm test` 36/36; GUI-røykprøve 33/33; ingen konsollfeil.)
+
+### Docs
+- `docs/visual-02/REPORT.md`: teknisk avgrensning, bildeoversikt, faktisk nettleserkontroll, begrensninger og anbefaling for visuell gjennomgang.
+
+### Added
 - **GUI-02 · evolusjonsfeedback** (`src/ui/presentation.js`): en liten, deterministisk presentasjonskø samordner oppdagelser, valg og milepæler. Den viser aldri overlappende meldinger, prioriterer milepæler, avviser dubletter, begrenser ventende informasjon og tømmes ved Ragnarok. (Kontroll: 4 nye enhetstester.)
 - **GUI-02 · visuell gjennomgang** (`docs/gui-02/`): faste før/etter-bilder, rapport og dokumentert kontroll av kortlesbarhet ved lyst terreng.
 
