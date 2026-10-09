@@ -57,6 +57,9 @@ Når en utgivelse opprettes, flyttes `Unreleased`-punkter til en datert versjons
 - Feilsøkingskroker ved `?debug` (spole frem, gi ressurser, kjøpe, styre kamera) for skjermbilder og manuell testing.
 - La til prosjektets tre kanoniske Markdown-dokumenter: masterdesigndokument, endringslogg og agentinstruksjoner, slik at videre utvikling har et tydelig felles grunnlag. (Kontroll: innholdsgjennomgang)
 
+### Fixed
+- 2026-10-09: Innsikter-menyen ble først oppdatert ett sekund etter et kjøp, slik at kjøpt kort et øyeblikk fortsatt så kjøpbart ut. Menyen oppdateres nå i neste bilde. (Kontroll: kortet viser «Bygges» i bildet etter kjøp; 12/12 tester bestått)
+
 ### Tests
 - 12 målrettede tester (`npm test`, Node sin innebygde testløper): klikk gir ressurser, uttømming/felling/gjenvekst, unge trær og steinfornyelse, oppgraderingsstatus og kostnadstrekk, byggetrinn, autonom sanking og at vist produksjon stemmer med leveranser, gjenoppretting når mål forsvinner, ingen vranglås uten ressurser, bygg uten overlapp og uten flytting, milepæl → zoom, determinisme, 40 minutters stabilitetskjøring og kameraets koordinat-rundtur/zoom. (Kontroll: 12/12 bestått)
 - Visuell kontroll med skjermbilder i forhåndsvisning: startverden, delvis høstet tre, lavvo under bygging, ferdig ly med første mennesker, menneske som bryter stein på nært hold, utviklet leir med bål og hytte under bygging, områdezoom etter milepæl, utviklet boplass med stier, samt Ragnarok-dialog. Funn som ble rettet underveis: harde skyggeellipser, flekkete skyskygger, glisne bjørkekroner, for sterkt lysdryss, usynlige stier, hytte for nær trekrone.

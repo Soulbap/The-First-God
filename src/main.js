@@ -19,7 +19,7 @@ const hud = createHud({
   onBuy(id) {
     const r = purchase(state, id);
     if (!r.ok && r.reason === 'noSite') hud.toast('Ingen ledig plass', 'Menneskene fant ikke et egnet sted å bygge akkurat nå.');
-    hudTimer = 1;
+    hudTimer = 0; // oppdater menyen straks etter kjøp
   },
   onSpeed(s) { speed = s; if (s > 0) savedSpeed = s; },
   onView(v) { goView(v); },
