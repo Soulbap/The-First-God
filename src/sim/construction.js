@@ -17,10 +17,11 @@ export function siteIsValid(state, type, x, y) {
 }
 
 // Deterministisk søk i ringer rundt leirens hjerte (bålet når det finnes).
-export function findBuildSite(state, type) {
+export function findBuildSite(state, type, settlementId = 'first') {
   const def = B.building[type];
-  const C = state.settlement.center;
-  const fire = state.buildings.find((b) => b.type === 'fire');
+  const home = state.settlements.find((s) => s.id === settlementId);
+  const C = settlementId === 'first' || !home ? state.settlement.center : home;
+  const fire = state.buildings.find((b) => b.type === 'fire' && (b.settlementId || 'first') === settlementId);
   const anchor = type === 'fire' || !fire ? C : fire;
   for (let ring = def.minRing; ring <= 520; ring += 10) {
     const steps = Math.max(12, Math.round(ring / 8));
@@ -35,7 +36,7 @@ export function findBuildSite(state, type) {
 }
 
 export function startConstruction(state, type, { onComplete = null, source = null, site: forcedSite = null, settlementId = 'first' } = {}) {
-  const site = forcedSite || findBuildSite(state, type);
+  const site = forcedSite || findBuildSite(state, type, settlementId);
   if (!site) return null;
   const def = B.building[type];
   const b = {
@@ -43,6 +44,7 @@ export function startConstruction(state, type, { onComplete = null, source = nul
     progress: 0, work: 0, workNeeded: def.work, complete: false, divine: !!def.divine,
     builders: [], onComplete, source, startedAt: state.time, settlementId,
   };
+  if (B.production[type]) { b.cycle = 0; b.active = false; b.idle = null; b.made = 0; }
   state.buildings.push(b);
   state.events.push({ type: 'constructionStarted', id: b.id, buildingType: type, x: b.x, y: b.y });
   return b;
@@ -69,6 +71,15 @@ function completeBuilding(state, b) {
     const fire = { id: state.nextId++, type: 'fire', x: b.x - 34, y: b.y + 18, radius: B.building.fire.radius,
       progress: 1, work: B.building.fire.work, workNeeded: B.building.fire.work, complete: true, divine: false,
       builders: [], source: 'second_fire', startedAt: state.time, settlementId: 'second' };
+    state.buildings.push(fire);
+    stampWear(state, fire.x, fire.y, 16, 0.2);
+  }
+  if (typeof b.source === 'string' && b.source.startsWith('founding:')) {
+    const S = state.settlements.find((q) => q.id === b.settlementId);
+    if (S) S.state = 'active';
+    const fire = { id: state.nextId++, type: 'fire', x: b.x - 34, y: b.y + 18, radius: B.building.fire.radius,
+      progress: 1, work: B.building.fire.work, workNeeded: B.building.fire.work, complete: true, divine: false,
+      builders: [], source: `${b.settlementId}_fire`, startedAt: state.time, settlementId: b.settlementId };
     state.buildings.push(fire);
     stampWear(state, fire.x, fire.y, 16, 0.2);
   }

@@ -8,12 +8,24 @@ import { recordAuto } from './stats.js';
 import { addWear } from './wear.js';
 import { inBounds, inPond, dist } from './world.js';
 import { startConstruction } from './construction.js';
-import { beginDelivery, pickupDelivery, completeDelivery } from './regional.js';
+import { beginDelivery, pickupDelivery, completeDelivery, recordTrip } from './regional.js';
+import { isHome, settlementById } from './settlements.js';
+import { partyArrive, partyTick } from './realm.js';
+import { missionAtEdge, missionHome } from './worldmap.js';
 
 const H = B.human;
 
-export const carryCapacity = (state) => H.carry + state.modifiers.carry;
-export const gatherInterval = (state) => H.gatherSeconds / state.modifiers.gatherSpeed;
+export const carryCapacity = (state, h) => H.carry + state.modifiers.carry + (h && h.settlementId !== 'first' ? state.modifiers.regionalCarry : 0);
+// Rollen gir en målbar fordel: skog- og steinbygder sanker sin egen råvare raskere.
+export function gatherInterval(state, h, kind) {
+  let k = state.modifiers.gatherSpeed;
+  if (h) {
+    const role = settlementById(state, h.settlementId)?.role;
+    if (role === 'Skogbygd' && kind === 'wood') k *= 1.25;
+    else if (role === 'Steinbygd' && kind === 'stone') k *= 1.25;
+  }
+  return H.gatherSeconds / k;
+}
 
 const nodeById = (state, id) => state.nodes.find((n) => n.id === id);
 const buildingById = (state, id) => state.buildings.find((b) => b.id === id);
@@ -56,7 +68,7 @@ function moveTo(state, h, dt) {
   h.x += (dx / d) * stepLen;
   h.y += (dy / d) * stepLen;
   h.walk += stepLen;
-  const traffic = h.state === 'toStore' || h.state === 'toSite' || h.state === 'returning' || h.state === 'toDeliver' || h.state === 'toDeliveryPickup'
+  const traffic = h.state === 'toStore' || h.state === 'toSite' || h.state === 'returning' || h.state === 'toDeliver' || h.state === 'toDeliveryPickup' || h.state === 'toSettle' || h.state === 'toEdge' || h.state === 'expReturn'
     ? B.wear.transportMultiplier : h.state === 'toExplore' ? B.wear.explorationMultiplier : 1;
   addWear(state, h.x, h.y, B.wear.perSecondWalking * traffic * dt);
   return false;
@@ -93,7 +105,7 @@ function goStore(state, h) {
 }
 
 function completedHomes(state) {
-  return state.buildings.filter((b) => b.complete && (b.type === 'shelter' || b.type === 'hut'));
+  return state.buildings.filter((b) => b.complete && isHome(b));
 }
 
 function goMaintenance(state, h) {
@@ -156,10 +168,6 @@ function chooseTask(state, h) {
     for (const q of founders) { q.state = 'toFound'; q.tx = settlementSite(state).x; q.ty = settlementSite(state).y; q.waypoints = null; }
     return;
   }
-  if (h.settlementId === 'second' && state.expansion.founded && h.deliveries % 2 === 0) {
-    const S = state.settlements.find((s) => s.id === 'second');
-    h.tx = S.x + range(state.rng, -95, 95); h.ty = S.y + range(state.rng, -55, 65); h.state = 'wander'; return;
-  }
   if (state.region?.enabled && beginDelivery(state, h)) return;
   // 1) Byggeplasser som trenger hender.
   const site = state.buildings.find((b) => !b.complete && !b.divine && b.builders.length < H.maxBuilders && (b.settlementId === h.settlementId || state.expansion.founders.includes(h.id)));
@@ -171,6 +179,11 @@ function chooseTask(state, h) {
     h.ty = site.y + Math.sin(a) * (site.radius * 0.55 + 4);
     h.state = 'toSite';
     return;
+  }
+  // Folk i en ung bosetting bruker annenhver runde på livet rundt ildstedet i stedet for å sanke.
+  if (h.settlementId !== 'first' && state.expansion.founded && h.deliveries % 2 === 0) {
+    const S = settlementById(state, h.settlementId);
+    if (S) { h.tx = S.x + range(state.rng, -95, 95); h.ty = S.y + range(state.rng, -55, 65); h.state = 'wander'; return; }
   }
   if (maybeExplore(state, h)) return;
   // 2) Sanking.
@@ -202,6 +215,7 @@ function deliver(state, h) {
     const store = deliveryPoint(state);
     state.events.push({ type: 'gain', res: type, amount, x: store.x, y: store.y, manual: false });
     h.deliveries++;
+    if (h.settlementId !== 'first') recordTrip(state, h.settlementId, 'first', type, amount);
   }
   h.carry = { type: null, amount: 0 };
   if (!state.buildings.some((b) => !b.complete) && hearthOf(state) && h.deliveries % 3 === 1 && goMaintenance(state, h)) return;
@@ -244,7 +258,7 @@ export function stepHuman(state, h, dt) {
       if (!n || !nodeUsable(n)) { abandonTarget(state, h); break; }
       h.dir = n.x > h.x ? 1 : -1;
       h.timer += dt;
-      const interval = gatherInterval(state);
+      const interval = gatherInterval(state, h, h.gatherKind);
       if (h.timer >= interval) {
         h.timer -= interval;
         const got = n.kind === 'tree' ? harvestTree(state, n, 1) : harvestRock(state, n, 1);
@@ -253,7 +267,7 @@ export function stepHuman(state, h, dt) {
           h.carry.amount += got;
           state.events.push({ type: 'hit', nodeId: n.id, by: 'human', res: h.gatherKind, x: n.x, y: n.y });
         }
-        if (h.carry.amount >= carryCapacity(state) || !nodeUsable(n)) { release(state, h); goStore(state, h); }
+        if (h.carry.amount >= carryCapacity(state, h) || !nodeUsable(n)) { release(state, h); goStore(state, h); }
       }
       break;
     }
@@ -326,13 +340,27 @@ export function stepHuman(state, h, dt) {
         const allThere = state.expansion.founders.every((id) => ['foundingWait', 'toFound'].includes(state.humans.find((q) => q.id === id)?.state));
         if (allThere && !state.buildings.some((b) => b.source === 'founding')) {
           const S = settlementSite(state);
-          state.settlements.push({ id: 'second', name: 'Lysningen', x: S.x, y: S.y, state: 'founding', population: [...state.expansion.founders] });
+          state.settlements.push({ id: 'second', name: 'Lysningen', x: S.x, y: S.y, state: 'founding', population: [...state.expansion.founders], kind: 'farm', projectsDone: 0, role: 'Skogbygd', stage: 'Leir' });
           for (const id of state.expansion.founders) { const q = state.humans.find((z) => z.id === id); q.settlementId = 'second'; q.state = 'idle'; q.timer = 0.1; }
           const first = state.settlements.find((s) => s.id === 'first');
           if (first) first.population = first.population.filter((id) => !state.expansion.founders.includes(id));
           startConstruction(state, 'hut', { source: 'founding', site: S, settlementId: 'second' });
         } else goIdle(state, h);
       }
+      break;
+    case 'toSettle':
+      if (moveTo(state, h, dt)) partyArrive(state, h);
+      break;
+    case 'settleWait':
+      partyTick(state, h, dt);
+      break;
+    case 'toEdge':
+      if (moveTo(state, h, dt)) missionAtEdge(state, h);
+      break;
+    case 'away':
+      break;
+    case 'expReturn':
+      if (moveTo(state, h, dt)) missionHome(state, h);
       break;
     case 'rest':
       h.timer -= dt;

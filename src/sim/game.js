@@ -12,6 +12,10 @@ import { requirementMet } from './economy.js';
 import { checkDiscoveries } from './discovery.js';
 import { stepRegional } from './regional.js';
 import { stepCivilization } from './civilization.js';
+import { stepProduction } from './production.js';
+import { stepRealm } from './realm.js';
+import { stepWorld } from './worldmap.js';
+import { refreshRoles } from './settlements.js';
 
 export const DT = B.dt;
 
@@ -33,6 +37,11 @@ export function step(state, dt = DT) {
   stepHumans(state, dt);
   stepRegional(state, dt);
   stepCivilization(state, dt);
+  stepProduction(state, dt);
+  stepRealm(state, dt);
+  stepWorld(state, dt);
+  state.timers.roles += dt;
+  if (state.timers.roles >= 1) { state.timers.roles = 0; refreshRoles(state); }
   stepWear(state, dt);
   stepEcology(state, dt);
   checkMilestones(state);

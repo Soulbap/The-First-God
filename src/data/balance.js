@@ -47,7 +47,34 @@ export const BALANCE = {
     hearth: { radius: 25, work: 24, minRing: 52 },
     field: { radius: 38, work: 22, minRing: 130 },
     workshop: { radius: 34, work: 30, minRing: 125 },
+    // GAMEPLAY-07/08: byinfrastruktur og sivilt bygg.
+    sawmill: { radius: 38, work: 40, minRing: 120 },
+    mason: { radius: 34, work: 40, minRing: 120 },
+    townhouse: { radius: 34, work: 36, minRing: 95 },
+    market: { radius: 42, work: 48, minRing: 85 },
+    hall: { radius: 40, work: 56, minRing: 105 },
   },
+  // Boligkapasitet per bygg (tidlig sivilisasjon brukte 2 per hjem).
+  housing: { shelter: 2, hut: 2, townhouse: 4 },
+  // Foredling: autonome sykluser. Råvaren trekkes først når det finnes mer enn `reserve`,
+  // slik at vanlige byggeprosjekter aldri sultes av sagbruket.
+  production: {
+    sawmill: { inputs: { wood: 3 }, outputs: { planks: 1 }, seconds: 10, reserve: 24, cap: 50 },
+    mason: { inputs: { stone: 3 }, outputs: { cutstone: 1 }, seconds: 12, reserve: 18, cap: 36 },
+    minPopulation: 2,
+    marketCapMultiplier: 2, // torget gir større lagerplass for foredlede varer
+  },
+  // Kunnskap kommer bare fra faktisk virksomhet: foredling, verksteder og kunnskapshallen.
+  knowledge: { perCycle: 0.25, workshopSeconds: 14, workshopYield: 0.25, hallSeconds: 8, hallYield: 0.5, hallPerPerson: 0.08, hallPopCap: 10, cityBonus: 1.25 },
+  city: { minPopulation: 12, minFoodStock: 4, minFields: 2, minDeliveries: 6, minInfrastructure: 5 },
+  realm: {
+    maxSettlements: 4, foundingCooldown: 70, checkSeconds: 8, party: 3,
+    supplies: { wood: 36, stone: 22 }, minFood: 6, minFoodHarvests: 3, minCapitalSurplus: 3,
+    routeEstablishedTrips: 3, minSiteSpacing: 380, minSiteDistance: 420, maxSiteDistance: 1050,
+  },
+  // Verdens-regioner: avstand i «ruter». Reisetid er abstrakt (ingen individuell simulering utenfor kartet).
+  globe: { cols: 5, rows: 3, expeditionSecondsPerStep: 55, outpostSecondsPerStep: 70, caravanSeconds: 46, caravanSpeed: 46, maxCaravans: 4,
+    expedition: { wood: 30, food: 8 }, outpost: { wood: 60, stone: 40, planks: 8, food: 8 }, outpostParty: 3, outpostGrowSeconds: 55, outpostCap: 8, establishedPop: 6 },
   settlement: { clearRadius: 150, localHomeCapacity: 2 },
   stats: { productionWindow: 60 },
   wear: { cell: 12, perSecondWalking: 0.22, transportMultiplier: 1.45, explorationMultiplier: 0.48, decayPerSecond: 0.0009 },

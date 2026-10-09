@@ -1,9 +1,8 @@
 // Tidlig sivilisasjon: få, synlige regler oppå den eksisterende regionale logistikkmodellen.
 import { BALANCE as B } from '../data/balance.js';
 import { spawnHumans } from './population.js';
-import { settlementRole } from './regional.js';
+import { completedHomesOf, housingCapacity, roleEffect } from './settlements.js';
 
-const homes = (state, id) => state.buildings.filter((b) => b.complete && b.settlementId === id && (b.type === 'shelter' || b.type === 'hut'));
 const fields = (state) => state.buildings.filter((b) => b.complete && b.type === 'field');
 
 export function stepCivilization(state) {
@@ -15,8 +14,7 @@ export function stepCivilization(state) {
       let made = 0;
       for (const field of activeFields) {
         const settlement = state.settlements.find((s) => s.id === field.settlementId);
-        const roleBonus = settlement && settlementRole(state, settlement) === 'Matbygda' ? 1 : 0;
-        made += B.human.foodPerHarvest + roleBonus;
+        made += B.human.foodPerHarvest + state.modifiers.foodBonus + roleEffect(settlement?.role, 'foodPerField', 0);
       }
       state.resources.food += made; state.totals.food += made; C.foodHarvests++;
       for (const field of activeFields) state.events.push({ type: 'foodHarvest', x: field.x, y: field.y, amount: made });
@@ -24,14 +22,18 @@ export function stepCivilization(state) {
     C.nextFoodAt = state.time + B.human.foodHarvestSeconds;
   }
   if (state.time < C.nextPopulationAt || state.resources.food < B.human.foodForGrowth) return;
+  // Hver bosetting kan vokse med én innbygger per runde når den har ledig bolig og maten rekker.
+  // Byer vokser litt raskere (rollen kan korte ned ventetiden), men aldri forbi boligkapasiteten.
+  let interval = B.human.civilizationPopulationSeconds;
   for (const settlement of state.settlements) {
-    if (settlement.population.length >= homes(state, settlement.id).length * B.settlement.localHomeCapacity) continue;
-    const home = homes(state, settlement.id)[0];
+    if (state.resources.food < B.human.foodForGrowth) break;
+    if (settlement.population.length >= housingCapacity(state, settlement.id)) continue;
+    const home = completedHomesOf(state, settlement.id)[0];
     if (!home) continue;
     state.resources.food -= B.human.foodForGrowth;
     spawnHumans(state, 1, { at: 'shelter', building: home, settlementId: settlement.id });
     state.events.push({ type: 'populationGrew', settlementId: settlement.id, x: settlement.x, y: settlement.y });
-    break;
+    interval = Math.min(interval, B.human.civilizationPopulationSeconds * roleEffect(settlement.role, 'growth'));
   }
-  C.nextPopulationAt = state.time + B.human.civilizationPopulationSeconds;
+  C.nextPopulationAt = state.time + interval;
 }

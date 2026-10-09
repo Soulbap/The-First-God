@@ -1,6 +1,7 @@
 // Oppretter den identiske startverdenen for en syklus (samme seed → samme verden).
 import { BALANCE as B } from '../data/balance.js';
 import { createRng, rand, range } from '../core/rng.js';
+import { createGlobe } from './worldmap.js';
 
 export const dist = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
 
@@ -61,19 +62,22 @@ export function createWorld(seed = 20261009) {
     version: 1, seed, rng, time: 0, nextId: 1,
     world: { width: W, height: H, pond: { x: C.x - 360, y: C.y + 210, rx: 130, ry: 64 } },
     settlement: { center: C, angleOffset: 0 },
-    settlements: [{ id: 'first', name: 'Den første landsbyen', x: C.x, y: C.y, state: 'active', population: [] }],
+    settlements: [{ id: 'first', name: 'Den første landsbyen', x: C.x, y: C.y, state: 'active', population: [], kind: 'capital', projectsDone: 0, role: 'Skogbygd', stage: 'Leir' }],
     expansion: { enabled: false, site: null, discovered: false, founding: false, founded: false, founders: [] },
-    region: { enabled: false, populationUnlocked: false, deliveries: [], reserved: { wood: 0, stone: 0, food: 0 }, completedDeliveries: 0, completedProjects: 0, project: null, nextPopulationAt: Infinity },
+    region: { enabled: false, populationUnlocked: false, deliveries: [], reserved: { wood: 0, stone: 0, food: 0, planks: 0, cutstone: 0 }, completedDeliveries: 0, completedProjects: 0, projects: {}, nextPopulationAt: Infinity },
+    realm: { autoFounding: false, limit: 2, party: null, lastFoundedAt: -Infinity, nextCheckAt: Infinity, foundedCount: 0 },
+    network: { routes: {}, trips: 0 },
+    globe: createGlobe(seed),
     civilization: { foodUnlocked: false, exchangeUnlocked: false, nextFoodAt: Infinity, nextPopulationAt: Infinity, foodHarvests: 0, exchangeDeliveries: 0 },
     stockpile: { x: C.x + 4, y: C.y + 48 },
-    resources: { wood: 0, stone: 0, food: 0, pp: 0 },
-    totals: { wood: 0, stone: 0, food: 0, pp: 0, manualClicks: 0 },
+    resources: { wood: 0, stone: 0, food: 0, planks: 0, cutstone: 0, knowledge: 0, pp: 0 },
+    totals: { wood: 0, stone: 0, food: 0, planks: 0, cutstone: 0, knowledge: 0, pp: 0, manualClicks: 0 },
     upgrades: {},
     discovered: {}, // innsikt-id → spilltid da den ble synlig (se discovery.js)
-    modifiers: { gatherSpeed: 1, carry: 0, buildSpeed: 1, exploration: false },
+    modifiers: { gatherSpeed: 1, carry: 0, buildSpeed: 1, exploration: false, craftSpeed: 1, knowledge: 1, foodBonus: 0, townhouseBonus: 0, regionalCarry: 0 },
     nodes: [], buildings: [], humans: [],
     milestones: {}, unlocks: { zoomArea: false, villageView: false },
-    timers: { seed: B.tree.seedIntervalSeconds, wearDecay: 0 },
+    timers: { seed: B.tree.seedIntervalSeconds, wearDecay: 0, roles: 0 },
     exploration: { nextAt: Infinity, activeId: null },
     stats: { log: [], autoStart: null },
     wear: { cell, cols, rows, data: new Float32Array(cols * rows) },
