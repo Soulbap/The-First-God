@@ -158,3 +158,12 @@ Før større systemer bygges, prioriter den vertikale prototypen definert i `GAM
 5. En trygg demonstrasjon av frivillig Ragnarok.
 
 Alt som ikke styrker disse punktene, skal vurderes som senere arbeid.
+
+## 10. Teknisk arbeidsflyt (Genesis-01-grunnlaget)
+
+- **Kjøre spillet:** `npm start` (eller `start.bat`) → http://localhost:5173. Ingen avhengigheter skal installeres.
+- **Tester:** `npm test` (Node sin innebygde testløper). Alle tester skal bestå før commit.
+- **Feilsøking og skjermbilder:** åpne `?debug` for `window.TFG` (`advance`, `give`, `buy`, `click`, `view`, `tick`). Nettleserpanel som er skjult pauser `requestAnimationFrame`; bruk da `TFG.tick(sekunder)` for å drive hovedløkken.
+- **Git:** `main` på https://github.com/Soulbap/The-First-God er referansen. Én tydelig commit per sammenhengende endring, aldri force push, og ingen hemmeligheter, `node_modules/` eller byggfiler i repoet.
+- **Nye avhengigheter** (f.eks. Electron) krever godkjenning fra prosjektansvarlig først.
+- **Neste milepæl** er spilltesting av Genesis-01 (`PLAYTEST.md`). Ikke start Genesis-02 før prototypen er vurdert.

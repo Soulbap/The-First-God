@@ -65,6 +65,10 @@ Når en utgivelse opprettes, flyttes `Unreleased`-punkter til en datert versjons
 - Visuell kontroll med skjermbilder i forhåndsvisning: startverden, delvis høstet tre, lavvo under bygging, ferdig ly med første mennesker, menneske som bryter stein på nært hold, utviklet leir med bål og hytte under bygging, områdezoom etter milepæl, utviklet boplass med stier, samt Ragnarok-dialog. Funn som ble rettet underveis: harde skyggeellipser, flekkete skyskygger, glisne bjørkekroner, for sterkt lysdryss, usynlige stier, hytte for nær trekrone.
 
 ### Docs
+- 2026-10-09: Prosjektet er koblet til GitHub (`Soulbap/The-First-God`, gren `main`) oven på depotets eksisterende første commit; `.gitignore` lagt til.
+- 2026-10-09: `README.md` erstatter plassholderen «# Incremental» med prosjektbeskrivelse, Genesis-01-omfang, forutsetninger, start, tester, kjente begrensninger og lenker til styringsdokumentene.
+- 2026-10-09: `PLAYTEST.md` med kort sjekkliste for spilltesting (verden, mennesker, bosetting, kamera, spillfølelse).
+- 2026-10-09: `AGENTS.md` §10 Teknisk arbeidsflyt: kommandoer, `?debug`-kroker, Git-regler (ingen force push), godkjenning av nye avhengigheter, og at spilltest kommer før Genesis-02.
 - La til implementasjonsstatus for Genesis-01 i `GAME_DESIGN.md` §12 med antakelser merket som åpne.
 - Definerte obligatorisk praksis for at AI oppdaterer denne endringsloggen ved alle prosjektendringer.
 
