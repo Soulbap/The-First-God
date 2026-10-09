@@ -1,9 +1,14 @@
 // Datadrevne oppgraderinger og milepæler. UI og simulering leser herfra.
-// requires/when: {upgrade}, {built}, {builtCount:{types,n}}, {noPending}, {all:[...]}
+// requires/when/discover: {upgrade}, {built}, {builtCount:{types,n}}, {noPending}, {gathered}, {all:[...]}
+// discover: når innsikten blir synlig for spilleren (standard = requires). Oppdagelse er varig i syklusen.
+// category/icon: presentasjon i Innsikter-panelet (se src/data/gui.js).
 export const UPGRADES = [
   {
     id: 'first_shelter',
     name: 'Første ly',
+    category: 'bosetning',
+    icon: 'shelter',
+    discover: [{ gathered: 1 }],
     cost: { wood: 10, stone: 5 },
     requires: [],
     effect: 'Gir de første menneskene et sted å våkne.',
@@ -13,6 +18,8 @@ export const UPGRADES = [
   {
     id: 'awakening',
     name: 'Vekkelse',
+    category: 'liv',
+    icon: 'awakening',
     cost: { wood: 12, stone: 6 },
     requires: [{ built: 'shelter' }],
     requireText: 'Første ly må stå ferdig',
@@ -23,6 +30,8 @@ export const UPGRADES = [
   {
     id: 'common_fire',
     name: 'Felles ild',
+    category: 'tro',
+    icon: 'fire',
     cost: { wood: 15, stone: 10 },
     requires: [{ upgrade: 'awakening' }],
     requireText: 'Krever Vekkelse',
@@ -33,6 +42,8 @@ export const UPGRADES = [
   {
     id: 'hands_remember',
     name: 'Hendene husker',
+    category: 'liv',
+    icon: 'axe',
     cost: { wood: 20, stone: 14 },
     requires: [{ upgrade: 'awakening' }],
     requireText: 'Krever Vekkelse',
@@ -43,6 +54,9 @@ export const UPGRADES = [
   {
     id: 'new_home',
     name: 'Nytt hjem',
+    category: 'bosetning',
+    icon: 'hut',
+    discover: [{ built: 'fire' }],
     cost: { wood: 30, stone: 20 },
     costGrowth: 1.45,
     max: 3,

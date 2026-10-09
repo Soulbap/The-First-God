@@ -1,0 +1,32 @@
+// Presentasjonsdata for grensesnittet: ressursnavn, innsiktskategorier og epoker/stadier.
+// Ingen spillregler her — krav bruker samme format som upgrades.js og leses via requirementMet.
+
+export const RESOURCES = {
+  wood: { name: 'Trevirke', unit: 'trevirke', icon: 'wood' },
+  stone: { name: 'Stein', unit: 'stein', icon: 'stone' },
+  people: { name: 'Folk', unit: 'folk', icon: 'people' },
+  pp: { name: 'Bønn (PP)', unit: 'PP', icon: 'pp' },
+};
+
+// Kategorier vises først når minst `minForTabs` av dem har aktive innsikter.
+// Senere epoker legger til egne kategorier her uten å endre panelet.
+export const CATEGORIES = [
+  { id: 'liv', name: 'Liv', icon: 'sprout' },
+  { id: 'bosetning', name: 'Bosetning', icon: 'hut' },
+  { id: 'tro', name: 'Tro', icon: 'fire' },
+];
+export const CATEGORY_RULES = { minForTabs: 2 };
+
+// Epoker styrer tema (data-epoch på <html>) og undertittel i panelet. Siste stadium som er oppfylt vinner.
+export const EPOCHS = [
+  {
+    id: 'genesis',
+    name: 'Genesis',
+    stages: [
+      { title: 'Skapelsens morgen', when: [] },
+      { title: 'Det første lyet', when: [{ built: 'shelter' }] },
+      { title: 'Den første leiren', when: [{ upgrade: 'awakening' }] },
+      { title: 'Den første bosetningen', when: [{ builtCount: { types: ['shelter', 'hut'], n: 2 } }, { built: 'fire' }] },
+    ],
+  },
+];

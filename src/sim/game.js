@@ -8,6 +8,7 @@ import { stepHumans } from './humans.js';
 import { stepWear } from './wear.js';
 import { pruneStats } from './stats.js';
 import { requirementMet } from './economy.js';
+import { checkDiscoveries } from './discovery.js';
 
 export const DT = B.dt;
 
@@ -29,6 +30,7 @@ export function step(state, dt = DT) {
   stepHumans(state, dt);
   stepWear(state, dt);
   checkMilestones(state);
+  checkDiscoveries(state);
   pruneStats(state);
 }
 

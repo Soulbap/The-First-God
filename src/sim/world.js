@@ -64,6 +64,7 @@ export function createWorld(seed = 20261009) {
     resources: { wood: 0, stone: 0, pp: 0 },
     totals: { wood: 0, stone: 0, pp: 0, manualClicks: 0 },
     upgrades: {},
+    discovered: {}, // innsikt-id → spilltid da den ble synlig (se discovery.js)
     modifiers: { gatherSpeed: 1, carry: 0 },
     nodes: [], buildings: [], humans: [],
     milestones: {}, unlocks: { zoomArea: false },
