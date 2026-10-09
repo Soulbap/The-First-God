@@ -10,6 +10,8 @@ import { GLOBE, globeFrame, globeFromWorldCam, worldCamFromGlobe, heightForSpan,
 import { createGlobeRenderer, planetView, drawGlobeOverlay, pickGlobe, sunDir } from './render/globe.js';
 import { bakePlanet } from './render/planetTexture.js';
 import { serialize, deserialize } from './sim/save.js';
+import { ragnarokAward, cycleMemory, buyPrestige, emptyMeta } from './sim/legacy.js';
+import { PRESTIGE, prestigeCost } from './data/prestige.js';
 
 const SEED = 20261009; // samme grunnverden i hver syklus
 const MAX_STEPS_PER_FRAME = 240;
@@ -35,7 +37,7 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, v); return true; } catch { return false; } },
   del(k) { try { localStorage.removeItem(k); } catch { /* ingen lagring */ } },
 };
-const meta = (() => { try { return { prestige: 0, cycles: 0, ...(PERSIST ? JSON.parse(store.get(META_KEY) || '{}') : {}) }; } catch { return { prestige: 0, cycles: 0 }; } })();
+const meta = (() => { try { return { ...emptyMeta(), ...(PERSIST ? JSON.parse(store.get(META_KEY) || '{}') : {}) }; } catch { return emptyMeta(); } })();
 let saveTimer = 20;
 function saveNow() { if (!PERSIST || !state) return; store.set(SAVE_KEY, serialize(state)); store.set(META_KEY, JSON.stringify(meta)); }
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -69,36 +71,50 @@ const hud = createHud({
     if (f > 1 && state.unlocks.worldView && cam.w >= maxWorldW() * 0.97) { enterGlobe(); return; }
     zoomAt(cam, cam.screenW / 2, cam.screenH / 2, f);
   },
-  onRagnarok(phase) {
-    if (phase === 'preview') hud.showRagnarok(ragnarokSummary());
+  onRagnarok(phase, id) {
+    if (phase === 'preview') { draft = { bonuses: { ...meta.bonuses }, spent: 0 }; hud.showRagnarok(ragnarokSummary()); }
+    else if (phase === 'buy') {
+      // Ekko velges i dialogen og gjelder først i neste syklus; avbryt forkaster valgene.
+      const s = ragnarokSummary(), budget = meta.prestige + s.prp - draft.spent;
+      const tmp = { prestige: budget, bonuses: draft.bonuses };
+      draft.spent += buyPrestige(tmp, id, budget);
+      hud.showRagnarok(ragnarokSummary(), { keepFocus: id });
+    } else if (phase === 'cancel') draft = null;
     else {
       const s = ragnarokSummary();
-      meta.prestige += s.prp;
+      meta.prestige += s.prp - (draft?.spent || 0);
+      if (draft) meta.bonuses = draft.bonuses;
       meta.cycles++;
+      meta.legacy.push(cycleMemory(state, meta.cycles));
+      draft = null;
       newCycle();
       saveNow();
-      hud.toast('Ragnarok', `En ny syklus begynner i den samme verdenen. Du bærer med deg ${meta.prestige} PrP.`);
+      hud.toast('Ragnarok', `En ny syklus begynner i den samme verdenen. En minnestein står ved tjernet. ${meta.prestige} PrP er spart til senere.`);
     }
   },
 });
 
+let draft = null; // ekko valgt i Ragnarok-dialogen, før bekreftelse
 function ragnarokSummary() {
-  const homes = state.buildings.filter((b) => b.complete && (b.type === 'shelter' || b.type === 'hut' || b.type === 'townhouse')).length;
+  const prp = ragnarokAward(state);
   const outposts = state.globe.regions.filter((r) => r.state === 'utpost' || r.state === 'etablert').length;
-  // Provisorisk formel — balanseres når permanente bonuser finnes. Nye ledd (GAMEPLAY-07..10) belønner
-  // bare det som faktisk er bygget opp: kunnskap, flere bosettinger og utposter. Ingenting trekkes fra.
-  const prp = Math.floor(Math.sqrt(state.totals.wood + state.totals.stone) / 4) + homes + Math.floor(state.totals.pp / 10)
-    + Math.floor(state.totals.knowledge / 40) + (state.settlements.length - 1) + outposts * 2;
   const extra = [];
   if (state.settlements.length > 1) extra.push(`${state.settlements.length} bosettinger`);
   if (state.resources.planks >= 1 || state.resources.cutstone >= 1) extra.push(`${Math.floor(state.resources.planks)} planker og ${Math.floor(state.resources.cutstone)} tilhugget stein`);
   if (state.totals.knowledge > 0) extra.push(`${Math.floor(state.resources.knowledge)} kunnskap og alle fremskritt`);
   if (outposts || state.globe.stats.discovered) extra.push(`${state.globe.stats.discovered} oppdagede land og ${outposts} utposter`);
+  const d = draft || { bonuses: { ...meta.bonuses }, spent: 0 };
+  const budget = meta.prestige + prp - d.spent;
+  const shop = PRESTIGE.map((def) => {
+    const level = d.bonuses[def.id] || 0, cost = prestigeCost(def, level);
+    return { id: def.id, name: def.name, effect: def.effect, world: def.world, level, max: def.max, cost, affordable: level < def.max && budget >= cost };
+  });
+  const memory = cycleMemory(state, meta.cycles + 1);
   return {
-    prp,
+    prp, bank: meta.prestige, budget, shop,
     lost: `${Math.floor(state.resources.wood)} trevirke, ${Math.floor(state.resources.stone)} stein, ${state.humans.length} mennesker og ${state.buildings.length} bygg${extra.length ? ', samt ' + extra.join(', ') : ''}`,
-    kept: 'Den samme startverdenen (samme tre, stein og landskap) og alle Prestige Points',
-    legacy: 'Plassholder: et varig tegn ved det første treet kommer i en senere iterasjon',
+    kept: 'Den samme startverdenen (samme tre, stein og landskap), sparte Prestige Points og ekkoene du velger nedenfor',
+    legacy: `En minnestein ved tjernet: «Syklus ${memory.n} — ${memory.stage}» (${memory.people} mennesker, ${memory.settlements} ${memory.settlements === 1 ? 'bosetting' : 'bosettinger'}).`,
   };
 }
 
@@ -116,7 +132,7 @@ function resize() {
 }
 
 function newCycle(loaded = null) {
-  state = loaded || createGame(SEED);
+  state = loaded || createGame(SEED, meta);
   renderer.reset(state);
   if (!planet) planet = createPlanet(SEED, state.globe.regions); // geografien er den samme i hver syklus
   if (!planetReady) startPlanetBake(state.globe.regions);

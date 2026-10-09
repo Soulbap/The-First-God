@@ -16,10 +16,12 @@ import { stepProduction } from './production.js';
 import { stepRealm } from './realm.js';
 import { stepWorld } from './worldmap.js';
 import { refreshRoles } from './settlements.js';
+import { applyLegacy } from './legacy.js';
 
 export const DT = B.dt;
 
-export const createGame = (seed) => createWorld(seed);
+// Ny syklus: identisk startverden; valgfrie ekko fra tidligere sykluser virker bare gjennom modifikatorer.
+export const createGame = (seed, meta = null) => applyLegacy(createWorld(seed), meta);
 
 export function checkMilestones(state) {
   for (const m of MILESTONES) {
@@ -75,10 +77,10 @@ export function clickNode(state, id) {
       state.events.push({ type: 'tooYoung', nodeId: n.id, x: n.x, y: n.y });
       return 0;
     }
-    got = harvestTree(state, n, B.manual.woodPerClick);
+    got = harvestTree(state, n, B.manual.woodPerClick + (state.modifiers.clickBonus || 0));
     res = 'wood';
   } else {
-    got = harvestRock(state, n, B.manual.stonePerClick);
+    got = harvestRock(state, n, B.manual.stonePerClick + (state.modifiers.clickBonus || 0));
     res = 'stone';
   }
   if (got > 0) {

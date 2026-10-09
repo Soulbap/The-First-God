@@ -116,7 +116,7 @@ export function missionAtEdge(state, h) {
   h.state = 'away'; h.away = true;
   if (!m.members.every((id) => state.humans.find((q) => q.id === id)?.away)) return;
   const target = regionById(state, m.regionId), per = m.kind === 'outpost' ? B.globe.outpostSecondsPerStep : B.globe.expeditionSecondsPerStep;
-  m.phase = 'away'; m.eta = state.time + per * Math.max(1, target.steps);
+  m.phase = 'away'; m.eta = state.time + (per * Math.max(1, target.steps)) / (state.modifiers.expeditionSpeed || 1);
 }
 
 export function missionHome(state, h) {
@@ -176,7 +176,7 @@ function stepOutposts(state) {
 function stepCaravans(state, dt) {
   const G = state.globe, C = state.stockpile;
   for (const c of G.caravans) {
-    const dx = C.x - c.x, dy = C.y + 14 - c.y, d = Math.hypot(dx, dy), step = B.globe.caravanSpeed * dt;
+    const dx = C.x - c.x, dy = C.y + 14 - c.y, d = Math.hypot(dx, dy), step = B.globe.caravanSpeed * (state.modifiers.walkSpeed || 1) * dt;
     if (d <= step) { c.arrived = true; continue; }
     c.x += dx / d * step; c.y += dy / d * step; c.walk += step; c.dir = dx > 0 ? 1 : -1;
     addWear(state, c.x, c.y, B.wear.perSecondWalking * B.wear.transportMultiplier * dt);

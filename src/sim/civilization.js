@@ -5,9 +5,26 @@ import { completedHomesOf, housingCapacity, roleEffect } from './settlements.js'
 
 const fields = (state) => state.buildings.filter((b) => b.complete && b.type === 'field');
 
+export const festivalActive = (state) => state.time < (state.civilization?.festivalUntil ?? -Infinity);
+
+// Høstfest: når lagrene er fulle, samles folket ved ildstedet. Maten brukes, bønnene dobles. Ingen spillerhandling.
+function stepFestival(state) {
+  const C = state.civilization, F = B.festival;
+  if (festivalActive(state) || state.time < C.nextFestivalAt) return;
+  const hearth = state.buildings.find((b) => (b.type === 'hearth' || b.type === 'fire') && b.complete && (b.settlementId || 'first') === 'first');
+  const cost = Math.round(F.base + state.humans.length * F.perPerson);
+  if (!hearth || state.resources.food < F.minFood + cost) return;
+  state.resources.food -= cost;
+  C.festivalUntil = state.time + F.duration;
+  C.nextFestivalAt = state.time + F.interval;
+  C.festivals++;
+  state.events.push({ type: 'festival', x: hearth.x, y: hearth.y, food: cost, n: C.festivals });
+}
+
 export function stepCivilization(state) {
   const C = state.civilization;
   if (!C?.foodUnlocked) return;
+  stepFestival(state);
   if (state.time >= C.nextFoodAt) {
     const activeFields = fields(state);
     if (activeFields.length) {

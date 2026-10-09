@@ -45,7 +45,7 @@ const lowerBound = (arr, y) => {
 export function createRenderer(canvas) {
   const mainCtx = canvas.getContext('2d');
   let ctx = mainCtx; // byttes midlertidig når hjemmeregionen males til planetens øyeblikksbilde
-  const R = { ctx, terrain: null, decor: null, env: null, ecologyOverlay: null, ecologyRevision: -1, grain: null, wearCanvas: null, wearImg: null, exposure: null, wearBox: null, fx: createFx(), emitTimers: new Map(), stats: { frameMs: 0, ecologyRefreshMs: 0 } };
+  const R = { ctx, weather: { rain: 0, wind: 0 }, view: null, terrain: null, decor: null, env: null, ecologyOverlay: null, ecologyRevision: -1, grain: null, wearCanvas: null, wearImg: null, exposure: null, wearBox: null, fx: createFx(), emitTimers: new Map(), stats: { frameMs: 0, ecologyRefreshMs: 0 } };
   const litterCache = new Map();
 
   R.reset = (state) => {
@@ -70,6 +70,7 @@ export function createRenderer(canvas) {
     R.wearCanvas = makeCanvas(cols * WS, rows * WS);
     R.wearImg = R.wearCanvas.getContext('2d').createImageData(cols * WS, rows * WS);
     R.exposure = new Float32Array(cols * rows);
+    R.pave = new Float32Array(cols * rows); // brolagt torg i byen (presentasjon)
     R.wearBox = null;
     // Fast kornmønster som gir slitt jord en ujevn kant (deterministisk fra seed).
     const nz = makeNoise(state.seed + 313), rnd = mulberry(state.seed + 317);
@@ -111,7 +112,7 @@ export function createRenderer(canvas) {
       } else if (e.type === 'sprout') {
         emit(fx, 'sprout', e.x, e.y, 6, { spread: 4, z: 2 });
       } else if (e.type === 'prayer') {
-        emit(fx, 'mote', e.x, e.y, 4, { spread: 3, z: 12 });
+        emit(fx, 'mote', e.x, e.y, e.festival ? 9 : 4, { spread: e.festival ? 8 : 3, z: 12 });
       } else if (e.type === 'constructionComplete') {
         emit(fx, 'dust', e.x, e.y, 10, { spread: 40, spreadY: 14, z: 2 });
         emit(fx, 'mote', e.x, e.y, 10, { spread: 30, spreadY: 10, z: 16 });
@@ -119,6 +120,17 @@ export function createRenderer(canvas) {
         emit(fx, 'dust', e.x, e.y, 6, { spread: 30, spreadY: 10, z: 2 });
       } else if (e.type === 'tooYoung') {
         shake(fx, e.nodeId);
+      } else if (e.type === 'blessing') {
+        // Velsignelser (PP): et synlig svar i verden, deretter den varige virkningen.
+        const C = state.settlement.center;
+        emit(fx, 'mote', C.x, C.y - 20, 40, { spread: 360, spreadY: 220, z: 30 });
+        if (e.kind === 'rain') { R.weather.rain = 11; for (const n of state.nodes) if (n.kind === 'tree' && n.state === 'alive' && n.growth < 0.9) emit(fx, 'sprout', n.x, n.y, 3, { spread: 4, z: 2 }); }
+        else if (e.kind === 'stone') { for (const n of state.nodes) if (n.kind === 'rock') { emit(fx, 'mote', n.x, n.y - n.radius * 0.4, 8, { spread: n.radius * 1.6, spreadY: 8, z: 10 }); emit(fx, 'dust', n.x, n.y, 6, { spread: n.radius * 1.4, spreadY: 6, z: 2 }); } }
+        else if (e.kind === 'wind') R.weather.wind = 8;
+        else if (e.kind === 'light') { for (const b of state.buildings) if (b.complete && ['hall', 'workshop', 'sawmill', 'mason'].includes(b.type)) emit(fx, 'mote', b.x, b.y - 20, 16, { spread: 50, spreadY: 14, z: 18 }); }
+      } else if (e.type === 'festival') {
+        emit(fx, 'mote', e.x, e.y - 6, 26, { spread: 70, spreadY: 26, z: 14 });
+        emit(fx, 'spark', e.x, e.y - 4, 12, { spread: 8 });
       }
     }
   };
@@ -133,6 +145,14 @@ export function createRenderer(canvas) {
   // Kontinuerlig liv: røyk, gnister, byggestøv og guddommelig byggelys.
   R.update = (state, dt, simDt, renderTime) => {
     const fx = R.fx;
+    // Vær fra velsignelser: kort regnskur og medvind som bærer løv gjennom bildet (kun presentasjon).
+    R.weather.rain = Math.max(0, R.weather.rain - dt);
+    R.weather.wind = Math.max(0, R.weather.wind - dt);
+    if (R.weather.wind > 0 && R.view && every('windleaf', 0.04, dt)) {
+      const v = R.view, x = v.x0 + Math.random() * (v.x1 - v.x0) * 0.4, y = v.y0 + Math.random() * (v.y1 - v.y0);
+      emit(fx, 'leaf', x, y, 1, { z: 18 + Math.random() * 20 });
+      const p = fx.parts[fx.parts.length - 1]; p.vx = 60 + Math.random() * 50; p.max = 3.5;
+    }
     // Sjelden, avgrenset oppdatering av et lavoppløst overlay. Baseterrenget,
     // dekor og mips beholdes; ingen helverdens-rebake skjer i hovedløkka.
     if (R.ecologyRevision !== state.ecology.revision) {
@@ -190,7 +210,7 @@ export function createRenderer(canvas) {
   };
 
   R.updateWear = (state) => {
-    const { cols, rows, data } = state.wear;
+    const { cols, rows, data, cell } = state.wear;
     const store = state.buildings.find((b) => b.type === 'storage' && b.complete) || state.stockpile;
     R.exposure.fill(0);
     const activity = clamp(state.humans.length * 0.16 + (state.totals.wood + state.totals.stone) / 130, 0, 1);
@@ -235,11 +255,37 @@ export function createRenderer(canvas) {
       trackTo(state.settlement.center, other, Math.min(0.62, 0.16 + trips * 0.05));
       stamp(state, other.x, other.y, 18, 58, Math.min(0.76, 0.18 + (other.projectsDone || 0) * 0.16));
     }
+    // Byen legger stein: rundt torg, hall og ildsted i en bosetting som har blitt By/Storby.
+    R.pave.fill(0);
+    for (const S of state.settlements) {
+      if (!['By', 'Storby'].includes(S.stage)) continue;
+      for (const b of state.buildings) {
+        if (!b.complete || (b.settlementId || 'first') !== S.id || !['market', 'hall', 'hearth'].includes(b.type)) continue;
+        const r1 = b.type === 'market' ? 84 : b.type === 'hall' ? 58 : 46;
+        const i0 = Math.max(0, Math.floor((b.x - r1) / cell)), i1 = Math.min(cols - 1, Math.ceil((b.x + r1) / cell));
+        const j0 = Math.max(0, Math.floor((b.y - r1) / cell)), j1 = Math.min(rows - 1, Math.ceil((b.y + r1) / cell));
+        for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+          const jit = (((i * 73856093) ^ (j * 19349663)) >>> 0) % 1000 / 1000;
+          const d = Math.hypot((i + 0.5) * cell - b.x, ((j + 0.5) * cell - b.y) * 1.45) * (0.8 + jit * 0.4);
+          const v = 1 - smooth(r1 * 0.45, r1, d);
+          if (v > R.pave[j * cols + i]) R.pave[j * cols + i] = v;
+        }
+      }
+      // Gatene i byens kjerne: de mest brukte stiene får stein i stedet for grus.
+      const coreR = S.stage === 'Storby' ? 330 : 250;
+      const ci0 = Math.max(0, Math.floor((S.x - coreR) / cell)), ci1 = Math.min(cols - 1, Math.ceil((S.x + coreR) / cell));
+      const cj0 = Math.max(0, Math.floor((S.y - coreR) / cell)), cj1 = Math.min(rows - 1, Math.ceil((S.y + coreR) / cell));
+      for (let j = cj0; j <= cj1; j++) for (let i = ci0; i <= ci1; i++) {
+        const k = j * cols + i, d = Math.hypot((i + 0.5) * cell - S.x, ((j + 0.5) * cell - S.y) * 1.3);
+        const v = smooth(0.78, 0.97, data[k]) * (1 - smooth(coreR * 0.32, coreR * 0.58, d));
+        if (v > R.pave[k]) R.pave[k] = v;
+      }
+    }
     // Skriv bare der noe er slitt (nå eller forrige gang).
     let minI = cols, maxI = -1, minJ = rows, maxJ = -1;
     for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
       const k = j * cols + i;
-      if (data[k] > 0.004 || R.exposure[k] > 0.004) { if (i < minI) minI = i; if (i > maxI) maxI = i; if (j < minJ) minJ = j; if (j > maxJ) maxJ = j; }
+      if (data[k] > 0.004 || R.exposure[k] > 0.004 || R.pave[k] > 0.004) { if (i < minI) minI = i; if (i > maxI) maxI = i; if (j < minJ) minJ = j; if (j > maxJ) maxJ = j; }
     }
     const prev = R.wearBox;
     const cur = maxI >= 0 ? { i0: Math.max(0, minI - 1), i1: Math.min(cols - 1, maxI + 1), j0: Math.max(0, minJ - 1), j1: Math.min(rows - 1, maxJ + 1) } : null;
@@ -247,18 +293,40 @@ export function createRenderer(canvas) {
     R.wearBox = cur;
     if (!box) return;
     const Wp = cols * WS, px = R.wearImg.data, nz = R.wearNoise;
-    const get = (i, j) => { i = i < 0 ? 0 : i >= cols ? cols - 1 : i; j = j < 0 ? 0 : j >= rows ? rows - 1 : j; const k = j * cols + i; return data[k] > R.exposure[k] ? data[k] : R.exposure[k]; };
+    const clampK = (i, j) => (j < 0 ? 0 : j >= rows ? rows - 1 : j) * cols + (i < 0 ? 0 : i >= cols ? cols - 1 : i);
+    const get = (i, j) => { const k = clampK(i, j); return data[k] > R.exposure[k] ? data[k] : R.exposure[k]; };
+    const getWalk = (i, j) => data[clampK(i, j)];
+    const getPave = (i, j) => R.pave[clampK(i, j)];
+    const bil = (f, i, j, u, v) => (f(i, j) * (1 - u) + f(i + 1, j) * u) * (1 - v) + (f(i, j + 1) * (1 - u) + f(i + 1, j + 1) * u) * v;
     for (let py = box.j0 * WS; py < (box.j1 + 1) * WS; py++) {
       const fy = (py + 0.5) / WS - 0.5, j = Math.floor(fy), v = fy - j;
       for (let pxx = box.i0 * WS; pxx < (box.i1 + 1) * WS; pxx++) {
         const fx = (pxx + 0.5) / WS - 0.5, i = Math.floor(fx), u = fx - i;
-        const w = (get(i, j) * (1 - u) + get(i + 1, j) * u) * (1 - v) + (get(i, j + 1) * (1 - u) + get(i + 1, j + 1) * u) * v;
+        const w = bil(get, i, j, u, v);
         const n = nz[py * Wp + pxx];
         const o = (py * Wp + pxx) * 4;
         // Gresset slites først i flekker; ved mye slitasje blir jorda sammenhengende bar.
-        const a = smooth(0.26, 0.62, w * 1.12 + (n - 0.5) * 0.7);
+        let a = smooth(0.26, 0.62, w * 1.12 + (n - 0.5) * 0.7);
         const shade = 0.78 + n * 0.5;
-        px[o] = 112 * shade; px[o + 1] = 94 * shade; px[o + 2] = 68 * shade; px[o + 3] = a * 215;
+        let r = 112 * shade, g = 94 * shade, b = 68 * shade;
+        // Ønskelinjer modnes: det som går mest, blir til en lys grusvei med småstein (historien ligger i bakken).
+        const walk = bil(getWalk, i, j, u, v);
+        const road = smooth(0.62, 0.9, walk + (n - 0.5) * 0.18);
+        if (road > 0) {
+          const grit = n > 0.82 ? 1.18 : n < 0.12 ? 0.82 : 1;
+          r += (150 * grit * (0.9 + n * 0.2) - r) * road; g += (136 * grit * (0.9 + n * 0.2) - g) * road; b += (106 * grit * (0.9 + n * 0.2) - b) * road;
+          a = Math.max(a, road);
+        }
+        // Brolagt torg: grå stein i ujevne rader med mørkere fuger.
+        const pave = bil(getPave, i, j, u, v);
+        if (pave > 0.02) {
+          const row = Math.floor(py / 2), joint = (py % 2 === 0) || ((pxx + (row % 2) * 2) % 4 === 0);
+          const k = smooth(0.15, 0.6, pave + (n - 0.5) * 0.3);
+          const tone = (joint ? 0.72 : 1) * (0.88 + n * 0.22);
+          r += (140 * tone - r) * k; g += (130 * tone - g) * k; b += (112 * tone - b) * k;
+          a = Math.max(a, k);
+        }
+        px[o] = r; px[o + 1] = g; px[o + 2] = b; px[o + 3] = a * 215;
       }
     }
     R.wearCanvas.getContext('2d').putImageData(R.wearImg, 0, 0);
@@ -331,6 +399,8 @@ export function createRenderer(canvas) {
     const inView = (x, y, mx = 70, up = 150) => x > vx0 - mx && x < vx1 + mx && y > vy0 - 20 && y < vy1 + up;
     const detailed = cam.w < VIEW.semanticAreaW;
     const C = state.settlement.center;
+    if (!snapshot) R.view = { x0: vx0, x1: vx1, y0: vy0, y1: vy1 };
+    const festival = state.time < (state.civilization?.festivalUntil ?? -Infinity);
     // Detaljnivå: finkorn og småplanter tones inn når vi zoomer nær og forsvinner jevnt når vi trekker ut.
     const detail = smooth(0.8, 1.6, S);
     const mid = smooth(0.4, 0.8, S);
@@ -468,6 +538,13 @@ export function createRenderer(canvas) {
     if (state.resources.planks >= 1) list.push({ y: sp.y + 6, draw: () => drawSprite(ctx, plankPileSprite(Math.min(14, Math.ceil(Math.sqrt(state.resources.planks) * 1.6))), sp.x - 36, sp.y + 8) });
     if (state.resources.cutstone >= 1) list.push({ y: sp.y + 8, draw: () => drawSprite(ctx, blockPileSprite(Math.min(18, Math.ceil(Math.sqrt(state.resources.cutstone) * 2))), sp.x + 40, sp.y + 10) });
     for (const f of fx.falls) list.push({ y: f.y + 0.5, draw: () => drawFall(f) });
+    // Minnesteiner ved tjernet: én for hver avsluttet syklus (arv, bare presentasjon — påvirker ingen regler).
+    const stones = state.legacy?.stones || [];
+    stones.forEach((m, i) => {
+      const a = -Math.PI / 2 + (i - (stones.length - 1) / 2) * 0.2;
+      const x = pond.x + Math.cos(a) * (pond.rx + 12), y = pond.y + Math.sin(a) * (pond.ry + 9);
+      if (inView(x, y)) list.push({ y, draw: () => drawMemorial(x, y, m.n) });
+    });
     list.sort((a, b) => a.y - b.y);
     for (const o of list) o.draw();
 
@@ -477,6 +554,7 @@ export function createRenderer(canvas) {
     for (const b of state.buildings) {
       if ((b.type !== 'fire' && b.type !== 'hearth') || !b.complete) continue;
       drawFireGlow(ctx, b.x, b.y, renderTime);
+      if (festival && b.type === 'hearth') drawFireGlow(ctx, b.x, b.y - 2, renderTime * 1.3); // høstfest: større, varmere ild
       drawEmbers(ctx, b.x, b.y, renderTime);
       drawFlames(ctx, b.x, b.y - 1, renderTime);
     }
@@ -513,6 +591,17 @@ export function createRenderer(canvas) {
     ctx.fillStyle = vg;
     ctx.fillRect(0, 0, sw, sh);
 
+    if (R.weather.rain > 0) {
+      const k = Math.min(1, R.weather.rain / 2, (11 - R.weather.rain) / 1.5);
+      ctx.fillStyle = `rgba(36,46,56,${(0.1 * k).toFixed(3)})`; ctx.fillRect(0, 0, sw, sh);
+      ctx.strokeStyle = `rgba(200,212,220,${(0.32 * k).toFixed(3)})`; ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 0; i < 220; i++) {
+        const sx = ((i * 97.13 + renderTime * 40) % (sw + 60)) - 30, sy = ((i * 53.71 + renderTime * 620 + (i % 7) * 90) % (sh + 40)) - 20;
+        ctx.moveTo(sx, sy); ctx.lineTo(sx - 3, sy + 13);
+      }
+      ctx.stroke();
+    }
     ctx.textAlign = 'center';
     ctx.font = '600 13px Georgia, "Palatino Linotype", serif';
     for (const p of fx.popups) {
@@ -698,6 +787,18 @@ export function createRenderer(canvas) {
         const off = Math.sin(renderTime * 8 + b.id) * 2.6;
         taper(ctx, b.x - 10, b.y - 7 + off, b.x - 6.2, b.y - 22 + off, 0.9, 0.9, 'rgb(170,172,168)');
       }
+    }
+    function drawMemorial(x, y, n) {
+      // En reist stein med lav, mose og innhugne tegn — én for hver syklus som er levd.
+      const h = 15 + (n % 3) * 3, w = 5.5 + (n % 2);
+      dab(ctx, x + 3, y + 0.6, w * 1.6, 2.2, 0, 'rgba(18,14,8,0.4)');
+      ctx.fillStyle = '#6f6c64';
+      ctx.beginPath(); ctx.moveTo(x - w, y); ctx.quadraticCurveTo(x - w - 0.8, y - h * 0.6, x - w * 0.55, y - h); ctx.quadraticCurveTo(x, y - h - 2.4, x + w * 0.6, y - h + 0.6); ctx.quadraticCurveTo(x + w + 0.6, y - h * 0.5, x + w, y); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = 'rgba(0,0,0,0.24)'; ctx.beginPath(); ctx.moveTo(x + w * 0.2, y); ctx.lineTo(x + w * 0.5, y - h + 1); ctx.quadraticCurveTo(x + w + 0.6, y - h * 0.5, x + w, y); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = 'rgba(214,208,190,0.28)'; ctx.fillRect(x - w * 0.6, y - h * 0.9, w * 0.35, h * 0.7);
+      dab(ctx, x - w * 0.4, y - 1.4, w * 0.7, 1.4, 0.1, 'rgba(84,104,52,0.8)');
+      ctx.strokeStyle = 'rgba(40,34,26,0.75)'; ctx.lineWidth = 0.45;
+      for (let k = 0; k < Math.min(5, n); k++) { const yy = y - h * 0.78 + k * 2.4; ctx.beginPath(); ctx.moveTo(x - 1.6, yy); ctx.lineTo(x + 1.4, yy + 0.8); ctx.moveTo(x, yy - 0.8); ctx.lineTo(x, yy + 1.6); ctx.stroke(); }
     }
     function drawFall(f) {
       const T = 1.3;

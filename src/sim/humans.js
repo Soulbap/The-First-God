@@ -12,6 +12,7 @@ import { beginDelivery, pickupDelivery, completeDelivery, recordTrip } from './r
 import { isHome, settlementById } from './settlements.js';
 import { partyArrive, partyTick } from './realm.js';
 import { missionAtEdge, missionHome } from './worldmap.js';
+import { festivalActive } from './civilization.js';
 
 const H = B.human;
 
@@ -63,7 +64,7 @@ function moveTo(state, h, dt) {
   const goal = h.waypoints?.[0] || { x: h.tx, y: h.ty };
   const dx = goal.x - h.x, dy = goal.y - h.y;
   const d = Math.hypot(dx, dy);
-  const stepLen = H.speed * h.look.pace * dt;
+  const stepLen = H.speed * h.look.pace * (state.modifiers.walkSpeed || 1) * dt;
   if (Math.abs(dx) > 0.5) h.dir = dx > 0 ? 1 : -1;
   if (d <= stepLen) { h.x = goal.x; h.y = goal.y; if (h.waypoints?.length) { h.waypoints.shift(); return false; } return true; }
   h.x += (dx / d) * stepLen;
@@ -110,8 +111,10 @@ function completedHomes(state) {
 }
 
 function goMaintenance(state, h) {
-  const homes = completedHomes(state);
-  const choices = [deliveryPoint(state), ...homes, hearthOf(state) || fireOf(state)].filter(Boolean);
+  const homes = completedHomes(state).filter((b) => (b.settlementId || 'first') === h.settlementId);
+  // Torget og hallen blir møteplasser: folk handler, prater og lærer der mellom arbeidsøktene.
+  const civic = state.buildings.filter((b) => b.complete && (b.type === 'market' || b.type === 'hall') && (b.settlementId || 'first') === h.settlementId);
+  const choices = [deliveryPoint(state), ...homes, hearthOf(state) || fireOf(state), ...civic, ...civic].filter(Boolean);
   if (!choices.length) return false;
   const target = choices[(h.id + h.deliveries) % choices.length];
   h.targetId = target.id || null;
@@ -180,6 +183,15 @@ function chooseTask(state, h) {
     h.ty = site.y + Math.sin(a) * (site.radius * 0.55 + 4);
     h.state = 'toSite';
     return;
+  }
+  // Høstfest: folk i hovedstaden som ikke bygger, samles ved ildstedet (bønnen der teller dobbelt).
+  if (h.settlementId === 'first' && festivalActive(state) && rand(state.rng) < B.festival.joinChance) {
+    const fire = hearthOf(state) || fireOf(state);
+    if (fire) {
+      const a = rand(state.rng) * Math.PI * 2, r = 22 + rand(state.rng) * 26;
+      h.state = 'toFire'; h.tx = fire.x + Math.cos(a) * r; h.ty = fire.y + Math.sin(a) * r * 0.55 + 2;
+      return;
+    }
   }
   // Folk i en ung bosetting bruker annenhver runde på livet rundt ildstedet i stedet for å sanke.
   if (h.settlementId !== 'first' && state.expansion.founded && h.deliveries % 2 === 0) {
@@ -366,9 +378,10 @@ export function stepHuman(state, h, dt) {
     case 'rest':
       h.timer -= dt;
       if (h.timer <= 0) {
-        state.resources.pp += H.prayerPP;
-        state.totals.pp += H.prayerPP;
-        state.events.push({ type: 'prayer', humanId: h.id, x: h.x, y: h.y });
+        const pp = H.prayerPP * (state.modifiers.prayerMult || 1) * (festivalActive(state) ? B.festival.prayerMultiplier : 1);
+        state.resources.pp += pp;
+        state.totals.pp += pp;
+        state.events.push({ type: 'prayer', humanId: h.id, x: h.x, y: h.y, festival: festivalActive(state) });
         goIdle(state, h, [0.4, 1.0]);
       }
       break;

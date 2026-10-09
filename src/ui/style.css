@@ -7,7 +7,7 @@ canvas#globe { position: fixed; inset: 0; width: 100vw; height: 100vh; display: 
 canvas#globe[hidden] { display: none; }
 canvas#world.globe-mode { cursor: grab; }
 .scale-chip { position: absolute; right: var(--edge); bottom: calc(var(--edge) + var(--bar-h) + var(--space-2)); padding: 4px 10px; border-radius: var(--radius-sm); background: rgba(20, 22, 18, 0.62); color: var(--gui-text-secondary); font-size: 12px; letter-spacing: 0.04em; pointer-events: none; transition: opacity var(--t-hover) var(--ease); }
-.scale-chip b { color: var(--gui-text, #efe4cc); font-weight: 600; }
+.scale-chip b { color: var(--gui-text-primary); font-weight: 600; }
 canvas#world.can-gather { cursor: pointer; }
 canvas#world.dragging { cursor: grabbing; }
 
@@ -170,7 +170,18 @@ button { font: inherit; color: inherit; }
 
 /* ---------- Ragnarok-dialog ---------- */
 #dialog { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(10, 12, 10, 0.5); }
-.dialog-box { width: min(460px, calc(100vw - 32px)); padding: var(--space-5); animation: rise var(--t-panel) var(--ease); }
+.dialog-box { width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 48px); overflow-y: auto; padding: var(--space-5); animation: rise var(--t-panel) var(--ease); }
+.echoes { border-top: var(--border-w) solid var(--gui-border-soft); padding-top: var(--space-3); }
+.echoes h3 { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); margin: 0 0 var(--space-1); font-size: var(--fs-body); font-weight: 600; }
+.echoes .budget { color: var(--gui-accent); font-weight: 600; font-variant-numeric: tabular-nums; }
+.echoes ul { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: grid; gap: var(--space-2); }
+.echo { display: flex; gap: var(--space-3); align-items: center; justify-content: space-between; padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: rgba(255, 255, 255, 0.03); }
+.echo h4 { margin: 0; font-size: var(--fs-body); }
+.echo p { margin: 2px 0 0; font-size: var(--fs-meta); color: var(--gui-text-secondary); line-height: 1.35; }
+.echo p.w { color: var(--gui-text-muted); font-style: italic; }
+.echo .lvl { color: var(--gui-accent); font-size: var(--fs-meta); font-weight: 600; margin-left: 4px; }
+.echo .btn { flex: none; min-width: 84px; }
+.echo.maxed { opacity: 0.7; }
 .dialog-box h2 { margin: 0 0 var(--space-2); font-size: var(--fs-title); }
 .dialog-box .lead { margin: 0 0 var(--space-4); color: var(--gui-text-secondary); line-height: var(--lh-body); }
 .dialog-box dl { display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-4); margin: 0 0 var(--space-4); line-height: 1.4; }

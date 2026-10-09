@@ -42,17 +42,17 @@ export const BALANCE = {
   building: {
     shelter: { radius: 26, work: 16, divine: true, minRing: 60 },
     fire: { radius: 14, work: 8, minRing: 20 },
-    hut: { radius: 30, work: 26, minRing: 110 },
-    storage: { radius: 32, work: 32, minRing: 105 },
+    hut: { radius: 30, work: 26, minRing: 80 },
+    storage: { radius: 32, work: 32, minRing: 80 },
     hearth: { radius: 25, work: 24, minRing: 52 },
     field: { radius: 38, work: 22, minRing: 130 },
     workshop: { radius: 34, work: 30, minRing: 125 },
     // GAMEPLAY-07/08: byinfrastruktur og sivilt bygg.
     sawmill: { radius: 38, work: 40, minRing: 120 },
     mason: { radius: 34, work: 40, minRing: 120 },
-    townhouse: { radius: 34, work: 36, minRing: 95 },
-    market: { radius: 42, work: 48, minRing: 85 },
-    hall: { radius: 40, work: 56, minRing: 105 },
+    townhouse: { radius: 34, work: 36, minRing: 80 },
+    market: { radius: 42, work: 48, minRing: 70 },
+    hall: { radius: 40, work: 56, minRing: 90 },
   },
   // Boligkapasitet per bygg (tidlig sivilisasjon brukte 2 per hjem).
   housing: { shelter: 2, hut: 2, townhouse: 4 },
@@ -75,6 +75,8 @@ export const BALANCE = {
   // Verdens-regioner: avstand i «ruter». Reisetid er abstrakt (ingen individuell simulering utenfor kartet).
   globe: { cols: 5, rows: 3, expeditionSecondsPerStep: 55, outpostSecondsPerStep: 70, caravanSeconds: 46, caravanSpeed: 46, maxCaravans: 4,
     expedition: { wood: 30, food: 8 }, outpost: { wood: 60, stone: 30, planks: 8, food: 8 }, outpostParty: 3, outpostGrowSeconds: 55, outpostCap: 8, establishedPop: 6 },
+  // OPUS-01 · Høstfest: overskuddsmat blir en samling ved ildstedet med dobbel bønn. Automatisk (idle), aldri tvunget.
+  festival: { minFood: 30, base: 10, perPerson: 0.8, interval: 110, duration: 28, prayerMultiplier: 2, joinChance: 0.7 },
   settlement: { clearRadius: 150, localHomeCapacity: 2 },
   stats: { productionWindow: 60 },
   wear: { cell: 12, perSecondWalking: 0.22, transportMultiplier: 1.45, explorationMultiplier: 0.48, decayPerSecond: 0.0009 },

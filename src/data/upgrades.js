@@ -307,6 +307,42 @@ export const UPGRADES = [
     world: 'Veier møter hav og fjell. Fra alle kanter kommer lass til torget.',
     actions: [{ type: 'connectWorld' }],
   },
+
+  // ---------- OPUS-01: Velsignelser (PP) ----------
+  // Bønnene strømmer tilbake til verden som varige velsignelser med nivåer. Kjøpes én gang per nivå og virker
+  // hele tiden (idle) — ingen aktive mirakler å klikke på. Hver har en synlig følge i verden.
+  {
+    id: 'blessed_rain', name: 'Regnets velsignelse', category: 'tro', icon: 'sprout', blessing: 'rain',
+    discover: [{ built: 'fire' }, { ppTotal: 6 }], cost: { pp: 12 }, costGrowth: 2.4, max: 3,
+    requires: [{ built: 'fire' }, { ppTotal: 6 }], requireText: 'Krever Felles ild',
+    effect: 'Trærne vokser 40 % raskere for hvert nivå. Skogen fornyer seg der folket hugger.',
+    world: 'Et mildt regn går over skogen. Spirer skyter opp, og stubbene blir raskere til unge trær.',
+    actions: [{ type: 'modify', key: 'treeGrowth', mult: 1.4 }],
+  },
+  {
+    id: 'stone_gift', name: 'Steinens gave', category: 'tro', icon: 'stone', blessing: 'stone',
+    discover: [{ built: 'fire' }, { ppTotal: 18 }], cost: { pp: 24 }, costGrowth: 2.3, max: 3,
+    requires: [{ built: 'fire' }, { ppTotal: 18 }], requireText: 'Krever Felles ild',
+    effect: 'Steinblokkene fornyer seg 30 % raskere for hvert nivå.',
+    world: 'Berget gir mer av seg selv: nye blokker skyves fram i bruddene der folket har hugget.',
+    actions: [{ type: 'modify', key: 'rockRegen', mult: 0.7 }],
+  },
+  {
+    id: 'wanderer_ease', name: 'Vandrerens letthet', category: 'tro', icon: 'explore', blessing: 'wind',
+    discover: [{ upgrade: 'hands_remember' }, { ppTotal: 40 }], cost: { pp: 45 }, costGrowth: 2.2, max: 3,
+    requires: [{ upgrade: 'hands_remember' }, { ppTotal: 40 }], requireText: 'Krever Hendene husker',
+    effect: 'Folk, bærere og karavaner går 12 % raskere for hvert nivå.',
+    world: 'En medvind følger dem som bærer. Stiene blir kortere, og flere lass kommer fram.',
+    actions: [{ type: 'modify', key: 'walkSpeed', mult: 1.12 }],
+  },
+  {
+    id: 'light_of_knowledge', name: 'Kunnskapens lys', category: 'tro', icon: 'book', blessing: 'light',
+    discover: [{ knowledge: 5 }], cost: { pp: 90 }, costGrowth: 2.2, max: 3,
+    requires: [{ knowledge: 5 }], requireText: 'Krever at folket har begynt å samle kunnskap',
+    effect: 'All kunnskap øker med 30 % for hvert nivå.',
+    world: 'Et stille lys hviler over verksteder og hall. Det folk lærer, blir værende.',
+    actions: [{ type: 'modify', key: 'knowledge', mult: 1.3 }],
+  },
 ];
 
 export const MILESTONES = [
@@ -341,6 +377,7 @@ export const MILESTONES = [
   { id: 'first_settlements', title: 'De første bosettingene', text: 'To steder har fått navn og ildsteder. Mellom dem går menneskene en sti som ikke fantes før.', when: { expansion: 'founded' }, unlock: 'regionView' },
   { id: 'living_region', title: 'En levende region', text: 'To ildsteder er blitt til et fellesskap. Mennesker og forsyninger følger stiene mellom hjemmene, og landet bærer stadig tydeligere spor av dem.', when: { all: [{ expansion: 'founded' }, { regionalProjects: 2 }, { delivery: 2 }, { routes: 1 }] } },
   { id: 'stable_food', title: 'Stabil matforsyning', text: 'Dyrket mark gir mer enn en enkelt god dag. Veksten kan nå bæres av landet.', when: { all: [{ upgrade: 'seed_promise' }, { foodHarvest: 1 }] } },
+  { id: 'first_harvest_feast', title: 'Den første høstfesten', text: 'Lagrene er fulle. Folket samles ved ildstedet, deler maten og ber sammen — og bønnene stiger dobbelt så høyt.', when: { festivals: 1 } },
   { id: 'first_town', title: 'Den første byen', text: 'En av bygdene har blitt en tidlig by: hjem, felles arbeid og forbindelser bærer et større samfunn.', when: { all: [{ upgrade: 'regional_exchange' }, { settlementStage: 'Tidlig by' }] }, unlock: 'townView' },
   { id: 'dawn_civilization', title: 'Sivilisasjonens morgen', text: 'Mark, verksteder og ferdselsårer binder bosettingene sammen til begynnelsen på en sivilisasjon.', when: { all: [{ milestone: 'first_town' }, { regionalProjects: 5 }, { delivery: 6 }] } },
   { id: 'city_rises', title: 'En by reiser seg', text: 'Sagbruk, steinhoggeri og tette hus bærer et større samfunn. Planker og tilhugget stein har gjort landsbyen til en by.', when: { stageMin: 'By' } },

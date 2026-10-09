@@ -8,7 +8,7 @@ export function siteIsValid(state, type, x, y) {
   const r = B.building[type].radius;
   if (!inBounds(state, x, y, 70) || inPond(state, x, y, r + 14)) return false;
   if (type !== 'field' && dist(x, y, state.stockpile.x, state.stockpile.y) < r + 34) return false;
-  for (const b of state.buildings) if (dist(x, y, b.x, b.y) < r + b.radius + 18) return false;
+  for (const b of state.buildings) if (dist(x, y, b.x, b.y) < r + b.radius + 14) return false;
   for (const n of state.nodes) {
     const need = n.kind === 'tree' ? r + 22 : r + n.radius + 10;
     if (dist(x, y, n.x, n.y) < need) return false;
@@ -16,23 +16,83 @@ export function siteIsValid(state, type, x, y) {
   return true;
 }
 
-// Deterministisk søk i ringer rundt leirens hjerte (bålet når det finnes).
+// Bosettingens soner (OPUS-01): menneskene velger fortsatt selv, men med en enkel «smak» som gir et lesbart sted —
+// en tett kjerne rundt ildstedet, hjem i klynger, verksteder vendt mot råvaren og åkerland i utkanten.
+const ZONE = {
+  shelter: 'home', hut: 'home', townhouse: 'home',
+  fire: 'core', hearth: 'core', storage: 'core', market: 'core', hall: 'core',
+  sawmill: 'work', mason: 'work', workshop: 'work',
+  field: 'field',
+};
+export const zoneOf = (type) => ZONE[type] || 'core';
+
+// Retning (enhetsvektor) mot tyngdepunktet av en ressurs rundt et punkt — verkstedene legger seg den veien.
+function resourceDir(state, anchor, kind) {
+  let sx = 0, sy = 0;
+  for (const n of state.nodes) {
+    if (n.kind !== kind || (kind === 'tree' && n.state !== 'alive')) continue;
+    const dx = n.x - anchor.x, dy = n.y - anchor.y, d = Math.hypot(dx, dy);
+    if (d < 40 || d > 900) continue;
+    const w = 1 / (d + 120);
+    sx += (dx / d) * w; sy += (dy / d) * w;
+  }
+  const l = Math.hypot(sx, sy);
+  return l > 1e-9 ? { x: sx / l, y: sy / l } : null;
+}
+
+function siteScore(state, type, x, y, ring, anchor, ctx) {
+  const zone = zoneOf(type);
+  let score = -ring * 0.12; // nærhet til hjertet
+  let homesNear = 0, workNear = 0, fieldsNear = 0, coreNear = 0;
+  for (const b of state.buildings) {
+    if ((b.settlementId || 'first') !== ctx.settlementId) continue;
+    const d = Math.hypot(b.x - x, b.y - y), z = zoneOf(b.type);
+    if (d < 115 && z === 'home') homesNear++;
+    if (d < 160 && z === 'work') workNear++;
+    if (d < 150 && z === 'field') fieldsNear++;
+    if (d < 120 && z === 'core') coreNear++;
+  }
+  const dx = (x - anchor.x) / (ring || 1), dy = (y - anchor.y) / (ring || 1);
+  if (zone === 'home') score += Math.min(3, homesNear) * 9 + Math.min(2, coreNear) * 4 - workNear * 7 - fieldsNear * 6;
+  else if (zone === 'core') score += coreNear * 5 - ring * 0.3; // torg og hall vil helt inn mot sentrum
+  else if (zone === 'work') {
+    const dir = ctx.dir;
+    if (dir) score += (dx * dir.x + dy * dir.y) * 34;
+    score += Math.min(2, workNear) * 10 - homesNear * 4;
+  } else if (zone === 'field') {
+    let trees = 0;
+    for (const n of state.nodes) if (n.kind === 'tree' && n.state === 'alive' && Math.hypot(n.x - x, n.y - y) < 140) trees++;
+    score += Math.min(3, fieldsNear) * 16 - homesNear * 8 - trees * 2 + Math.min(ring, 260) * 0.14;
+  }
+  return score;
+}
+
+// Deterministisk søk i ringer rundt leirens hjerte (bålet når det finnes). Blant gyldige tomter i de nærmeste
+// ringene velges den som passer sonen best; ellers som før den første ledige.
 export function findBuildSite(state, type, settlementId = 'first') {
   const def = B.building[type];
   const home = state.settlements.find((s) => s.id === settlementId);
   const C = settlementId === 'first' || !home ? state.settlement.center : home;
   const fire = state.buildings.find((b) => b.type === 'fire' && (b.settlementId || 'first') === settlementId);
   const anchor = type === 'fire' || !fire ? C : fire;
+  const zone = zoneOf(type);
+  const ctx = { settlementId, dir: type === 'sawmill' ? resourceDir(state, anchor, 'tree') : type === 'mason' ? resourceDir(state, anchor, 'rock') : null };
+  const reach = zone === 'field' ? 150 : zone === 'work' ? 120 : 70; // hvor langt utover første ledige ring vi vurderer
+  let best = null, firstRing = null;
   for (let ring = def.minRing; ring <= 520; ring += 10) {
+    if (firstRing != null && ring > firstRing + reach) break;
     const steps = Math.max(12, Math.round(ring / 8));
     for (let k = 0; k < steps; k++) {
       const a = state.settlement.angleOffset + (k / steps) * Math.PI * 2;
       const x = anchor.x + Math.cos(a) * ring;
       const y = anchor.y + Math.sin(a) * ring * 0.72;
-      if (siteIsValid(state, type, x, y)) return { x, y };
+      if (!siteIsValid(state, type, x, y)) continue;
+      if (firstRing == null) firstRing = ring;
+      const score = siteScore(state, type, x, y, ring, anchor, ctx);
+      if (!best || score > best.score + 1e-9) best = { x, y, score };
     }
   }
-  return null;
+  return best ? { x: best.x, y: best.y } : null;
 }
 
 export function startConstruction(state, type, { onComplete = null, source = null, site: forcedSite = null, settlementId = 'first' } = {}) {

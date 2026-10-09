@@ -68,13 +68,14 @@ export function createWorld(seed = 20261009) {
     realm: { autoFounding: false, limit: 2, party: null, lastFoundedAt: -Infinity, nextCheckAt: Infinity, foundedCount: 0, siteCache: null },
     network: { routes: {}, trips: 0 },
     globe: createGlobe(seed),
-    civilization: { foodUnlocked: false, exchangeUnlocked: false, nextFoodAt: Infinity, nextPopulationAt: Infinity, foodHarvests: 0, exchangeDeliveries: 0 },
+    civilization: { foodUnlocked: false, exchangeUnlocked: false, nextFoodAt: Infinity, nextPopulationAt: Infinity, foodHarvests: 0, exchangeDeliveries: 0, festivalUntil: -Infinity, nextFestivalAt: 0, festivals: 0 },
     stockpile: { x: C.x + 4, y: C.y + 48 },
     resources: { wood: 0, stone: 0, food: 0, planks: 0, cutstone: 0, knowledge: 0, pp: 0 },
     totals: { wood: 0, stone: 0, food: 0, planks: 0, cutstone: 0, knowledge: 0, pp: 0, manualClicks: 0 },
     upgrades: {},
     discovered: {}, // innsikt-id → spilltid da den ble synlig (se discovery.js)
-    modifiers: { gatherSpeed: 1, carry: 0, buildSpeed: 1, exploration: false, craftSpeed: 1, knowledge: 1, foodBonus: 0, townhouseBonus: 0, regionalCarry: 0, rockRegen: 1 },
+    modifiers: { gatherSpeed: 1, carry: 0, buildSpeed: 1, exploration: false, craftSpeed: 1, knowledge: 1, foodBonus: 0, townhouseBonus: 0, regionalCarry: 0, rockRegen: 1, treeGrowth: 1, walkSpeed: 1, clickBonus: 0, awakenBonus: 0, prayerMult: 1, expeditionSpeed: 1 },
+    legacy: { cycles: 0, stones: [], bonuses: {} }, // arv fra tidligere sykluser (OPUS-01); påvirker ikke startverdenen
     nodes: [], buildings: [], humans: [],
     milestones: {}, unlocks: { zoomArea: false, villageView: false },
     timers: { seed: B.tree.seedIntervalSeconds, wearDecay: 0, roles: 0 },

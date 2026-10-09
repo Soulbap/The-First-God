@@ -251,13 +251,15 @@ export function createHud({ onBuy, onSpeed, onView, onZoom, onRagnarok }) {
   });
 
   // ---------- Ragnarok ----------
-  const closeDialog = () => {
+  const closeDialog = (cancelled = true) => {
+    if (cancelled && !els.dialog.hidden) onRagnarok('cancel');
     els.dialog.hidden = true;
     if (dialogReturn) dialogReturn.focus({ preventScroll: true });
     dialogReturn = null;
   };
   $('ragnarok-cancel').addEventListener('click', closeDialog);
-  $('ragnarok-confirm').addEventListener('click', () => { closeDialog(); onRagnarok('confirm'); });
+  $('ragnarok-confirm').addEventListener('click', () => { closeDialog(false); onRagnarok('confirm'); });
+  els.summary.addEventListener('click', (e) => { const b = e.target.closest('[data-echo]'); if (b && !b.disabled) onRagnarok('buy', b.dataset.echo); });
   els.dialog.addEventListener('click', (e) => { if (e.target === els.dialog) closeDialog(); });
 
   window.addEventListener('keydown', (e) => {
@@ -346,16 +348,27 @@ export function createHud({ onBuy, onSpeed, onView, onZoom, onRagnarok }) {
       if (els.hint.textContent !== text) els.hint.textContent = text;
       els.hint.classList.remove('hide');
     },
-    showRagnarok(summary) {
+    showRagnarok(summary, { keepFocus = null } = {}) {
+      const shop = summary.shop.map((b) => `<li class="echo${b.level >= b.max ? ' maxed' : ''}">
+          <div><h4>${b.name}${b.level ? ` <span class="lvl">${b.level}/${b.max}</span>` : ''}</h4><p>${b.effect}</p><p class="w">${b.world}</p></div>
+          <button type="button" class="btn${b.affordable ? ' btn-gold' : ''}" data-echo="${b.id}" ${b.affordable ? '' : 'disabled'}>${b.level >= b.max ? 'Fullt' : `${b.cost} PrP`}</button></li>`).join('');
       els.summary.innerHTML = `<dl>
         <dt>Går tapt</dt><dd>${summary.lost}</dd>
         <dt>Beholdes</dt><dd>${summary.kept}</dd>
-        <dt>Tildeles</dt><dd>${summary.prp} Prestige Points (PrP)</dd>
+        <dt>Tildeles</dt><dd>${summary.prp} Prestige Points (PrP)${summary.bank ? ` · ${summary.bank} spart fra før` : ''}</dd>
         <dt>Varig avtrykk</dt><dd>${summary.legacy}</dd>
-      </dl><p class="note">Prototype: permanente bonuser er ennå ikke kjøpbare. Valget er frivillig og kan avbrytes.</p>`;
-      dialogReturn = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      </dl>
+      <section class="echoes" aria-label="Ekko fra tidligere sykluser">
+        <h3>Ekko inn i neste syklus <span class="budget">${summary.budget} PrP å bruke</span></h3>
+        <p class="note">Valgfritt. Ekkoene gjør starten litt lettere, men treet, steinen og det første lyet må fortsatt skapes. Valgene gjelder først når du bekrefter.</p>
+        <ul>${shop}</ul>
+      </section>`;
+      const wasOpen = !els.dialog.hidden;
+      if (!wasOpen) dialogReturn = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       els.dialog.hidden = false;
-      $('ragnarok-cancel').focus({ preventScroll: true });
+      const keep = keepFocus && els.summary.querySelector(`[data-echo="${keepFocus}"]`);
+      if (keep && !keep.disabled) keep.focus({ preventScroll: true });
+      else if (!wasOpen || keepFocus) $('ragnarok-cancel').focus({ preventScroll: true });
     },
     get panel() { return mode; },
     openPanel(m) { setMode(m, { focus: false }); },

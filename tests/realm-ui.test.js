@@ -22,7 +22,7 @@ test('alt innhold har ikon, kategori og kjente ressurser (ingen døde kort)', ()
 });
 
 test('alle krav bruker kjente kravtyper (ellers kan innhold aldri låses opp)', () => {
-  const known = new Set(['all', 'upgrade', 'built', 'builtCount', 'milestone', 'people', 'gathered', 'noPending', 'expansion', 'delivery', 'regionalProjects', 'foodHarvest', 'settlementStage', 'stageMin', 'settlements', 'roles', 'routes', 'techs', 'knowledge', 'regions', 'outposts', 'caravans', 'civStage', 'regionalWear']);
+  const known = new Set(['all', 'upgrade', 'built', 'builtCount', 'milestone', 'people', 'gathered', 'noPending', 'expansion', 'delivery', 'regionalProjects', 'foodHarvest', 'settlementStage', 'stageMin', 'settlements', 'roles', 'routes', 'techs', 'knowledge', 'regions', 'outposts', 'caravans', 'civStage', 'regionalWear', 'ppTotal', 'festivals']);
   const walk = (r, where) => { for (const k of Object.keys(r)) { assert.ok(known.has(k), `${where}: ukjent krav «${k}»`); if (k === 'all') r.all.forEach((q) => walk(q, where)); } };
   for (const u of UPGRADES) for (const r of [...u.requires, ...(u.discover || [])]) walk(r, u.id);
   for (const m of MILESTONES) walk(m.when, m.id);

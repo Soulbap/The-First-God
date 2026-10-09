@@ -85,7 +85,8 @@ function finishProject(state, p) {
 }
 
 export function beginDelivery(state, h) {
-  const d = state.region?.deliveries.find((q) => q.status === 'queued');
+  // Beholdningen kan ha blitt brukt siden leveransen ble satt i kø: bær bare det som faktisk finnes (aldri negativ).
+  const d = state.region?.deliveries.find((q) => q.status === 'queued' && state.resources[q.type] >= q.amount);
   if (!d || h.settlementId !== 'first') return false;
   d.status = 'reserved'; d.carrierId = h.id; state.resources[d.type] -= d.amount;
   state.region.reserved[d.type] += d.amount;

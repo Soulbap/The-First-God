@@ -36,6 +36,8 @@ export function requirementMet(state, req) {
   if (req.routes) return establishedRoutes(state).length >= req.routes;
   if (req.techs) return techCount(state) >= req.techs;
   if (req.knowledge) return state.totals.knowledge >= req.knowledge;
+  if (req.ppTotal) return state.totals.pp >= req.ppTotal;
+  if (req.festivals) return (state.civilization?.festivals || 0) >= req.festivals;
   if (req.regions) return discoveredRegions(state).length >= req.regions;
   if (req.outposts) return outpostRegions(state).length >= req.outposts;
   if (req.caravans) return (state.globe?.stats.caravanDeliveries || 0) >= req.caravans;
@@ -81,12 +83,13 @@ export function purchase(state, id) {
   state.upgrades[id] = upgradeCount(state, id) + 1;
   for (const a of def.actions) applyAction(state, def, a);
   state.events.push({ type: 'purchased', id, cost });
+  if (def.blessing) state.events.push({ type: 'blessing', id, kind: def.blessing, level: state.upgrades[id] });
   return { ok: true };
 }
 
 function applyAction(state, def, a) {
   if (a.type === 'construct') startConstruction(state, a.building, { onComplete: a.onComplete || null, source: def.id, settlementId: a.settlement || 'first' });
-  else if (a.type === 'spawnHumans') spawnHumans(state, a.count, { at: a.at });
+  else if (a.type === 'spawnHumans') spawnHumans(state, a.count + (def.id === 'awakening' ? state.modifiers.awakenBonus || 0 : 0), { at: a.at });
   else if (a.type === 'modify') {
     if (a.mult) state.modifiers[a.key] *= a.mult;
     if (a.add) state.modifiers[a.key] += a.add;

@@ -38,7 +38,7 @@ export function stepNature(state, dt) {
   for (const n of state.nodes) {
     if (n.kind === 'tree') {
       if (n.state === 'alive') {
-        if (n.growth < 1) n.growth = Math.min(1, n.growth + T.growthPerSecond * n.vigor * (1.15 - 0.3 * n.growth) * dt);
+        if (n.growth < 1) n.growth = Math.min(1, n.growth + T.growthPerSecond * (state.modifiers.treeGrowth || 1) * n.vigor * (1.15 - 0.3 * n.growth) * dt);
         if (n.stump && n.growth > 0.45) n.stump = false;
       } else {
         n.timer -= dt;
