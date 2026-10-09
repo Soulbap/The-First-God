@@ -293,42 +293,45 @@ export function createRenderer(canvas) {
     const box = cur && prev ? { i0: Math.min(cur.i0, prev.i0), i1: Math.max(cur.i1, prev.i1), j0: Math.min(cur.j0, prev.j0), j1: Math.max(cur.j1, prev.j1) } : (cur || prev);
     R.wearBox = cur;
     if (!box) return;
-    const Wp = cols * WS, px = R.wearImg.data, nz = R.wearNoise;
-    const clampK = (i, j) => (j < 0 ? 0 : j >= rows ? rows - 1 : j) * cols + (i < 0 ? 0 : i >= cols ? cols - 1 : i);
-    const get = (i, j) => { const k = clampK(i, j); return data[k] > R.exposure[k] ? data[k] : R.exposure[k]; };
-    const getWalk = (i, j) => data[clampK(i, j)];
-    const getPave = (i, j) => R.pave[clampK(i, j)];
-    const bil = (f, i, j, u, v) => (f(i, j) * (1 - u) + f(i + 1, j) * u) * (1 - v) + (f(i, j + 1) * (1 - u) + f(i + 1, j + 1) * u) * v;
+    const Wp = cols * WS, px = R.wearImg.data, nz = R.wearNoise, ex = R.exposure, pv = R.pave;
+    // Ytelse: maks(slitasje, eksponering) per celle beregnes én gang; interpolasjonen er skrevet ut uten funksjonskall.
+    const M = R.wearMax || (R.wearMax = new Float32Array(cols * rows));
+    for (let j = box.j0; j <= box.j1; j++) for (let i = box.i0; i <= box.i1; i++) { const k = j * cols + i; M[k] = data[k] > ex[k] ? data[k] : ex[k]; }
     for (let py = box.j0 * WS; py < (box.j1 + 1) * WS; py++) {
-      const fy = (py + 0.5) / WS - 0.5, j = Math.floor(fy), v = fy - j;
+      const fy = (py + 0.5) / WS - 0.5, jf = Math.floor(fy), v = fy - jf;
+      const j0 = jf < 0 ? 0 : jf >= rows ? rows - 1 : jf, j1 = jf + 1 >= rows ? rows - 1 : jf + 1 < 0 ? 0 : jf + 1;
+      const r0 = j0 * cols, r1 = j1 * cols;
       for (let pxx = box.i0 * WS; pxx < (box.i1 + 1) * WS; pxx++) {
-        const fx = (pxx + 0.5) / WS - 0.5, i = Math.floor(fx), u = fx - i;
-        const w = bil(get, i, j, u, v);
-        const n = nz[py * Wp + pxx];
+        const fx = (pxx + 0.5) / WS - 0.5, ifl = Math.floor(fx), u = fx - ifl;
+        const i0 = ifl < 0 ? 0 : ifl >= cols ? cols - 1 : ifl, i1 = ifl + 1 >= cols ? cols - 1 : ifl + 1 < 0 ? 0 : ifl + 1;
+        const a00 = r0 + i0, a10 = r0 + i1, a01 = r1 + i0, a11 = r1 + i1;
+        const w = (M[a00] * (1 - u) + M[a10] * u) * (1 - v) + (M[a01] * (1 - u) + M[a11] * u) * v;
         const o = (py * Wp + pxx) * 4;
+        const n = nz[py * Wp + pxx];
         // Gresset slites først i flekker; ved mye slitasje blir jorda sammenhengende bar.
         let a = smooth(0.26, 0.62, w * 1.12 + (n - 0.5) * 0.7);
         const shade = 0.78 + n * 0.5;
         let r = 112 * shade, g = 94 * shade, b = 68 * shade;
         // Ønskelinjer modnes: det som går mest, blir til en lys grusvei med småstein (historien ligger i bakken).
-        const walk = bil(getWalk, i, j, u, v);
-        const road = smooth(0.62, 0.9, walk + (n - 0.5) * 0.18);
-        if (road > 0) {
-          const grit = n > 0.82 ? 1.18 : n < 0.12 ? 0.82 : 1;
-          r += (150 * grit * (0.9 + n * 0.2) - r) * road; g += (136 * grit * (0.9 + n * 0.2) - g) * road; b += (106 * grit * (0.9 + n * 0.2) - b) * road;
-          a = Math.max(a, road);
+        const walk = (data[a00] * (1 - u) + data[a10] * u) * (1 - v) + (data[a01] * (1 - u) + data[a11] * u) * v;
+        if (walk > 0.5) {
+          const road = smooth(0.62, 0.9, walk + (n - 0.5) * 0.18);
+          if (road > 0) {
+            const grit = (n > 0.82 ? 1.18 : n < 0.12 ? 0.82 : 1) * (0.9 + n * 0.2);
+            r += (150 * grit - r) * road; g += (136 * grit - g) * road; b += (106 * grit - b) * road;
+            if (road > a) a = road;
+          }
         }
-        // Brolagt torg: grå stein i ujevne rader med mørkere fuger.
-        const pave = bil(getPave, i, j, u, v);
+        // Brolagt torg: ujevne heller; hver liten blokk får sin egen valør, fugene er svake og ikke et rutenett.
+        const pave = (pv[a00] * (1 - u) + pv[a10] * u) * (1 - v) + (pv[a01] * (1 - u) + pv[a11] * u) * v;
         if (pave > 0.02) {
-          // Ujevne heller: hver liten blokk får sin egen valør; fugene er svake og ikke et rutenett.
-          const row = Math.floor(py / 3), col = Math.floor((pxx + (row % 2) * 2) / 4);
+          const row = (py / 3) | 0, cshift = (row & 1) * 2, col = ((pxx + cshift) / 4) | 0;
           const hb = (((row * 73856093) ^ (col * 19349663)) >>> 0) % 1000 / 1000;
-          const joint = (py % 3 === 0 && hb < 0.7) || ((pxx + (row % 2) * 2) % 4 === 0 && hb > 0.35);
+          const joint = (py % 3 === 0 && hb < 0.7) || ((pxx + cshift) % 4 === 0 && hb > 0.35);
           const k = smooth(0.15, 0.6, pave + (n - 0.5) * 0.4);
           const tone = (joint ? 0.86 : 1) * (0.84 + hb * 0.18 + n * 0.1);
           r += (140 * tone - r) * k; g += (130 * tone - g) * k; b += (112 * tone - b) * k;
-          a = Math.max(a, k);
+          if (k > a) a = k;
         }
         px[o] = r; px[o + 1] = g; px[o + 2] = b; px[o + 3] = a * 215;
       }

@@ -138,6 +138,8 @@ Når en utgivelse opprettes, flyttes `Unreleased`-punkter til en datert versjons
 - Regionale leveranser reserverte materialer uten å sjekke beholdningen, så stein kunne bli negativ (−1 ved 30:00 i baseline). Nå bæres bare det som finnes.
 - Zoomgrensen for områdevisning følger tilstanden, ikke bare milepælshendelsen (riktig etter lasting).
 - Rulling i planetvisningen avbrøt ikke lenger utgangen den selv ba om.
+- Smale skjermer (1280–1400 px): bunnmenyen og fart/zoom-linjen overlappet etter at Planet- og lydknappen kom til. Lydknappen står nå for seg selv nede til venstre, og linjen er mer kompakt. Ragnarok-knappene holdes synlige når dialogen ruller.
+- Ytelse: slitasjelaget (stier, grus, torg) tegnes uten funksjonskall per piksel — 80 → 25 ms per oppdatering i sent spill (baseline uten grus/torg: 32 ms). Målt i nettleser.
 
 ### Tests
 - `tests/planet.test.js` (12): deterministisk planet, landskap per land for sju frø, retning lik kartkanten, verden ↔ planet, sømløst kamera, projeksjon, visningsmodell, tekstur, lagring (rundtur, avvisning, utfylling).
