@@ -1,0 +1,71 @@
+# Endringslogg — THE FIRST GOD
+
+Alle merkbare prosjektendringer dokumenteres her av AI-en som utfører endringen. Filen er en menneskelesbar historikk, ikke en erstatning for Git-historikk eller tekniske commit-meldinger.
+
+## AI-praksis (obligatorisk)
+
+Ved **hver** endring av kode, innhold, design, ressurser, konfigurasjon eller dokumentasjon skal AI:
+
+1. oppdatere denne filen i samme arbeidsøkt,
+2. legge en kort oppføring under `## [Unreleased]`,
+3. gruppere oppføringen under riktig kategori,
+4. beskrive både hva som ble endret og hvorfor når hvorfor ikke er åpenbart,
+5. nevne gjennomført kontroll/test når den er relevant,
+6. aldri omskrive eller fjerne tidligere versjonerte oppføringer uten eksplisitt instruks.
+
+Små rettelser skal også logges, men kan slås sammen til én presis punktlinje når de hører til samme arbeid. Ren lesing/inspeksjon uten filendring skal ikke logges.
+
+### Kategorier
+
+- `Added` — ny funksjon, innhold eller dokument.
+- `Changed` — endret oppførsel, balanse eller design.
+- `Fixed` — feilretting.
+- `Removed` — fjernet funksjon, innhold eller avhengighet.
+- `Docs` — dokumentasjonsendring når den ikke hører tydeligere hjemme over.
+- `Tests` — nye eller endrede tester/verifikasjon.
+
+### Format
+
+Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på versjonsnummer, testresultater eller brukeropplevelse.
+
+```md
+## [Unreleased]
+
+### Added
+- Kort, konkret beskrivelse av nyheten og dens hensikt. (Kontroll: ...)
+```
+
+Når en utgivelse opprettes, flyttes `Unreleased`-punkter til en datert versjonsseksjon. Versjonsnavn avgjøres av prosjektets faktiske releasepraksis.
+
+## [Unreleased]
+
+### Added
+- Genesis-01 vertikal prototype som spillbar 2D-verden i nettleser (vanilla JavaScript + Canvas 2D, ingen avhengigheter). Start med `start.bat` eller `npm start` → http://localhost:5173. (Kontroll: kjørt og inspisert i forhåndsvisning)
+- Simulering adskilt fra presentasjon (`src/sim/`): seedet startverden med bjørk, gran, steinblokker og tjern; fast tidssteg (1/60 s) uavhengig av bildefrekvens; deterministisk tilfeldighet.
+- Organisk vegetasjon: trær vokser fra spire til fullvoksen (~2 min), hogst lager hogstskår, uttømte trær felles (fallanimasjon, stokk, stubbe) og vokser opp igjen; modne trær sprer frø til ledige plasser (tak: 130 trær). Steinblokker brytes ned blokk for blokk og fornyes sakte.
+- Manuell sanking ved klikk på det faktiske treet/steinen med dempet tilbakemelding: risting, flis/løv/støv, liten «+1», og ressursen flyr til lageret.
+- Synlig lager: vedstabel og steinhaug ved leirplassen vokser og krymper med beholdningen.
+- Datadrevne oppgraderinger (`src/data/upgrades.js`): Første ly, Vekkelse, Felles ild, Hendene husker, Nytt hjem (3 ganger). Alle viser kostnad, effekt, «I verden» og krav, med tilstandene Låst / For dyrt ennå / Tilgjengelig / Bygges / Fullført.
+- Automatisk tomtevalg og byggetrinn: lavvo (steinring → stenger → huddekke → dør) og rundhus (fundament → stolper → flettverk → takstoler → stråtak → dør); materialhaug som minker. Første ly bygges av guddommelig kraft, senere bygg av menneskene.
+- Autonome mennesker med enkel tilstandsmaskin (finn oppgave → gå → hugg/bryt/bygg → bær → lever → hvil og be ved bålet), reservasjon av ressurser og trygg håndtering når målet forsvinner. Synlig gange, hogst, steinbryting, bygging, bæring og bønn.
+- Felles ild med flammer, glød, gnister og røyk; mennesker hviler ved bålet og ber → bønnepoeng (PP). Ferdige hjem har røyk fra taket.
+- Stier: der mennesker går ofte slites gresset bort til synlige jordstier.
+- Milepæler (Første hjem, Første ild, Sammenhengende bosetting) med diskret melding; den siste låser opp områdezoom og glir kameraet jevnt ut (4,5 s) over samme verden.
+- Kamera med zoom rundt markøren, panorering ved å dra, Nær/Område-knapper og sikker retur. Semantisk zoom: gress og småtall skjules i områdevisning, og en etikett viser boplassens størrelse.
+- UI: ressurslinje med faktisk produksjon per sekund, Innsikter-skuff som åpner seg første gang noe kan kjøpes, veiledende hint, fartskontroll (pause/1×/2×/4×, tastatur mellomrom/1/2/3).
+- Frivillig Ragnarok-demonstrasjon: forhåndsvisning av tap/bevaring/PrP, kan avbrytes; bekreftelse starter identisk grunnverden og beholder PrP. Permanente bonuser og varig avtrykk er plassholdere.
+- Feilsøkingskroker ved `?debug` (spole frem, gi ressurser, kjøpe, styre kamera) for skjermbilder og manuell testing.
+- La til prosjektets tre kanoniske Markdown-dokumenter: masterdesigndokument, endringslogg og agentinstruksjoner, slik at videre utvikling har et tydelig felles grunnlag. (Kontroll: innholdsgjennomgang)
+
+### Tests
+- 12 målrettede tester (`npm test`, Node sin innebygde testløper): klikk gir ressurser, uttømming/felling/gjenvekst, unge trær og steinfornyelse, oppgraderingsstatus og kostnadstrekk, byggetrinn, autonom sanking og at vist produksjon stemmer med leveranser, gjenoppretting når mål forsvinner, ingen vranglås uten ressurser, bygg uten overlapp og uten flytting, milepæl → zoom, determinisme, 40 minutters stabilitetskjøring og kameraets koordinat-rundtur/zoom. (Kontroll: 12/12 bestått)
+- Visuell kontroll med skjermbilder i forhåndsvisning: startverden, delvis høstet tre, lavvo under bygging, ferdig ly med første mennesker, menneske som bryter stein på nært hold, utviklet leir med bål og hytte under bygging, områdezoom etter milepæl, utviklet boplass med stier, samt Ragnarok-dialog. Funn som ble rettet underveis: harde skyggeellipser, flekkete skyskygger, glisne bjørkekroner, for sterkt lysdryss, usynlige stier, hytte for nær trekrone.
+
+### Docs
+- La til implementasjonsstatus for Genesis-01 i `GAME_DESIGN.md` §12 med antakelser merket som åpne.
+- Definerte obligatorisk praksis for at AI oppdaterer denne endringsloggen ved alle prosjektendringer.
+
+## [0.1.0] — 2026-10-09
+
+### Added
+- Etablerte det dokumenterte konseptgrunnlaget for THE FIRST GOD: realistisk painterly 2.5D, autonom sivilisasjon, synlig organisk vekst, semantisk zoom, frivillig Ragnarok og valgfri prestisje.

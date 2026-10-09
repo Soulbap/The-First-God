@@ -1,0 +1,33 @@
+# Avhengigheter og bygg
+node_modules/
+dist/
+build/
+out/
+*.exe
+
+# Logger og midlertidige filer
+*.log
+npm-debug.log*
+*.tmp
+.cache/
+tmp/
+
+# Miljø/hemmeligheter
+.env
+.env.*
+
+# Editor og OS
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Lokale Claude-innstillinger (launch.json deles bevisst)
+.claude/settings.local.json
+
+# Feilsøkings- og skjermbildeutdata
+screenshots/
+debug-output/

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>THE FIRST GOD — Genesis-01</title>
+  <link rel="stylesheet" href="src/ui/style.css">
+</head>
+<body>
+  <canvas id="world" aria-label="Verden"></canvas>
+  <div id="loading">Verden males …</div>
+
+  <div id="hud">
+    <div id="resources" class="panel"></div>
+
+    <button id="drawer-toggle" class="panel" type="button">Innsikter <span class="badge" hidden></span></button>
+    <aside id="drawer" class="panel" hidden>
+      <header><h2>Innsikter</h2><button id="drawer-close" type="button" aria-label="Lukk">×</button></header>
+      <div id="upgrade-list"></div>
+    </aside>
+
+    <div id="hint" class="hint"></div>
+    <div id="toasts"></div>
+
+    <div id="controls" class="panel">
+      <div class="group" role="group" aria-label="Spillfart">
+        <button data-speed="0" title="Pause (mellomrom)">❚❚</button>
+        <button data-speed="1" class="on" title="Normal fart (1)">1×</button>
+        <button data-speed="2" title="Dobbel fart (2)">2×</button>
+        <button data-speed="4" title="Firedobbel fart (3)">4×</button>
+      </div>
+      <div class="group" role="group" aria-label="Utsnitt">
+        <button data-view="near" class="on" title="Nær: leiren og menneskene">Nær</button>
+        <button data-view="area" disabled title="Låses opp ved milepælen Sammenhengende bosetting">Område</button>
+      </div>
+    </div>
+
+    <div id="brand">
+      <span class="title">THE FIRST GOD</span><span class="sub">Genesis-01</span>
+      <button id="ragnarok-btn" type="button">Ragnarok …</button>
+    </div>
+
+    <div id="dialog" hidden>
+      <div class="panel dialog-box">
+        <h2>Ragnarok</h2>
+        <p class="lead">Avslutt denne syklusen frivillig og begynn på nytt i den samme grunnverdenen.</p>
+        <div id="ragnarok-summary"></div>
+        <div class="actions">
+          <button id="ragnarok-cancel" type="button">Behold denne verdenen</button>
+          <button id="ragnarok-confirm" type="button" class="danger">Utløs Ragnarok</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
