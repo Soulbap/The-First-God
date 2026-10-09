@@ -5,17 +5,55 @@ import { createCamera, clampCamera, setZoomLimits, zoomAt, panBy, glideTo, updat
 import { createRenderer } from './render/renderer.js';
 import { createHud } from './ui/hud.js';
 import { overviewLayout, regionAt } from './view/overview.js';
+import { createPlanet, toLatLon, fromLatLon, angle } from './sim/planet.js';
+import { GLOBE, globeFrame, globeFromWorldCam, worldCamFromGlobe, heightForSpan, globeGlide, updateGlobeCamera, clampGlobe, dragGlobe, scaleOf } from './view/globe.js';
+import { createGlobeRenderer, planetView, drawGlobeOverlay, pickGlobe, sunDir } from './render/globe.js';
+import { bakePlanet } from './render/planetTexture.js';
+import { serialize, deserialize } from './sim/save.js';
 
 const SEED = 20261009; // samme grunnverden i hver syklus
 const MAX_STEPS_PER_FRAME = 240;
 
 const canvas = document.getElementById('world');
+const globeCanvas = document.getElementById('globe');
 const renderer = createRenderer(canvas);
 let state, cam;
 let speed = 1, savedSpeed = 1, acc = 0, renderTime = 0, last = performance.now();
 let hoverId = null, hudTimer = 0, wearTimer = 0, pendingGlide = null;
-let overview = false, hoverRegion = null; // verdensoversikt: samme simulering, ett høyere meningsnivå
-const meta = { prestige: 0, cycles: 0 };
+// Planetvisningen (OPUS-01): samme simulering, sett fra økende høyde. Reserve uten WebGL: den gamle kartoversikten.
+let overview = false, hoverRegion = null; // reserveoversikt (bare uten WebGL)
+let globeMode = false, gcam = null, exitAfterGlide = null, snapTimer = 0;
+let planet = null, baked = null;
+const globeR = createGlobeRenderer(globeCanvas);
+// Lagring: syklusen og metaprogresjonen (PrP) i nettleseren. Ingen tid går mens spillet er lukket.
+// ?debug lagrer/laster aldri av seg selv (skjermbilder og røykprøver skal starte rent); ?fresh hopper over lasting.
+const params = new URLSearchParams(location.search);
+const PERSIST = !params.has('debug') || params.has('persist');
+const SAVE_KEY = 'tfg.save', META_KEY = 'tfg.meta';
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); return true; } catch { return false; } },
+  del(k) { try { localStorage.removeItem(k); } catch { /* ingen lagring */ } },
+};
+const meta = (() => { try { return { prestige: 0, cycles: 0, ...(PERSIST ? JSON.parse(store.get(META_KEY) || '{}') : {}) }; } catch { return { prestige: 0, cycles: 0 }; } })();
+let saveTimer = 20;
+function saveNow() { if (!PERSIST || !state) return; store.set(SAVE_KEY, serialize(state)); store.set(META_KEY, JSON.stringify(meta)); }
+const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Planetens overflate males én gang per side (verdenen er den samme i hver syklus) — i bakgrunnen når det går.
+let planetReady;
+function startPlanetBake(regions) {
+  const plain = regions.map((r) => ({ id: r.id, col: r.col, row: r.row, biome: r.biome, home: r.home }));
+  planetReady = new Promise((resolve) => {
+    const done = (out) => { baked = out; if (globeR) globeR.setSurface(out); resolve(true); };
+    try {
+      const worker = new Worker(new URL('./render/planetWorker.js', import.meta.url), { type: 'module' });
+      worker.onmessage = (e) => { done(e.data); worker.terminate(); };
+      worker.onerror = () => { done(bakePlanet(SEED, plain)); };
+      worker.postMessage({ seed: SEED, regions: plain });
+    } catch { done(bakePlanet(SEED, plain)); }
+  });
+}
 
 const hud = createHud({
   onBuy(id) {
@@ -26,7 +64,11 @@ const hud = createHud({
   },
   onSpeed(s) { speed = s; if (s > 0) savedSpeed = s; },
   onView(v) { goView(v); },
-  onZoom(f) { zoomAt(cam, cam.screenW / 2, cam.screenH / 2, f); },
+  onZoom(f) {
+    if (globeMode) { globeZoom(f); return; }
+    if (f > 1 && state.unlocks.worldView && cam.w >= maxWorldW() * 0.97) { enterGlobe(); return; }
+    zoomAt(cam, cam.screenW / 2, cam.screenH / 2, f);
+  },
   onRagnarok(phase) {
     if (phase === 'preview') hud.showRagnarok(ragnarokSummary());
     else {
@@ -34,6 +76,7 @@ const hud = createHud({
       meta.prestige += s.prp;
       meta.cycles++;
       newCycle();
+      saveNow();
       hud.toast('Ragnarok', `En ny syklus begynner i den samme verdenen. Du bærer med deg ${meta.prestige} PrP.`);
     }
   },
@@ -64,26 +107,99 @@ function resize() {
   const dpr = Math.min(window.devicePixelRatio || 1, 1.75);
   canvas.width = Math.round(window.innerWidth * dpr);
   canvas.height = Math.round(window.innerHeight * dpr);
+  globeCanvas.width = canvas.width;
+  globeCanvas.height = canvas.height;
   cam.screenW = window.innerWidth;
   cam.screenH = window.innerHeight;
   cam.dpr = dpr;
   clampCamera(cam, state.world.width, state.world.height);
 }
 
-function newCycle() {
-  state = createGame(SEED);
+function newCycle(loaded = null) {
+  state = loaded || createGame(SEED);
   renderer.reset(state);
+  if (!planet) planet = createPlanet(SEED, state.globe.regions); // geografien er den samme i hver syklus
+  if (!planetReady) startPlanetBake(state.globe.regions);
   const C = state.settlement.center;
   cam = createCamera(C.x - 10, C.y - 30);
   setZoomLimits(cam, false);
   acc = 0;
   pendingGlide = null;
   overview = false; hoverRegion = null;
+  leaveGlobeNow();
   hud.reset();
   resize();
 }
 
-const currentView = () => (overview ? 'world' : cam.w >= VIEW.semanticAreaW ? 'area' : 'near');
+// ---------- Skala: Nær → Område → Region → Kontinent → Planet ----------
+// Største synlige bredde i den detaljerte verdenen for denne skjermen (samme regel som clampCamera).
+const maxWorldW = () => Math.min(cam.maxW, state.world.width, state.world.height * (cam.screenW / cam.screenH));
+// Laveste planethøyde = akkurat den detaljerte verdenens største utsnitt. Under den overtar 2D-verdenen igjen.
+const minGlobeH = () => heightForSpan((maxWorldW() / state.world.width) * planet.patch.w, cam.screenW, cam.screenH);
+
+function currentView() {
+  if (globeMode) return scaleOf(gcam.h).id === 'region' ? 'region' : scaleOf(gcam.h).id;
+  if (overview) return 'world';
+  return cam.w >= VIEW.semanticAreaW ? 'area' : 'near';
+}
+const SCALE_NAMES = { near: 'Nær', area: 'Område', region: 'Region', continent: 'Kontinent', planet: 'Planet', world: 'Verden' };
+
+function refreshPatch() {
+  if (!globeR) return;
+  globeR.setPatch(renderer.snapshot(state, renderTime));
+  snapTimer = 1.2;
+}
+
+function enterGlobe({ glide = true } = {}) {
+  if (!state.unlocks.worldView) return;
+  if (!globeR) { setOverview(true); return; } // reserve: kartoversikten
+  if (!baked) { baked = bakePlanet(SEED, state.globe.regions); globeR.setSurface(baked); } // sjelden: arbeideren er ikke ferdig ennå
+  clampCamera(cam, state.world.width, state.world.height);
+  cam.tween = null; pendingGlide = null;
+  refreshPatch();
+  gcam = globeFromWorldCam(planet, { ...cam, w: Math.min(cam.w, maxWorldW()) }, state.world);
+  globeMode = true; exitAfterGlide = null; hoverRegion = null; down = null;
+  globeCanvas.hidden = false;
+  canvas.classList.add('globe-mode');
+  canvas.classList.remove('dragging', 'can-gather');
+  if (glide) globeGlide(gcam, gcam.lat, gcam.lon, GLOBE.continentH, reducedMotion() ? 0.01 : 3.2);
+  hudTimer = 0;
+}
+
+function leaveGlobeNow() {
+  globeMode = false; exitAfterGlide = null;
+  globeCanvas.hidden = true;
+  canvas.classList.remove('globe-mode');
+}
+
+// Tilbake til den detaljerte verdenen. Når kameraet står over hjemmet i laveste høyde, er overgangen sømløs;
+// ellers glir planeten først hjem og ned (ingen hopp).
+function exitGlobe(then = 'area') {
+  if (!globeMode) return;
+  const homeLL = toLatLon(planet.home.dir), hMin = minGlobeH();
+  const focus = fromLatLon(gcam.lat, gcam.lon);
+  const overHome = angle(focus, planet.home.dir) < planet.patch.h * 0.45;
+  if (overHome && gcam.h <= hMin * 1.06) {
+    const w = worldCamFromGlobe(planet, gcam, state.world, cam.screenW, cam.screenH);
+    cam.x = w.x; cam.y = w.y; cam.w = Math.min(maxWorldW(), w.w); cam.tween = null;
+    clampCamera(cam, state.world.width, state.world.height);
+    leaveGlobeNow();
+    if (then === 'near') goView('near');
+    hudTimer = 0;
+    return;
+  }
+  const C = state.settlement.center, target = toLatLon(planet.worldToDir(C.x, C.y - 30));
+  globeGlide(gcam, target.lat ?? homeLL.lat, target.lon, hMin, reducedMotion() ? 0.01 : 2.4);
+  exitAfterGlide = then;
+}
+
+function globeZoom(factor) {
+  const hMin = minGlobeH();
+  const next = gcam.h * factor;
+  if (factor < 1 && next < hMin) { exitGlobe('area'); return; }
+  gcam.h = Math.max(hMin, Math.min(GLOBE.maxH, next));
+  gcam.tween = null;
+}
 
 function setOverview(on) {
   if (on && !state.unlocks.worldView) return;
@@ -93,7 +209,13 @@ function setOverview(on) {
 }
 
 function goView(v, duration) {
-  if (v === 'world') { setOverview(true); return; }
+  if (v === 'world') {
+    if (!globeR) { setOverview(true); return; }
+    if (globeMode) { const L = toLatLon(planet.home.dir); globeGlide(gcam, L.lat, L.lon, gcam.h < GLOBE.continentH * 1.5 ? GLOBE.maxH * 0.92 : GLOBE.continentH, reducedMotion() ? 0.01 : 2.6); }
+    else enterGlobe();
+    return;
+  }
+  if (globeMode) { exitGlobe(v); return; }
   if (overview) setOverview(false);
   const C = state.settlement.center;
   if (v === 'area' && state.unlocks.zoomArea) {
@@ -113,6 +235,7 @@ function updateHint() {
   else if (!shelter.complete) text = 'Lyet reises …';
   else if (!s.upgrades.awakening) text = s.resources.wood >= 12 && s.resources.stone >= 6 ? 'Lyet står. Velg «Vekkelse» for å vekke de første menneskene.' : 'Lyet står. Samle til «Vekkelse» — 12 trevirke og 6 stein.';
   else if (s.time - (s.stats.autoStart ?? 0) < 14) text = 'Menneskene sanker nå selv. Du kan slippe musen og se verden leve.';
+  else if (globeMode && gcam.h < GLOBE.continentH * 1.4) text = 'Rull ut for å se hele planeten. Dra for å snu den. Klikk på hjemlandet eller rull inn for å vende hjem.';
   hud.hint(text);
 }
 
@@ -126,9 +249,9 @@ function handleEvents(events) {
     }
     if (e.unlock === 'villageView') {
       setZoomLimits(cam, true);
-      pendingGlide = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1.4;
+      pendingGlide = reducedMotion() ? 0 : 1.4;
     }
-    if (e.unlock === 'regionView') { setZoomLimits(cam, true); pendingGlide = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1.4; }
+    if (e.unlock === 'regionView') { setZoomLimits(cam, true); pendingGlide = reducedMotion() ? 0 : 1.4; }
   }
 }
 
@@ -152,29 +275,53 @@ function tick(realDt) {
   renderer.handleEvents(state, events, cam);
   renderer.update(state, realDt, realDt * speed, renderTime);
 
-  if (pendingGlide != null) {
+  if (pendingGlide != null && !globeMode) {
     pendingGlide -= realDt;
     if (pendingGlide <= 0) {
       pendingGlide = null;
-      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      goView('area', reduced ? 0.01 : 4.5);
+      goView('area', reducedMotion() ? 0.01 : 4.5);
     }
   }
+  // Zoomgrensen følger tilstanden (ikke bare milepælshendelsen), så en lastet eller avansert verden er riktig.
+  if (state.unlocks.zoomArea && cam.maxW < VIEW.area.maxW) setZoomLimits(cam, true);
   updateCamera(cam, realDt);
   clampCamera(cam, state.world.width, state.world.height);
 
   wearTimer -= realDt;
   if (wearTimer <= 0) { wearTimer = 0.5; renderer.updateWear(state); }
+  saveTimer -= realDt;
+  if (saveTimer <= 0) { saveTimer = 20; saveNow(); }
 
-  if (overview) renderer.renderOverview(state, cam, renderTime, hoverRegion);
+  if (globeMode) renderGlobe(realDt);
+  else if (overview) renderer.renderOverview(state, cam, renderTime, hoverRegion);
   else renderer.render(state, cam, renderTime, hoverId);
 
   hudTimer -= realDt;
   if (hudTimer <= 0) {
     hudTimer = 0.15;
-    hud.update(state, { speed, view: currentView(), areaUnlocked: state.unlocks.zoomArea });
+    const view = currentView();
+    hud.update(state, { speed, view: globeMode ? 'world' : view, areaUnlocked: state.unlocks.zoomArea, scale: SCALE_NAMES[view] });
     updateHint();
   }
+}
+
+function renderGlobe(realDt) {
+  const moving = updateGlobeCamera(gcam, realDt);
+  const hMin = minGlobeH();
+  if (!moving && exitAfterGlide) { const then = exitAfterGlide; exitAfterGlide = null; gcam.h = hMin; exitGlobe(then); if (!globeMode) { renderer.render(state, cam, renderTime, hoverId); return; } }
+  clampGlobe(gcam, hMin);
+  snapTimer -= realDt;
+  if (snapTimer <= 0 && gcam.h < 0.9) refreshPatch();
+  const t0 = performance.now();
+  const view = planetView(state, planet);
+  const sun = sunDir(planet, renderTime);
+  const dayBlend = 1 - Math.min(1, Math.max(0, (gcam.h - hMin * 1.4) / (0.32 - hMin * 1.4)));
+  globeR.draw({
+    frame: globeFrame(gcam, cam.screenW, cam.screenH), planet, regions: view.regions, lights: view.lights, sun, dayBlend, time: renderTime, h: gcam.h,
+    patchOn: 1 - Math.min(1, Math.max(0, (gcam.h - 1.2) / 0.8)), fogOn: true,
+  });
+  drawGlobeOverlay(canvas.getContext('2d'), state, planet, gcam, { sw: cam.screenW, sh: cam.screenH, dpr: cam.dpr || 1, time: renderTime, hoverId: hoverRegion });
+  renderer.stats.globeMs = (renderer.stats.globeMs || 0) + (performance.now() - t0 - (renderer.stats.globeMs || 0)) * 0.1;
 }
 
 // ---------- Input ----------
@@ -188,19 +335,30 @@ canvas.addEventListener('pointermove', (e) => {
   if (overview) { const r = regionAt(overviewLayout(state, cam.screenW, cam.screenH), state, e.clientX, e.clientY); hoverRegion = r ? r.id : null; return; }
   if (down) {
     if (!down.moved && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) { down.moved = true; canvas.classList.add('dragging'); }
-    if (down.moved) panBy(cam, e.clientX - down.lx, e.clientY - down.ly);
+    if (down.moved) {
+      if (globeMode) { dragGlobe(gcam, e.clientX - down.lx, e.clientY - down.ly, cam.screenW, cam.screenH); exitAfterGlide = null; }
+      else panBy(cam, e.clientX - down.lx, e.clientY - down.ly);
+    }
     down.lx = e.clientX;
     down.ly = e.clientY;
     return;
   }
+  if (globeMode) { const p = pickGlobe(state, planet, gcam, cam.screenW, cam.screenH, e.clientX, e.clientY); hoverRegion = p && p.id !== 'home' ? p.id : null; canvas.classList.toggle('can-gather', !!p); return; }
   const n = renderer.pick(state, cam, e.clientX, e.clientY);
   hoverId = n ? n.id : null;
   canvas.classList.toggle('can-gather', !!n);
 });
 canvas.addEventListener('pointerup', (e) => {
   if (down && !down.moved && down.button === 0) {
-    const n = renderer.pick(state, cam, e.clientX, e.clientY);
-    if (n) { clickNode(state, n.id); hudTimer = 0; }
+    if (globeMode) {
+      // Klikk på hjemlandet: vend hjem. Klikk på et land: se nærmere på det.
+      const p = pickGlobe(state, planet, gcam, cam.screenW, cam.screenH, e.clientX, e.clientY);
+      if (p?.id === 'home') exitGlobe('area');
+      else if (p?.region) { const L = toLatLon(planet.sites.get(p.id).dir); globeGlide(gcam, L.lat, L.lon, Math.min(gcam.h, 0.3), reducedMotion() ? 0.01 : 1.6); exitAfterGlide = null; }
+    } else {
+      const n = renderer.pick(state, cam, e.clientX, e.clientY);
+      if (n) { clickNode(state, n.id); hudTimer = 0; }
+    }
   }
   down = null;
   canvas.classList.remove('dragging');
@@ -208,9 +366,11 @@ canvas.addEventListener('pointerup', (e) => {
 canvas.addEventListener('pointerleave', () => { hoverId = null; });
 canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
-  // Å zoome forbi områdevisningen åpner oversikten; å zoome inn igjen går tilbake til landskapet.
+  if (globeMode) { globeZoom(Math.exp(e.deltaY * 0.0022)); exitAfterGlide = null; return; }
+  // Reserve: kartoversikten åpnes/lukkes som før.
   if (overview) { if (e.deltaY < 0) goView('area', 1.2); return; }
-  if (e.deltaY > 0 && state.unlocks.worldView && cam.w >= cam.maxW * 0.97) { setOverview(true); return; }
+  // Å zoome ut forbi områdevisningen løfter kameraet opp fra den samme verdenen mot planeten.
+  if (e.deltaY > 0 && state.unlocks.worldView && cam.w >= maxWorldW() * 0.97) { enterGlobe(); return; }
   zoomAt(cam, e.clientX, e.clientY, Math.exp(e.deltaY * 0.0012));
 }, { passive: false });
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -218,16 +378,25 @@ window.addEventListener('keydown', (e) => {
   if (e.target.closest && e.target.closest('input,textarea')) return;
   if (e.code === 'Space' && e.target.closest && e.target.closest('button')) return; // mellomrom aktiverer knappen
   if (e.code === 'Space') { e.preventDefault(); speed = speed === 0 ? savedSpeed : 0; }
-  if ((e.key === 'v' || e.key === 'V') && state.unlocks.worldView) { if (overview) goView('area', 1.2); else setOverview(true); }
+  if ((e.key === 'v' || e.key === 'V') && state.unlocks.worldView) {
+    if (globeMode) exitGlobe('area');
+    else if (overview) goView('area', 1.2);
+    else if (globeR) enterGlobe();
+    else setOverview(true);
+  }
   if (e.key === '1') speed = savedSpeed = 1;
   if (e.key === '2') speed = savedSpeed = 2;
   if (e.key === '3') speed = savedSpeed = 4;
 });
 window.addEventListener('resize', resize);
+window.addEventListener('pagehide', saveNow);
+document.addEventListener('visibilitychange', () => { if (document.hidden) saveNow(); });
 
 // ---------- Start ----------
 setTimeout(() => {
-  newCycle();
+  const saved = PERSIST && !params.has('fresh') ? deserialize(store.get(SAVE_KEY) || '', { seed: SEED }) : null;
+  newCycle(saved);
+  if (saved && saved.time > 5) hud.toast('Verden venter', 'Menneskene fortsetter der du forlot dem. Ingen tid har gått mens du var borte.');
   document.getElementById('loading').hidden = true;
   requestAnimationFrame((t) => { last = t; frame(t); });
   if (new URLSearchParams(location.search).has('debug')) {
@@ -235,15 +404,26 @@ setTimeout(() => {
     window.TFG = {
       get state() { return state; },
       get cam() { return cam; },
+      get globe() { return gcam; },
+      get planet() { return planet; },
       advance: (s) => advance(state, s),
       give: (w, st) => { state.resources.wood += w; state.resources.stone += st; },
       buy: (id) => purchase(state, id),
       click: (id) => clickNode(state, id),
-      view: (x, y, w) => { cam.x = x; cam.y = y; cam.w = w; cam.tween = null; },
+      view: (x, y, w) => { if (globeMode) leaveGlobeNow(); cam.x = x; cam.y = y; cam.w = w; cam.tween = null; },
+      // Planet: overview(true) åpner planetvisningen uten glid (skjermbilder); globeView setter kameraet direkte.
+      overview: (on) => { if (on) { if (globeR) { enterGlobe({ glide: false }); gcam.h = GLOBE.continentH; } else setOverview(true); } else { if (globeMode) { gcam.h = minGlobeH(); const L = toLatLon(planet.worldToDir(cam.x, cam.y)); gcam.lat = L.lat; gcam.lon = L.lon; gcam.tween = null; exitGlobe('area'); } setOverview(false); } return globeMode || overview; },
+      globeView: (lat, lon, h) => { if (!globeMode) enterGlobe({ glide: false }); gcam.lat = lat; gcam.lon = lon; gcam.h = h; gcam.tween = null; },
+      enterGlobe: (glide = true) => enterGlobe({ glide }),
+      planetReady: () => planetReady,
       setSpeed: (s) => { speed = s; },
-      overview: (on) => { setOverview(on); return overview; },
+      // Lagring i feilsøking: eksplisitt, under egne nøkler (rører aldri spillerens lagring).
+      saveAs: (key) => { localStorage.setItem('tfg.dev.' + key, serialize(state)); return true; },
+      loadFrom: (key) => { const st = deserialize(localStorage.getItem('tfg.dev.' + key) || '', { seed: SEED }); if (!st) return false; newCycle(st); return true; },
       cancelGlide: () => { pendingGlide = null; },
-      get isOverview() { return overview; },
+      get isOverview() { return globeMode || overview; },
+      get isGlobe() { return globeMode; },
+      get hasWebGL() { return !!globeR; },
       hud,
       renderStats: renderer.stats,
       renderer,

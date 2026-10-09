@@ -3,6 +3,11 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: #2c3222; color: var(--gui-text-primary); font-family: var(--font-ui); font-size: var(--fs-body); }
 canvas#world { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; cursor: default; touch-action: none; }
+canvas#globe { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+canvas#globe[hidden] { display: none; }
+canvas#world.globe-mode { cursor: grab; }
+.scale-chip { position: absolute; right: var(--edge); bottom: calc(var(--edge) + var(--bar-h) + var(--space-2)); padding: 4px 10px; border-radius: var(--radius-sm); background: rgba(20, 22, 18, 0.62); color: var(--gui-text-secondary); font-size: 12px; letter-spacing: 0.04em; pointer-events: none; transition: opacity var(--t-hover) var(--ease); }
+.scale-chip b { color: var(--gui-text, #efe4cc); font-weight: 600; }
 canvas#world.can-gather { cursor: pointer; }
 canvas#world.dragging { cursor: grabbing; }
 

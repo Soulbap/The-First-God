@@ -318,9 +318,14 @@ export function createHud({ onBuy, onSpeed, onView, onZoom, onRagnarok }) {
   }
 
   return {
-    update(state, { speed, view, areaUnlocked }) {
+    update(state, { speed, view, areaUnlocked, scale }) {
       lastState = state;
       render(state);
+      // Hvilken skala spilleren ser på (vises når mer enn nærbildet finnes).
+      const chip = $('scale');
+      const showChip = !!scale && areaUnlocked;
+      chip.hidden = !showChip;
+      if (showChip) { const html = `Utsnitt: <b>${scale}</b>`; if (chip.innerHTML !== html) chip.innerHTML = html; }
       for (const b of els.controls.querySelectorAll('button[data-speed]')) {
         const on = Number(b.dataset.speed) === speed;
         b.classList.toggle('on', on);

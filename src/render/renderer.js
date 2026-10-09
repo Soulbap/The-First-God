@@ -43,7 +43,8 @@ const lowerBound = (arr, y) => {
 };
 
 export function createRenderer(canvas) {
-  const ctx = canvas.getContext('2d');
+  const mainCtx = canvas.getContext('2d');
+  let ctx = mainCtx; // byttes midlertidig når hjemmeregionen males til planetens øyeblikksbilde
   const R = { ctx, terrain: null, decor: null, env: null, ecologyOverlay: null, ecologyRevision: -1, grain: null, wearCanvas: null, wearImg: null, exposure: null, wearBox: null, fx: createFx(), emitTimers: new Map(), stats: { frameMs: 0, ecologyRefreshMs: 0 } };
   const litterCache = new Map();
 
@@ -307,8 +308,19 @@ export function createRenderer(canvas) {
   };
 
   // ---------- Tegning ----------
-  R.render = (state, cam, renderTime, hoverId) => {
+  // Øyeblikksbilde av hele hjemmeregionen (samme tegning som spillet, uten skjermpynt) til planetvisningen.
+  R.snapshot = (state, renderTime, width = 1536) => {
+    const W = state.world.width, H = state.world.height, h = Math.round(width * H / W);
+    if (!R.snapCanvas || R.snapCanvas.width !== width) R.snapCanvas = makeCanvas(width, h);
+    const saved = ctx;
+    ctx = R.snapCanvas.getContext('2d');
+    try { R.render(state, { x: W / 2, y: H / 2, w: W, screenW: width, screenH: h, dpr: 1 }, renderTime, null, { snapshot: true }); } finally { ctx = saved; }
+    return R.snapCanvas;
+  };
+
+  R.render = (state, cam, renderTime, hoverId, opts = {}) => {
     const t0 = performance.now();
+    const snapshot = !!opts.snapshot;
     const dpr = cam.dpr || 1;
     const z = zoomOf(cam);
     const S = dpr * z;
@@ -325,7 +337,7 @@ export function createRenderer(canvas) {
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = '#2c3222';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     ctx.setTransform(S, 0, 0, S, E, F);
     ctx.imageSmoothingEnabled = true;
     // Sprites males med 3 px/enhet: ved vanlig zoom er nedskalering liten, og bilineær er nok (og mye raskere enn 'high').
@@ -473,7 +485,7 @@ export function createRenderer(canvas) {
     drawArcs(ctx, fx);
 
     // Visuell hierarki: leiren er blikkfanget, skogen lenger ute dempes svakt.
-    if (state.buildings.length) {
+    if (state.buildings.length && !snapshot) {
       const gx0 = sx0, gy0 = sy0, gw = sx1 - sx0, gh = sy1 - sy0;
       const dim = ctx.createRadialGradient(C.x, C.y, 340, C.x, C.y, 1250);
       dim.addColorStop(0, 'rgba(10,14,8,0)');
@@ -489,6 +501,7 @@ export function createRenderer(canvas) {
       ctx.globalCompositeOperation = 'source-over';
     }
 
+    if (snapshot) { ctx.setTransform(1, 0, 0, 1, 0, 0); return; }
     // Skjermrom: fargetone, lett vignett, små gevinsttall og områdeetikett.
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const sw = cam.screenW, sh = cam.screenH;

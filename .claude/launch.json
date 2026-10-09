@@ -1,6 +1,7 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "game", "runtimeExecutable": "node", "runtimeArgs": ["tools/serve.mjs"], "port": 5173 }
+    { "name": "game", "runtimeExecutable": "node", "runtimeArgs": ["tools/serve.mjs"], "port": 5173 },
+    { "name": "game-5181", "runtimeExecutable": "node", "runtimeArgs": ["tools/serve.mjs", "5181"], "port": 5181 }
   ]
 }

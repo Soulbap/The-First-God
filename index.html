@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="src/ui/style.css">
 </head>
 <body>
+  <canvas id="globe" aria-hidden="true" hidden></canvas>
   <canvas id="world" aria-label="Verden"></canvas>
   <div id="loading">Verden males …</div>
 
@@ -61,7 +62,7 @@
       <div class="group" role="group" aria-label="Utsnitt">
         <button type="button" data-view="near" title="Nær: leiren og menneskene">Nær</button>
         <button type="button" data-view="area" disabled title="Låses opp ved milepælen Sammenhengende bosetting">Område</button>
-        <button type="button" data-view="world" hidden title="Verden: riket, rutene og landene bortenfor (V)">Verden</button>
+        <button type="button" data-view="world" hidden title="Planet: den samme verdenen sett fra høyt over kloden (V)">Planet</button>
       </div>
       <div class="group" role="group" aria-label="Zoom">
         <button type="button" data-zoom="out" aria-label="Zoom ut" title="Zoom ut" data-icon="minus"></button>
@@ -69,6 +70,7 @@
       </div>
     </div>
 
+    <div id="scale" class="scale-chip" aria-live="polite" hidden></div>
     <div id="brand"><span class="title">THE FIRST GOD</span><span class="sub">Genesis-01</span></div>
 
     <div id="dialog" hidden>
