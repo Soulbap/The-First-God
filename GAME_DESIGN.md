@@ -295,6 +295,13 @@ Prototypen finnes og er spillbar. Denne seksjonen beskriver hva som er bygget og
 - **Utforskertrang** er en valgfri innsikt etter **Den første landsbyen**. Én ledig innbygger går av og til ut på tilgjengelig terreng, blir kort borte og vender tilbake; den lette slitasjen gjør de første utgående sporene synlige. Dette utløser **De første stiene**.
 - Avgrensning: Utforskning avslører ikke kart eller nye ressurser. GAMEPLAY-04 bygger videre med nøyaktig én andre bosetting og en regional kameraramme, ikke et verdenskart eller en koloniseringssløyfe.
 
+### GAMEPLAY-06 — sivilisasjonens morgen (bekreftet implementasjon)
+
+- **Frøets løfte** åpner den første autonome åkeren og en delt matbeholdning. Mat blir høstet med jevne mellomrom og brukes bare til boligbegrenset vekst; lav beholdning bremser fremgang uten å fjerne innbyggere eller allerede bygd innhold.
+- **Arbeidets deling** gjør en bosettings identitet lesbar uten spillerstyring: åker gir Matbygda, verksted gir Håndverksbygd, mens øvrige bosettinger beskrives ut fra nærmeste skog eller stein. **Regional utveksling** lar den samme, fysiske leveringsflyten finansiere åker og verksted i den unge bosettingen.
+- Bosettingenes stadium avledes av befolkning, ferdige hjem, funksjonell infrastruktur og regional forbindelse: Leir, Grend, Landsby, Voksende landsby og Tidlig by. Det finnes fortsatt ingen byggplassering, arbeidsordre eller handelsmarked.
+- Nye milepæler er **Stabil matforsyning**, **Den første byen** og **Sivilisasjonens morgen**. Denne første implementasjonen holder fortsatt to bosettinger og en delt beholdning, med en bevisst liten økonomi.
+
 ### Spillflyt slik den er bygget
 
 1. Spilleren klikker på bjørka og steinen (og andre trær/steiner) for trevirke og stein.

@@ -158,6 +158,28 @@ export const UPGRADES = [
     world: 'Den brukte ruten blir en tydelig, men ujevn jordsti gjennom skogen.',
     actions: [],
   },
+  {
+    id: 'seed_promise', name: 'Frøets løfte', category: 'liv', icon: 'sprout',
+    discover: [{ milestone: 'living_region' }], cost: { wood: 72, stone: 32 },
+    requires: [{ milestone: 'living_region' }], requireText: 'Krever En levende region',
+    effect: 'Dyrket mark gir en trygg matbeholdning. Mat gjør vekst mulig, men mangel skader ingen.',
+    world: 'Folk rydder en liten åker ved den gamle landsbyen. Avling hentes inn med jevne mellomrom.',
+    actions: [{ type: 'construct', building: 'field' }, { type: 'enableFood', afterSeconds: 8 }],
+  },
+  {
+    id: 'division_labor', name: 'Arbeidets deling', category: 'bosetning', icon: 'storage',
+    discover: [{ upgrade: 'seed_promise' }], cost: { wood: 84, stone: 64, food: 8 },
+    requires: [{ upgrade: 'seed_promise' }, { built: 'field' }], requireText: 'Krever ferdig dyrket mark',
+    effect: 'Bosettingene utvikler en rolle ut fra mark, verksted og lokale ressurser.',
+    world: 'Enkle verksteder og nye arbeidsrytmer gjør bygdene tydelig forskjellige.', actions: [],
+  },
+  {
+    id: 'regional_exchange', name: 'Regional utveksling', category: 'bosetning', icon: 'explore',
+    discover: [{ upgrade: 'division_labor' }], cost: { wood: 96, stone: 72, food: 12 },
+    requires: [{ upgrade: 'division_labor' }, { foodHarvest: 2 }], requireText: 'Krever to innhøstinger',
+    effect: 'Den andre bosettingen får åker og verksted gjennom de samme fysiske leveransene.',
+    world: 'Bærere følger den brukte ruten med materialer mellom bygdene.', actions: [{ type: 'enableExchange' }],
+  },
 ];
 
 export const MILESTONES = [
@@ -191,6 +213,9 @@ export const MILESTONES = [
   { id: 'new_land', title: 'Nytt land i sikte', text: 'En vandrer har funnet en lysning bortenfor den kjente skogen. Verden er større enn den første landsbyen.', when: { expansion: 'discovered' } },
   { id: 'first_settlements', title: 'De første bosettingene', text: 'To steder har fått navn og ildsteder. Mellom dem går menneskene en sti som ikke fantes før.', when: { expansion: 'founded' }, unlock: 'regionView' },
   { id: 'living_region', title: 'En levende region', text: 'To ildsteder er blitt til et fellesskap. Mennesker og forsyninger følger stiene mellom hjemmene, og landet bærer stadig tydeligere spor av dem.', when: { all: [{ expansion: 'founded' }, { regionalProjects: 2 }, { delivery: 2 }, { regionalWear: 0.35 }] } },
+  { id: 'stable_food', title: 'Stabil matforsyning', text: 'Dyrket mark gir mer enn en enkelt god dag. Veksten kan nå bæres av landet.', when: { all: [{ upgrade: 'seed_promise' }, { foodHarvest: 1 }] } },
+  { id: 'first_town', title: 'Den første byen', text: 'En av bygdene har blitt en tidlig by: hjem, felles arbeid og forbindelser bærer et større samfunn.', when: { all: [{ upgrade: 'regional_exchange' }, { settlementStage: 'Tidlig by' }] }, unlock: 'townView' },
+  { id: 'dawn_civilization', title: 'Sivilisasjonens morgen', text: 'Mark, verksteder og ferdselsårer binder bosettingene sammen til begynnelsen på en sivilisasjon.', when: { all: [{ milestone: 'first_town' }, { regionalProjects: 5 }, { delivery: 6 }] } },
 ];
 
 export const upgradeById = (id) => UPGRADES.find((u) => u.id === id);

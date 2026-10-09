@@ -104,7 +104,7 @@ test('økologilaget oppdateres avledet og avgrenset uten å endre økonomien', (
   while (clickNode(s, tree.id)) { /* fell treet gjennom den virkelige spillregelen */ }
   advance(s, ECOLOGY_REFRESH_SECONDS + 0.2);
   assert.ok(s.ecology.revision >= 1, 'miljøpresentasjonen får et oppdateringspunkt');
-  assert.deepEqual(s.resources, { wood: before.wood + 12, stone: before.stone, pp: before.pp }, 'miljøoppdateringen gir ingen egne ressurser');
+  assert.deepEqual(s.resources, { ...before, wood: before.wood + 12 }, 'miljøoppdateringen gir ingen egne ressurser');
   const rev = s.ecology.revision;
   advance(s, ECOLOGY_REFRESH_SECONDS * 0.4);
   assert.equal(s.ecology.revision, rev, 'oppdateringer er begrenset i tid');

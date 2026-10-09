@@ -2,6 +2,7 @@
 import { UPGRADES, upgradeById } from '../data/upgrades.js';
 import { findBuildSite, startConstruction } from './construction.js';
 import { spawnHumans } from './population.js';
+import { settlementStage } from './regional.js';
 
 export const upgradeCount = (state, id) => state.upgrades[id] || 0;
 
@@ -22,6 +23,8 @@ export function requirementMet(state, req) {
   if (req.expansion) return !!state.expansion?.[req.expansion];
   if (req.delivery) return (state.region?.completedDeliveries || 0) >= req.delivery;
   if (req.regionalProjects) return (state.region?.completedProjects || 0) >= req.regionalProjects;
+  if (req.foodHarvest) return (state.civilization?.foodHarvests || 0) >= req.foodHarvest;
+  if (req.settlementStage) return state.settlements.some((s) => settlementStage(state, s) === req.settlementStage);
   if (req.regionalWear) {
     const a = state.settlement.center, b = state.settlements?.find((s) => s.id === 'second');
     if (!b) return false;
@@ -85,6 +88,12 @@ function applyAction(state, def, a) {
   } else if (a.type === 'enableRegionalPopulation') {
     state.region.populationUnlocked = true;
     state.region.nextPopulationAt = state.time + a.afterSeconds;
+  } else if (a.type === 'enableFood') {
+    state.civilization.foodUnlocked = true;
+    state.civilization.nextFoodAt = state.time + a.afterSeconds;
+    state.civilization.nextPopulationAt = state.time + a.afterSeconds;
+  } else if (a.type === 'enableExchange') {
+    state.civilization.exchangeUnlocked = true;
   }
 }
 

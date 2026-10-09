@@ -7,7 +7,7 @@ import { stampWear } from './wear.js';
 export function siteIsValid(state, type, x, y) {
   const r = B.building[type].radius;
   if (!inBounds(state, x, y, 70) || inPond(state, x, y, r + 14)) return false;
-  if (dist(x, y, state.stockpile.x, state.stockpile.y) < r + 34) return false;
+  if (type !== 'field' && dist(x, y, state.stockpile.x, state.stockpile.y) < r + 34) return false;
   for (const b of state.buildings) if (dist(x, y, b.x, b.y) < r + b.radius + 18) return false;
   for (const n of state.nodes) {
     const need = n.kind === 'tree' ? r + 22 : r + n.radius + 10;

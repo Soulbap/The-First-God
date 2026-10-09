@@ -11,6 +11,7 @@ import { pruneStats } from './stats.js';
 import { requirementMet } from './economy.js';
 import { checkDiscoveries } from './discovery.js';
 import { stepRegional } from './regional.js';
+import { stepCivilization } from './civilization.js';
 
 export const DT = B.dt;
 
@@ -31,6 +32,7 @@ export function step(state, dt = DT) {
   stepConstruction(state, dt);
   stepHumans(state, dt);
   stepRegional(state, dt);
+  stepCivilization(state, dt);
   stepWear(state, dt);
   stepEcology(state, dt);
   checkMilestones(state);

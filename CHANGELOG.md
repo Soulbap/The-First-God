@@ -31,6 +31,13 @@ Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på ve
 ```md
 ## [Unreleased]
 
+### Added
+- **GAMEPLAY-06 · sivilisasjonens morgen**: Mat er en ny, synlig ressurs fra autonome åkre. Den brukes bare når en ny innbygger kan komme til et ledig hjem; tom beholdning stopper dermed vekst uten dødsfall eller økonomisk kollaps.
+- **GAMEPLAY-06 · utviklede bosettinger**: Bosettingene leses nå som Leir, Grend, Landsby, Voksende landsby eller Tidlig by ut fra befolkning, hjem, infrastruktur og regionale forbindelser. Roller oppstår uten spillerordre fra dyrket mark, verksted eller lokale skog-/steinforekomster.
+- **GAMEPLAY-06 · infrastruktur og region**: Åker og verksted bruker den eksisterende autonome byggeflyten og gyldig tomtesøk. Regional logistikk bygger videre med fysiske leveranser, først til den unge bosettingens åker og deretter verksted.
+- **GAMEPLAY-06 · progresjon**: Frøets løfte, Arbeidets deling og Regional utveksling leder fra En levende region til Stabil matforsyning, Den første byen og Sivilisasjonens morgen.
+- **GAMEPLAY-06 · bevis**: Seks faktiske Edge-skjermbilder og rapport under `docs/gameplay-06/`. (Kontroll: `npm test` 44/44; Edge-capture uten konsollfeil.)
+
 ### Docs
 - La til `docs/HOME_PC_HANDOFF.md` for synkronisert hjemme-PC-overlevering: aktiv spillbar gren, commit, grenoversikt, teststatus, begrensninger, lokale referansefiler og Windows-kommandoer. (Kontroll: `npm test` 41/41 bestått.)
 

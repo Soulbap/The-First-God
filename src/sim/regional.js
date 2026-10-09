@@ -10,7 +10,29 @@ const projectDefs = [
   { id: 'second_storage', type: 'storage', cost: { wood: 14, stone: 8 } },
   { id: 'second_home', type: 'hut', cost: { wood: 20, stone: 12 } },
   { id: 'second_hearth', type: 'hearth', cost: { wood: 12, stone: 16 } },
+  { id: 'second_field', type: 'field', cost: { wood: 18, stone: 6 } },
+  { id: 'second_workshop', type: 'workshop', cost: { wood: 22, stone: 18 } },
 ];
+
+export function settlementStage(state, settlement) {
+  const homes = state.buildings.filter((b) => b.complete && b.settlementId === settlement.id && (b.type === 'shelter' || b.type === 'hut')).length;
+  const infrastructure = state.buildings.filter((b) => b.complete && b.settlementId === settlement.id && !['shelter', 'hut', 'fire'].includes(b.type)).length;
+  const population = settlement.population.length;
+  if (population >= 8 && homes >= 3 && infrastructure >= 3 && state.civilization?.exchangeUnlocked) return 'Tidlig by';
+  if (population >= 6 && homes >= 2 && infrastructure >= 2) return 'Voksende landsby';
+  if (population >= 4 && homes >= 2 && infrastructure >= 1) return 'Landsby';
+  if (population >= 2 && homes >= 1) return 'Grend';
+  return 'Leir';
+}
+
+export function settlementRole(state, settlement) {
+  const local = state.nodes.filter((n) => Math.hypot(n.x - settlement.x, n.y - settlement.y) < 300);
+  const hasField = state.buildings.some((b) => b.complete && b.settlementId === settlement.id && b.type === 'field');
+  const hasWorkshop = state.buildings.some((b) => b.complete && b.settlementId === settlement.id && b.type === 'workshop');
+  if (hasField) return 'Matbygda';
+  if (hasWorkshop) return 'Håndverksbygd';
+  return local.filter((n) => n.kind === 'tree').length >= local.filter((n) => n.kind === 'rock').length ? 'Skogbygd' : 'Steinbygd';
+}
 
 export function localCapacity(state, settlementId) {
   return state.buildings.filter((b) => b.complete && b.settlementId === settlementId && (b.type === 'hut' || b.type === 'shelter')).length * B.settlement.localHomeCapacity;
@@ -89,10 +111,10 @@ export function cancelDelivery(state, h) {
 
 export function stepRegional(state, dt) {
   const R = state.region; if (!R?.enabled || !state.expansion.founded) return;
-  const next = projectDefs[R.completedProjects]; if (!R.project && next) activateProject(state, next);
+  const next = projectDefs[R.completedProjects]; if (!R.project && next && (next.type !== 'field' || state.civilization.foodUnlocked) && (next.type !== 'workshop' || state.civilization.exchangeUnlocked)) activateProject(state, next);
   queueNeed(state); finishProject(state);
   const S = second(state);
-  if (S && R.populationUnlocked && state.time >= R.nextPopulationAt && S.population.length < localCapacity(state, 'second')) {
+  if (S && R.populationUnlocked && !state.civilization.foodUnlocked && state.time >= R.nextPopulationAt && S.population.length < localCapacity(state, 'second')) {
     const home = state.buildings.find((b) => b.complete && b.settlementId === 'second' && (b.type === 'hut' || b.type === 'shelter'));
     if (home) { spawnHumans(state, 1, { at: 'shelter', building: home, settlementId: 'second' }); R.nextPopulationAt = state.time + B.human.regionalPopulationSeconds; }
   }

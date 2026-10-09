@@ -12,6 +12,7 @@ import { createFx, emit, flyToPile, popup, shake, updateFx, shakeAngle, drawPart
 import { zoomOf, viewH, screenToWorld, worldToScreen, VIEW } from '../view/camera.js';
 import { gatherInterval } from '../sim/humans.js';
 import { treeCapacity } from '../sim/nature.js';
+import { settlementRole, settlementStage } from '../sim/regional.js';
 
 export const wind = (x, t) => 0.6 * Math.sin(t * 0.9 + x * 0.003) + 0.4 * Math.sin(t * 2.1 + x * 0.009 + 1.3);
 
@@ -496,13 +497,14 @@ export function createRenderer(canvas) {
       ctx.globalAlpha = areaK;
       ctx.font = 'italic 15px Georgia, "Palatino Linotype", serif';
       ctx.fillStyle = 'rgba(16,12,8,0.55)';
+      const firstSettlement = state.settlements.find((q) => q.id === 'first');
       const settlementName = state.milestones.first_village != null ? 'Den første landsbyen' : 'Den første boplassen';
       ctx.fillText(settlementName, s.x + 1, s.y + 1);
       ctx.fillStyle = '#efe4cc';
       ctx.fillText(settlementName, s.x, s.y);
       ctx.font = '12px "Segoe UI", system-ui, sans-serif';
       ctx.fillStyle = 'rgba(236,226,204,0.85)';
-      ctx.fillText(`${pop} mennesker · ${homes} hjem`, s.x, s.y + 17);
+      ctx.fillText(`${settlementStage(state, firstSettlement)} · ${pop} mennesker · ${homes} hjem`, s.x, s.y + 17);
       ctx.globalAlpha = 1;
       const second = state.settlements?.find((q) => q.id === 'second');
       if (second && state.expansion.founded) {
@@ -513,9 +515,9 @@ export function createRenderer(canvas) {
         ctx.fillStyle = '#efe4cc'; ctx.fillText(second.name, s2.x, s2.y);
         const secondHomes = state.buildings.filter((b) => b.complete && b.settlementId === 'second' && (b.type === 'hut' || b.type === 'shelter')).length;
         const secondStore = state.buildings.some((b) => b.complete && b.settlementId === 'second' && b.type === 'storage');
-        const localState = secondStore ? `${secondHomes} hjem · lager` : secondHomes > 1 ? `${secondHomes} hjem` : 'nytt hjem';
+        const localState = `${settlementStage(state, second)} · ${settlementRole(state, second)}`;
         ctx.font = '12px "Segoe UI", system-ui, sans-serif'; ctx.fillStyle = 'rgba(236,226,204,0.85)';
-        ctx.fillText(`${second.population.length} mennesker · ${localState}`, s2.x, s2.y + 17);
+        ctx.fillText(`${second.population.length} mennesker · ${secondHomes} hjem · ${localState}`, s2.x, s2.y + 17);
         ctx.globalAlpha = 1;
       } else if (state.expansion?.discovered && state.expansion.site) {
         const s2 = worldToScreen(cam, state.expansion.site.x, state.expansion.site.y);

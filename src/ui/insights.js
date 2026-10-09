@@ -72,6 +72,7 @@ export function selectResources(state) {
     { id: 'stone', value: state.resources.stone, rate: auto ? rate.stone : null },
   ];
   if (state.humans.length) out.push({ id: 'people', value: state.humans.length, rate: null });
+  if (state.civilization?.foodUnlocked || state.resources.food > 0) out.push({ id: 'food', value: state.resources.food, rate: null });
   return out;
 }
 

@@ -4,6 +4,7 @@
 export const RESOURCES = {
   wood: { name: 'Trevirke', unit: 'trevirke', icon: 'wood' },
   stone: { name: 'Stein', unit: 'stein', icon: 'stone' },
+  food: { name: 'Mat', unit: 'mat', icon: 'sprout' },
   people: { name: 'Folk', unit: 'folk', icon: 'people' },
   pp: { name: 'Bønn (PP)', unit: 'PP', icon: 'pp' },
 };
@@ -29,6 +30,7 @@ export const EPOCHS = [
       { title: 'Den første bosetningen', when: [{ builtCount: { types: ['shelter', 'hut'], n: 2 } }, { built: 'fire' }] },
       { title: 'Voksende bosetting', when: [{ built: 'storage' }] },
       { title: 'Den første landsbyen', when: [{ built: 'hearth' }, { people: 8 }] },
+      { title: 'Sivilisasjonens morgen', when: [{ milestone: 'stable_food' }] },
     ],
   },
 ];

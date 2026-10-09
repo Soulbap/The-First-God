@@ -429,6 +429,37 @@ function paintFirePit(seed, p) {
   });
 }
 
+// ---------- Dyrket mark: jordstriper, lave gjerder og grønne skudd ----------
+function paintField(seed, p) {
+  return paintSprite(96, 48, 48, 29, (ctx) => {
+    const rnd = mulberry(seed), a = smooth(0, 0.2, p);
+    dab(ctx, 0, 2, 42, 15, 0, rgba([105, 82, 53], 0.58 * a));
+    ctx.save(); ctx.globalAlpha = a;
+    for (let row = 0; row < 7; row++) {
+      const y = -9 + row * 3.4;
+      taper(ctx, -36, y, 36, y + 1.8, 1.2, 1.1, row % 2 ? 'rgb(93,70,44)' : 'rgb(122,95,60)');
+      if (p > 0.5) for (let i = 0; i < 10; i++) dab(ctx, -31 + i * 7 + (rnd() - .5), y - 1, 0.8, 1.5 + rnd(), 0, 'rgb(105,126,58)');
+    }
+    for (const x of [-38, 38]) taper(ctx, x, 5, x, -15, 1.1, .8, 'rgb(96,72,48)');
+    ctx.restore();
+  });
+}
+
+// ---------- Verksted: åpen tømmerbod med arbeidsbenk ----------
+function paintWorkshop(seed, p) {
+  return paintSprite(82, 60, 41, 48, (ctx) => {
+    const rnd = mulberry(seed), a = smooth(0, .2, p);
+    dab(ctx, 0, 3, 29, 10, 0, rgba([40, 30, 18], .35 * a));
+    ctx.save(); ctx.globalAlpha = a;
+    for (const x of [-22, 22]) taper(ctx, x, 4, x, -28, 1.6, 1.25, 'rgb(91,68,45)');
+    taper(ctx, -27, -17, 27, -17, 1.3, 1.1, 'rgb(98,75,49)');
+    ctx.beginPath(); ctx.moveTo(-34, -17); ctx.lineTo(-19, -36); ctx.lineTo(22, -36); ctx.lineTo(34, -17); ctx.closePath(); ctx.fillStyle = 'rgb(112,89,55)'; ctx.fill();
+    taper(ctx, -22, 0, 22, 0, 2.6, 2.2, 'rgb(106,76,46)');
+    for (let i = 0; i < 7; i++) dab(ctx, -16 + i * 5, -3 + rnd() * 3, 1.2, .9, rnd(), 'rgb(145,136,116)');
+    ctx.restore();
+  });
+}
+
 const cache = new Map();
 export function buildingSprite(b) {
   const level = b.complete ? STEPS : Math.floor(b.progress * STEPS);
@@ -439,7 +470,9 @@ export function buildingSprite(b) {
   const sprite = b.type === 'shelter' ? paintShelter(seed, p)
     : b.type === 'hut' ? paintHut(seed, p)
       : b.type === 'storage' ? paintStorage(seed, p)
-        : b.type === 'hearth' ? paintHearth(seed, p) : paintFirePit(seed, p);
+      : b.type === 'hearth' ? paintHearth(seed, p)
+        : b.type === 'field' ? paintField(seed, p)
+          : b.type === 'workshop' ? paintWorkshop(seed, p) : paintFirePit(seed, p);
   cache.set(b.id, { level, sprite });
   return sprite;
 }
