@@ -41,8 +41,8 @@ Zoom er ikke bare optikk; den skifter hva spilleren kan forstå og gjøre.
 |---|---|---|---|
 | Nær | Tre, stein, mennesker, leir | Direkte skapelse og tidlig innsamling | Små spirer, vedhauger, bål, første hytte |
 | Område | Leir, marker, skog, nærområder | Samfunnets rytme og oppgraderingsutfall | Stier, åkrer, verksteder, handel |
-| Verden | Kontinenter og klima | Sivilisasjonens fotavtrykk | Byklynger, skoger, veier, lys om natten. **Bekreftet implementasjon (GAMEPLAY-10):** verdensoversikt over et grovt kart; hjemmeregionen er én rute |
-| Planet | Hel klode | Planetarisk helse og epoke | Biomfordeling, hav, polarlys, nattlys |
+| Region/Kontinent | Kontinenter og klima | Sivilisasjonens fotavtrykk | Byklynger, skoger, veier, lys om natten. **Implementert (OPUS-01):** samme planetkamera som under; hjemmeregionen er en ekte flekk på kula med et levende bilde av verdenen |
+| Planet | Hel klode | Planetarisk helse og epoke | Biomfordeling, hav, nattlys. **Implementert (OPUS-01):** WebGL-planet; kjent land i farger, ukjent dempet; utposter og ruter; dag/natt med nattlys |
 | Solsystem | Planeter og baner | Ekspansjon og større mål | Kolonier/objekter, lysfenomener |
 | Galakse | Stjernesystemer | Kosmisk arv og syklusens sluttbilde | Stjernenett, guddommelige spor |
 
@@ -347,8 +347,8 @@ Prototypen finnes og er spillbar. Denne seksjonen beskriver hva som er bygget og
 - **GAMEPLAY-07..10 (nye antakelser):** Alle byinfrastrukturen bygges i hovedstaden (første bosetting) — andre bosettinger får spesialbygg gjennom planen sin. Kunnskap, planker og tilhugget stein er felles beholdninger (som tre og stein). Utposter og ekspedisjoner er en abstrakt tidtaker, ikke en simulering. Tallbalansen (tider, kostnader, tak) er provisorisk; hele reisen tar ca. 115 min for en grådig bot og er ikke spilltestet av mennesker.
 - **Første ly og Nytt hjem** er lagt til ved siden av designets tre navngitte valg for å vise bygging og bosettingsvekst. Vekkelse er beholdt som eget valg etter lyet.
 - **Stein fornyes sakte** (1 per 35 s per blokk) slik at økonomien ikke stopper. Det er ikke naturtro, og kan erstattes av nye steinkilder senere.
-- **PP har foreløpig ingen bruk.** De vises og skapes av mennesker ved bålet; guddommelige handlinger kommer senere.
-- **Ragnarok** er en demonstrasjon: forhåndsvisning, frivillig bekreftelse og samme startverden. PrP-formelen og varig avtrykk er plassholdere; permanente bonuser kan ikke kjøpes ennå.
+- ~~PP har foreløpig ingen bruk.~~ Løst i OPUS-01: varige velsignelser (se seksjon 14).
+- **Ragnarok**: frivillig, med forhåndsvisning og samme startverden. Fra OPUS-01 kan PrP brukes på valgfrie ekko, og hver syklus etterlater en minnestein (seksjon 14). PrP-formelen er fortsatt provisorisk.
 - Alle balanseverdier i `src/data/balance.js` og `src/data/upgrades.js` er provisoriske.
 - **Teknisk grunnlag:** vanilla JavaScript + Canvas 2D med prosedyralt malt grafikk og ingen avhengigheter. Pakking som portabel Windows-app (Electron) er ikke gjort.
 - **VISUAL-02 · levende miljølag:** skogbunn og forstyrret jord avledes fra gjeldende trær, bygg og slitasje, og oppdateres høyst hvert tiende spillsekund. Det er bare presentasjon: ressursøkonomi, kollisjon, tomtevalg og menneskenes oppgaver endres ikke.
@@ -378,3 +378,26 @@ Grensesnittet skal oppleves som en stille, guddommelig intelligens som observere
 - **Undertittel etter stadium:** Skapelsens morgen → Det første lyet → Den første leiren → Den første bosetningen.
 - Merket på Innsikter-knappen teller valg som kan kjøpes nå; «NY» markerer innsikter spilleren ikke har sett i panelet.
 - Typografi bruker systemfonter (Palatino Linotype / Segoe UI) for å unngå nye avhengigheter; en lisensiert visningsfont kan vurderes senere.
+
+## 14. OPUS-01 — den levende verdenen (2026-10-10)
+
+Rapporter: `docs/opus-01/`. Prosjektansvarlig presiserte under arbeidet: **spillet er hovedsakelig et idle incremental game**, og **det skal ikke være offline-fremgang**.
+
+### Bekreftet implementasjon
+
+- **Planeten er den samme verdenen.** Rektangulære verdenskort er erstattet av en deterministisk planet (WebGL). Hjemmeregionen er en flekk på kula med et levende bilde av den detaljerte verdenen, og zoom går sammenhengende fra nær til hele kloden og tilbake. Nabolandene ligger på ekte geografi i samme retning som ved kartkanten. Planeten viser det folket vet: kjent land i farger, ukjent land dempet. Ingen ny forvaltningssløyfe på planetnivå.
+- **Velsignelser (PP).** Bønn strømmer tilbake som varige velsignelser med nivåer, kjøpt i Tro-kategorien. Ingen aktive mirakler med nedkjøling (idle først).
+- **Høstfest.** Matoverskudd blir automatisk en samling ved ildstedet med dobbel bønn.
+- **Ragnarok med arv.** PrP kjøper valgfrie ekko som virker gjennom modifikatorer i neste syklus; startverdenen er identisk og skapelsen må fortsatt gjøres. Minnesteiner ved tjernet viser tidligere sykluser.
+- **Lagring uten offline-fremgang.**
+- **Bosettingens soner.** Autonom plassering med preferanser: kjerne, boligklynger, verksteder mot råvaren, åker i utkanten. Ingen byggplassering for spilleren.
+- **Bakken husker.** Mye brukte stier blir grusveier; byer får brolagt torg.
+
+### Antakelser — åpne
+
+- Velsignelsenes styrke (40 %/30 %/12 %/30 % per nivå) og priser er provisoriske; boten når slutten på 80–97 min. Menneskelig spilltest er ikke gjort.
+- Høstfest-terskel, matforbruk og intervall (`BALANCE.festival`) er provisoriske.
+- PP hoper seg opp når alle velsignelser er på maks; et uendelig PP-sluk er foreslått, ikke bestemt (`docs/opus-01/FUTURE_IDEAS.md`).
+- Ekkoenes styrke og PrP-formelen er provisoriske.
+- Planetens størrelse i forhold til hjemmeregionen (hjemmet ~4,6°, nabolandene ~10° unna) er et lesbarhetsvalg, ikke realistisk skala.
+- Lyden er et grunnlag, ikke ferdig lyddesign; den er ikke vurdert ved lytting i dette arbeidet.

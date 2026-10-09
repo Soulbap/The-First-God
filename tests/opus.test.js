@@ -93,8 +93,9 @@ test('Ragnarok: PrP tildeles for det som er bygget; ekko kjøpes med grenser og 
   const award0 = ragnarokAward(fresh);
   const s = camp(); advance(s, 60);
   assert.ok(ragnarokAward(s) > award0);
-  const meta = emptyMeta(); meta.prestige = 10;
-  assert.equal(buyPrestige(meta, 'old_roots'), 5);
+  const first = prestigeCost(PRESTIGE[0], 0);
+  const meta = emptyMeta(); meta.prestige = first * 2;
+  assert.equal(buyPrestige(meta, 'old_roots'), first);
   assert.equal(meta.bonuses.old_roots, 1);
   assert.equal(canBuyPrestige(meta, 'old_roots'), false, `neste nivå koster ${prestigeCost(PRESTIGE[0], 1)}`);
   meta.prestige = 1000;

@@ -31,3 +31,6 @@ desktop.ini
 # Feilsøkings- og skjermbildeutdata
 screenshots/
 debug-output/
+
+# OPUS-01: før/etter-skjermbilder er dokumentasjon og skal være med
+!docs/opus-01/screenshots/

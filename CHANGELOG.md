@@ -119,6 +119,35 @@ Når en utgivelse opprettes, flyttes `Unreleased`-punkter til en datert versjons
 ## [Unreleased]
 
 ### Added
+- **OPUS-01 · planeten** (`src/sim/planet.js`, `src/render/globe.js`, `src/render/planetTexture.js`, `src/render/planetWorker.js`, `src/view/globe.js`): Den rektangulære kortoversikten er erstattet av en deterministisk planet med kontinenter, hav, fjell, skyer, atmosfære, dag/natt og nattlys. Hjemmeregionen er en ekte flekk på kula med et levende øyeblikksbilde av den detaljerte verdenen; nabolandene ligger på ekte geografi i nøyaktig den retningen karavaner og ekspedisjoner bruker ved kartkanten. Zoom går sammenhengende Nær → Område → Region → Kontinent → Planet og tilbake uten hopp (samme fokus og bredde ved overgangen). Kjent land vises i farger, ukjent land dempet; utposter, ruter og ekspedisjoner vises på kloden. WebGL 1 uten avhengigheter; reserve uten WebGL er den gamle kartoversikten.
+- **OPUS-01 · planetavsløringen**: Ved «Et sammenhengende rike» og ved sluttmilepælen løfter kameraet seg selv fra byen til kontinentet og hele kloden. All input avbryter; redusert bevegelse gir kort overgang.
+- **OPUS-01 · velsignelser** (`src/data/upgrades.js`): PP får endelig en bruk. Fire varige velsignelser med tre nivåer og stigende pris — **Regnets velsignelse** (trevekst), **Steinens gave** (steinfornyelse), **Vandrerens letthet** (gangfart, også karavaner) og **Kunnskapens lys** (kunnskap). Hver gir et synlig svar i verden (regnskur og spirer, glimt i bruddene, medvind med løv, lys over verkstedene). Idle-vennlig: ingen aktive mirakler å klikke på.
+- **OPUS-01 · høstfest** (`src/sim/civilization.js`): Når lagrene er fulle, samles folket ved ildstedet; maten brukes og bønnen teller dobbelt. Ny milepæl **Den første høstfesten**.
+- **OPUS-01 · Ragnarok med arv** (`src/data/prestige.js`, `src/sim/legacy.js`): PrP kan brukes på fem valgfrie ekko (Gamle røtter, Ekko av bønner, Hendenes minne, Glemselens vennlighet, Stjernekart i asken) som velges i Ragnarok-dialogen og gjelder fra neste syklus. Startverdenen er identisk; skapelsen må fortsatt gjøres. Hver avsluttet syklus etterlater en minnestein ved tjernet.
+- **OPUS-01 · lagring** (`src/sim/save.js`): Syklusen og metaprogresjonen lagres i nettleseren (hvert 20. s og når siden skjules) og lastes ved oppstart. **Ingen offline-fremgang** — verden fortsetter nøyaktig der den ble forlatt. `?fresh` starter rent; `?debug` lagrer ikke.
+- **OPUS-01 · lyd** (`src/audio/ambience.js`): Prosedyrisk stemning uten lydfiler: vind, fuglesang i nærbildet, knitring ved bål, hammerslag ved bygging og en dempet klang i planetvisningen. Lydknapp og tasten M; valget huskes.
+
+### Changed
+- **OPUS-01 · bosettingens soner** (`src/sim/construction.js`, `src/data/balance.js`): Menneskene velger fortsatt tomt selv, men foretrekker en tett kjerne (ildsted, lager, torg, hall), hjem i klynger, verksteder vendt mot råvaren og åker i utkanten. Litt kortere avstand mellom bygg. Byer blir kompakte i stedet for jevne ringer.
+- **OPUS-01 · bakken husker** (`src/render/renderer.js`): De mest brukte stiene modnes til lyse grusveier; byer får brolagt torg rundt marked, hall og ildsted, og storbyen steinlagte hovedgater. Bare presentasjon, avledet av faktisk slitasje.
+- **OPUS-01 · møteplasser**: Folk besøker torget og hallen mellom arbeidsøktene.
+- **OPUS-01 · grensesnitt**: «Verden»-knappen heter nå **Planet**; en diskret etikett viser hvilken skala man ser på; Ragnarok-dialogen viser arv og ekko.
+- **OPUS-01 · tempo**: Gjennomspilling med boten tar nå 80–97 min (sju frø) mot 103–158 min før; lengste venting mellom to hendelser er 6–8 min mot ~21 min. Se `docs/opus-01/PLAYTEST_REPORT.md`.
+
+### Fixed
+- Regionale leveranser reserverte materialer uten å sjekke beholdningen, så stein kunne bli negativ (−1 ved 30:00 i baseline). Nå bæres bare det som finnes.
+- Zoomgrensen for områdevisning følger tilstanden, ikke bare milepælshendelsen (riktig etter lasting).
+- Rulling i planetvisningen avbrøt ikke lenger utgangen den selv ba om.
+
+### Tests
+- `tests/planet.test.js` (12): deterministisk planet, landskap per land for sju frø, retning lik kartkanten, verden ↔ planet, sømløst kamera, projeksjon, visningsmodell, tekstur, lagring (rundtur, avvisning, utfylling).
+- `tests/opus.test.js` (8): velsignelser (låst/kjøpbar/aktivert, nivåer, effekt), høstfest (start, forbruk, bønn, aldri negativ, milepæl), Ragnarok-arv (tildeling, kjøp, grenser, identisk startverden) og soner.
+- `tools/gui-smoke-realm.js` følger nå den sammenhengende planetzoomen (27 kontroller). (Kontroll: `npm test` 106/106; GUI-røykprøve 33/33; Rike/planet-røykprøve 27/27; ingen konsollfeil.)
+
+### Docs
+- `docs/opus-01/`: RESEARCH, DESIGN_REVIEW, PLANET_ARCHITECTURE, IMPLEMENTATION_REPORT, FUTURE_IDEAS, PLAYTEST_REPORT og før/etter-skjermbilder.
+
+### Added
 - **GAMEPLAY-07 · byenes tid** (`src/sim/settlements.js`, `src/sim/production.js`, `src/render/city.js`): Nye trinn **By** og **Storby** avledes av syv uavhengige krav (folk, boligkapasitet, bolighus, mat, infrastruktur, sagbruk/steinhoggeri/torg, foredlede varer og fullførte leveranser) — aldri av én terskel. To nye råvarer, **planker** og **tilhugget stein**, lages autonomt av **Sagbruk** og **Steinhoggeri** (3 tre → 1 planke, 3 stein → 1 blokk), med reserve og lagertak så vanlige byggeprosjekter aldri sultes. **Bolighus** (4 plasser) og **Torg** (større leveranser og dobbelt lagerrom for foredlede varer) bygges av menneskene selv. Milepælen **En by reiser seg**.
 - **GAMEPLAY-08 · den organiserte sivilisasjonen**: **Kunnskap** er en ny ressurs som bare oppstår av faktisk virksomhet (sagbruk, steinhoggeri, verksteder og den nye **Kunnskapshallen**, mer med flere folk). Fem fremskritt (Organisert håndverk, Bedre jordbruk, Byggemetoder, Delt kunnskap, Samfunnsorden) gir målbare evner. Roller (Kunnskapssete, Bysenter, Sagbruksbygd, Steinhoggerbygd, Matbygda, Håndverksbygd, Skogbygd, Steinbygd) gir målbare fordeler (`ROLE_EFFECTS`). Milepælen **Kunnskapens tidsalder**.
 - **GAMEPLAY-09 · det voksende riket** (`src/sim/realm.js`, `src/sim/regional.js`): **Flere ildsteder** lar folk autonomt grunnlegge opptil fire bosettinger når mat, folk, materialer, ledige hender og ro er på plass. Tomtevalget er deterministisk (tørt land, avstand, trygg vei utenom tjernet, fritt areal, lokale ressurser, mangel på roller) og bosettingene vokser fra én hytte via de eksisterende fysiske leveransene, med planer for skog, stein eller jord. Handelsruter oppstår av fullførte turer (`state.network`). **Handelsveier** øker lasten. Milepælen **Et sammenhengende rike**.

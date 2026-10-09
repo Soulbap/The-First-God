@@ -12,13 +12,13 @@ const sstep = (a, b, x) => { const t = sat((x - a) / (b - a)); return t * t * (3
 
 const C = {
   deep: [24, 44, 56], sea: [34, 62, 72], shallow: [62, 96, 96], sand: [150, 138, 104],
-  grass: [104, 112, 62], dry: [140, 130, 80], forest: [58, 80, 44], conifer: [40, 60, 40],
+  grass: [92, 112, 60], dry: [132, 128, 80], forest: [56, 82, 44], conifer: [40, 62, 42],
   rock: [108, 102, 92], darkRock: [76, 72, 66], snow: [226, 226, 218], desert: [172, 150, 106], tundra: [118, 116, 96],
 };
 
 function landColor(s, hash) {
   const { e, moist, temp } = s;
-  let c = mix(C.dry, C.grass, sstep(0.25, 0.5, moist));
+  let c = mix(C.dry, C.grass, sstep(0.18, 0.45, moist));
   c = mix(c, mix(C.forest, C.conifer, sstep(0.55, 0.3, temp)), sstep(0.5, 0.72, moist));
   c = mix(c, C.desert, sstep(0.72, 0.9, temp) * sstep(0.4, 0.2, moist));
   c = mix(c, C.tundra, sstep(0.32, 0.18, temp));

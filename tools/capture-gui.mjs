@@ -115,7 +115,29 @@ const GAMEPLAY_07_10_SCENES = [
   { name: '09-final-milestone', w: 1920, h: 1080, js: `${BOT} to('first_world_civilization'); T.cancelGlide(); T.state.events = T.state.events.filter((e) => e.id === 'first_world_civilization'); T.hud.reset(); T.tick(6); T.hud.openPanel('insights'); T.tick(0.3); T.hud.openPanel(null); T.overview(true); settle(1);` },
 ];
 GAMEPLAY_07_10_SCENES.push({ name: '10-ragnarok-late-game', w: 1920, h: 1080, js: `${BOT} to('first_world_civilization'); T.cancelGlide(); T.state.events.length = 0; T.hud.reset(); T.tick(0.4); close(); T.view(C.x + 40, C.y - 20, 2300); document.querySelector('[data-nav="ragnarok"]').click(); settle(0.4);` });
-const SCENES = process.env.GAMEPLAY_07_10 === '1' ? GAMEPLAY_07_10_SCENES : process.env.GAMEPLAY_06 === '1' ? GAMEPLAY_06_SCENES : process.env.GAMEPLAY_05 === '1' ? GAMEPLAY_05_SCENES : process.env.GAMEPLAY_04 === '1' ? GAMEPLAY_04_SCENES : process.env.GAMEPLAY_03 === '1' ? GAMEPLAY_03_SCENES : process.env.GAMEPLAY_02 === '1' ? GAMEPLAY_02_SCENES : DEFAULT_SCENES;
+// OPUS-01: før/etter på samme progresjonstrinn (boten spiller; ingen snarveier). Skriptene bruker bare kroker som finnes
+// i begge versjonene; planetkrokene (globeView, planetReady) brukes bare når de finnes.
+const PLANET = `const planet = async (h) => { if (T.planetReady) await T.planetReady(); if (T.globeView) { const P = T.planet; T.globeView(P.home.lat - (h > 1 ? 0.05 : 0), P.home.lon, h); } else T.overview(true); };`;
+const OPUS_01_SCENES = [
+  { name: '01-early-settlement', w: 1920, h: 1080, js: `${BOT} to('settlement'); T.advance(40); calm(); T.view(C.x - 10, C.y - 20, 640); close(); settle(1.5);` },
+  { name: '02-developed-village', w: 1920, h: 1080, js: `${BOT} to('first_village'); T.advance(90); calm(); T.view(C.x - 10, C.y - 10, 860); close(); settle(1.5);` },
+  { name: '03-first-city', w: 1920, h: 1080, js: `${BOT} to('city_rises'); T.advance(60); calm(); T.view(C.x, C.y + 10, 1000); close(); settle(1.5);` },
+  { name: '04-mature-city', w: 1920, h: 1080, js: `${BOT} to('connected_realm'); T.advance(120); calm(); T.view(C.x, C.y + 10, 1000); close(); settle(1.5);` },
+  { name: '05-regional-network', w: 1920, h: 1080, js: `${BOT} to('connected_realm'); T.advance(90); calm(); T.view(C.x + 40, C.y - 20, 2300); close(); settle(2);` },
+  { name: '06-planet-view', w: 1920, h: 1080, js: `${BOT} ${PLANET} to('first_world_civilization'); T.advance(60); calm(); close(); await planet(3.1); settle(1.5);` },
+  { name: '07-planet-exploration', w: 1920, h: 1080, js: `${BOT} ${PLANET} to('connected_realm'); to((s) => s.globe.mission && s.globe.mission.phase === 'away' && s.globe.stats.discovered >= 2); calm(); close(); await planet(0.6); settle(1.5);` },
+  { name: '08-major-milestone', w: 1920, h: 1080, js: `${BOT} ${PLANET} to('first_world_civilization'); T.cancelGlide(); T.state.events = T.state.events.filter((e) => e.id === 'first_world_civilization'); T.hud.reset(); T.tick(0.5); T.cancelGlide(); T.hud.openPanel(null); await planet(0.6); settle(1);` },
+  { name: '09-ragnarok', w: 1920, h: 1080, js: `${BOT} to('first_world_civilization'); T.cancelGlide(); T.state.events.length = 0; T.hud.reset(); T.tick(0.4); T.cancelGlide(); close(); T.view(C.x, C.y + 10, 1000); document.querySelector('[data-nav="ragnarok"]').click(); settle(0.4);` },
+];
+// Bare etter: overgangen fra den detaljerte verdenen til planeten i fem trinn (samme fokus).
+const OPUS_01_TRANSITION = [
+  ['t1-area-2d', `T.view(C.x + 40, C.y - 20, 2300);`],
+  ['t2-region', `T.view(C.x + 40, C.y - 20, 2300); T.tick(0.1); T.enterGlobe(false); T.globe.h = 0.11;`],
+  ['t3-continent-near', `T.view(C.x + 40, C.y - 20, 2300); T.tick(0.1); T.enterGlobe(false); T.globe.h = 0.3;`],
+  ['t4-continent', `T.view(C.x + 40, C.y - 20, 2300); T.tick(0.1); T.enterGlobe(false); T.globe.h = 0.8;`],
+  ['t5-planet', `T.view(C.x + 40, C.y - 20, 2300); T.tick(0.1); T.enterGlobe(false); T.globe.h = 3.1;`],
+].map(([name, js]) => ({ name, w: 1920, h: 1080, js: `${BOT} to('first_world_civilization'); T.advance(60); calm(); close(); await T.planetReady(); ${js} T.tick(0.6); settle(0.6);` }));
+const SCENES = process.env.OPUS_01 === '1' ? OPUS_01_SCENES : process.env.OPUS_01 === 'transition' ? OPUS_01_TRANSITION : process.env.GAMEPLAY_07_10 === '1' ? GAMEPLAY_07_10_SCENES : process.env.GAMEPLAY_06 === '1' ? GAMEPLAY_06_SCENES : process.env.GAMEPLAY_05 === '1' ? GAMEPLAY_05_SCENES : process.env.GAMEPLAY_04 === '1' ? GAMEPLAY_04_SCENES : process.env.GAMEPLAY_03 === '1' ? GAMEPLAY_03_SCENES : process.env.GAMEPLAY_02 === '1' ? GAMEPLAY_02_SCENES : DEFAULT_SCENES;
 const ACTIVE_SCENES = process.env.CAPTURE_SCENES
   ? SCENES.filter((s) => process.env.CAPTURE_SCENES.split(',').some((name) => s.name.startsWith(name.trim())))
   : SCENES;

@@ -69,3 +69,30 @@ Spill hele forløpet i normal fart (ca. 1,5–2 timer) og noter hvor det går tr
 ## Tempo
 - [ ] Hvor lang tid brukte du til hver milepæl? Hvor ventet du mest? Ble 2×/4× brukt?
 - [ ] Fungerer Ragnarok (forhåndsvisning viser nye ting, ny syklus er ren)?
+
+
+# Spilltest — OPUS-01 (planeten og den levende verdenen)
+
+Spill fra start til «Et sammenhengende rike» eller lenger (lagringen gjør at du kan ta pauser). Svar **ja / delvis / nei** + en setning.
+
+## Planeten
+- [ ] Føles det som det samme stedet når kameraet løfter seg fra byen til kontinentet og planeten?
+- [ ] Var avsløringen ved «Et sammenhengende rike» et sterkt øyeblikk?
+- [ ] Forstår du hvilke land folket kjenner og hvilke som er ukjente?
+- [ ] Er det lett å komme hjem igjen (rull inn, klikk på hjemlandet, Område/Nær)?
+
+## Gudekraft (idle)
+- [ ] Merker du at bønn (PP) nå betyr noe? Ser du hva velsignelsene gjorde i verden?
+- [ ] Er høstfesten synlig og hyggelig, eller blir den borte?
+- [ ] Er det for mye eller for lite å kjøpe underveis? Hvor ventet du lengst?
+
+## Byen og landet
+- [ ] Ser byen ut som en by (kjerne, hus, verksteder, åker i utkanten)?
+- [ ] Ser du at mye brukte stier har blitt veier, og at torget er brolagt?
+
+## Ragnarok
+- [ ] Gir ekkoene lyst til å starte en ny syklus? Er det klart hva som går tapt og beholdes?
+- [ ] Ser du minnesteinen ved tjernet i neste syklus?
+
+## Lyd
+- [ ] Er lyden behagelig og lav nok? Mangler noe?

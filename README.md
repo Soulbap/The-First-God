@@ -19,7 +19,14 @@ Genesis-01 er den første vertikale skiven:
 
 Spillet har vokst langt forbi den første skiven: landsby, region, tidlig sivilisasjon, **by** (planker, tilhugget stein, bolighus, torg), **kunnskap** og fremskritt, opptil **fire bosettinger** med roller og handelsruter, og en **Verden-oversikt** med ekspedisjoner, utposter og karavaner. Alt skjer autonomt; du velger retning gjennom innsikter. Se `GAME_DESIGN.md` (seksjon 12) og rapportene under `docs/`.
 
-Rask kontroll: `npm test` (86 tester) og `node tools/playthrough.mjs` (spiller hele veien i simuleringen).
+## OPUS-01: den levende verdenen
+
+- **Planeten**: zoom ut forbi områdevisningen (eller trykk **Planet**/V) og kameraet løfter seg fra den samme verdenen til kontinentet og hele kloden. Dra for å snu den, klikk på et land, rull inn eller klikk på hjemlandet for å vende hjem.
+- **Velsignelser**: bønn (PP) brukes på varige velsignelser under Innsikter → Tro.
+- **Høstfest**, **Ragnarok med arv** (ekko og minnesteiner), **lagring** (ingen offline-fremgang) og **lyd** (M for av/på).
+- Se `docs/opus-01/`.
+
+Rask kontroll: `npm test` (106 tester) og `node tools/playthrough.mjs` (spiller hele veien i simuleringen).
 
 ## Forutsetninger
 
@@ -39,7 +46,7 @@ npm start
 
 Åpne deretter http://localhost:5173.
 
-Kontroller: klikk på trær og stein, åpne **Innsikter** i menyen nederst (Escape lukker), dra for å panorere, musehjul eller −/+ for zoom, mellomrom for pause og 1/2/3 for fart. Nye innsikter dukker opp etter hvert som verden utvikler seg.
+Kontroller: klikk på trær og stein, åpne **Innsikter** i menyen nederst (Escape lukker), dra for å panorere (på planeten: snu kloden), musehjul eller −/+ for zoom, V for planeten, M for lyd, mellomrom for pause og 1/2/3 for fart. Spillet lagres automatisk; `?fresh` i adressen starter på nytt uten å laste. Nye innsikter dukker opp etter hvert som verden utvikler seg.
 
 ## Kjøre tester
 
@@ -51,8 +58,8 @@ npm test
 
 - Grafikken er prosedyralt malt i koden, ikke håndmalt: bakken blir uskarp helt inne, felte stokker er enkle former og menneskene er forenklede figurer.
 - Mennesker går i rette linjer og kan gå gjennom hytter (ingen hindringsunngåelse).
-- Ingen lagring — spillet starter på nytt når siden lastes.
-- PP har ingen bruk ennå; Ragnarok gir plassholder-PrP og ingen permanente bonuser.
+- Ingen offline-fremgang (bevisst valg): verden står stille mens spillet er lukket.
+- Planetvisningen krever WebGL; uten WebGL vises den gamle kartoversikten.
 - Stein fornyes sakte av spilløkonomiske grunner (åpent designspørsmål).
 - Kjører i nettleser; ikke pakket som Windows-app (.exe).
 - Balanseverdiene er provisoriske.

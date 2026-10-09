@@ -261,7 +261,7 @@ export function createRenderer(canvas) {
       if (!['By', 'Storby'].includes(S.stage)) continue;
       for (const b of state.buildings) {
         if (!b.complete || (b.settlementId || 'first') !== S.id || !['market', 'hall', 'hearth'].includes(b.type)) continue;
-        const r1 = b.type === 'market' ? 84 : b.type === 'hall' ? 58 : 46;
+        const r1 = b.type === 'market' ? 72 : b.type === 'hall' ? 54 : 40;
         const i0 = Math.max(0, Math.floor((b.x - r1) / cell)), i1 = Math.min(cols - 1, Math.ceil((b.x + r1) / cell));
         const j0 = Math.max(0, Math.floor((b.y - r1) / cell)), j1 = Math.min(rows - 1, Math.ceil((b.y + r1) / cell));
         for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
@@ -271,8 +271,9 @@ export function createRenderer(canvas) {
           if (v > R.pave[j * cols + i]) R.pave[j * cols + i] = v;
         }
       }
-      // Gatene i byens kjerne: de mest brukte stiene får stein i stedet for grus.
-      const coreR = S.stage === 'Storby' ? 330 : 250;
+      // Gatene i storbyens kjerne: de mest brukte stiene får stein i stedet for grus.
+      if (S.stage !== 'Storby') continue;
+      const coreR = 330;
       const ci0 = Math.max(0, Math.floor((S.x - coreR) / cell)), ci1 = Math.min(cols - 1, Math.ceil((S.x + coreR) / cell));
       const cj0 = Math.max(0, Math.floor((S.y - coreR) / cell)), cj1 = Math.min(rows - 1, Math.ceil((S.y + coreR) / cell));
       for (let j = cj0; j <= cj1; j++) for (let i = ci0; i <= ci1; i++) {
@@ -320,9 +321,12 @@ export function createRenderer(canvas) {
         // Brolagt torg: grå stein i ujevne rader med mørkere fuger.
         const pave = bil(getPave, i, j, u, v);
         if (pave > 0.02) {
-          const row = Math.floor(py / 2), joint = (py % 2 === 0) || ((pxx + (row % 2) * 2) % 4 === 0);
-          const k = smooth(0.15, 0.6, pave + (n - 0.5) * 0.3);
-          const tone = (joint ? 0.72 : 1) * (0.88 + n * 0.22);
+          // Ujevne heller: hver liten blokk får sin egen valør; fugene er svake og ikke et rutenett.
+          const row = Math.floor(py / 3), col = Math.floor((pxx + (row % 2) * 2) / 4);
+          const hb = (((row * 73856093) ^ (col * 19349663)) >>> 0) % 1000 / 1000;
+          const joint = (py % 3 === 0 && hb < 0.7) || ((pxx + (row % 2) * 2) % 4 === 0 && hb > 0.35);
+          const k = smooth(0.15, 0.6, pave + (n - 0.5) * 0.4);
+          const tone = (joint ? 0.86 : 1) * (0.84 + hb * 0.18 + n * 0.1);
           r += (140 * tone - r) * k; g += (130 * tone - g) * k; b += (112 * tone - b) * k;
           a = Math.max(a, k);
         }

@@ -71,6 +71,11 @@ void main(){
   vec3 forestC = col * vec3(0.66, 0.72, 0.64) * (0.8 + crowns * 0.4);
   col = mix(col, mix(col * vec3(1.06, 1.04, 0.98), forestC, grove), green * near);
   col *= 1.0 + (fbm(p * 420.0) - 0.5) * 0.2 * near + (fbm(p * 120.0) - 0.5) * 0.12 * near;
+  // Fjell: skarpe rygger og renner i stein og snø i stedet for myke, røykaktige flater.
+  float rock = (1.0 - smoothstep(0.03, 0.08, max(col.r, max(col.g, col.b)) - min(col.r, min(col.g, col.b)))) * (1.0 - water);
+  float ridge = 1.0 - abs(2.0 * vnoise(p * 700.0) - 1.0);
+  ridge = ridge * 0.6 + (1.0 - abs(2.0 * vnoise(p * 2100.0) - 1.0)) * 0.4;
+  col *= 1.0 + (ridge - 0.55) * 0.45 * rock * (1.0 - smoothstep(0.1, 1.6, uH));
 
   // Det kjente og det ukjente: land folket ikke har sett, er dempet og disig (guden ser alt, folket gjør det ikke).
   vec3 local = vec3(dot(p, uHE), dot(p, uHN), dot(p, uHU));
@@ -85,7 +90,7 @@ void main(){
   }
   if (uFogOn > 0.5) {
     float lum = dot(col, vec3(0.3, 0.55, 0.15));
-    vec3 mist = mix(mix(vec3(lum), col, 0.62), vec3(0.56, 0.6, 0.62), 0.14) * 0.94;
+    vec3 mist = mix(mix(vec3(lum), col, 0.78), vec3(0.58, 0.62, 0.64), 0.12) * 0.96;
     col = mix(mist + (fbm(p * 22.0 + uTime * 0.01) - 0.5) * 0.04, col, known);
   }
 
@@ -313,7 +318,8 @@ export function drawGlobeOverlay(ctx, state, planet, g, { sw, sh, dpr, time, hov
     if (s?.front) {
       ctx.fillStyle = '#f4ecd4'; ctx.beginPath(); ctx.arc(s.x, s.y, 4 + Math.sin(time * 4) * 0.8, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = 'rgba(20,16,10,0.8)'; ctx.lineWidth = 1; ctx.stroke();
-      label(ctx, m.kind === 'outpost' ? 'Nybyggere' : 'Ekspedisjon', s.x, s.y - 10, 11, { font: FONT_UI, italic: false });
+      const hs = P(home);
+      if (!hs || Math.hypot(hs.x - s.x, hs.y - s.y) > 60) label(ctx, m.kind === 'outpost' ? 'Nybyggere' : 'Ekspedisjon', s.x, s.y - 10, 11, { font: FONT_UI, italic: false });
     }
     ctx.globalAlpha = 1;
   }
