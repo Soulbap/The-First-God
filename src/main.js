@@ -20,9 +20,11 @@ const hud = createHud({
     const r = purchase(state, id);
     if (!r.ok && r.reason === 'noSite') hud.toast('Ingen ledig plass', 'Menneskene fant ikke et egnet sted å bygge akkurat nå.');
     hudTimer = 0; // oppdater menyen straks etter kjøp
+    return r;
   },
   onSpeed(s) { speed = s; if (s > 0) savedSpeed = s; },
   onView(v) { goView(v); },
+  onZoom(f) { zoomAt(cam, cam.screenW / 2, cam.screenH / 2, f); },
   onRagnarok(phase) {
     if (phase === 'preview') hud.showRagnarok(ragnarokSummary());
     else {
@@ -92,6 +94,7 @@ function updateHint() {
 
 function handleEvents(events) {
   for (const e of events) {
+    if (e.type === 'discovered') hud.discovered(e.id);
     if (e.type !== 'milestone') continue;
     hud.toast(e.title, e.text);
     if (e.unlock === 'zoomArea') {
@@ -175,6 +178,7 @@ canvas.addEventListener('wheel', (e) => {
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 window.addEventListener('keydown', (e) => {
   if (e.target.closest && e.target.closest('input,textarea')) return;
+  if (e.code === 'Space' && e.target.closest && e.target.closest('button')) return; // mellomrom aktiverer knappen
   if (e.code === 'Space') { e.preventDefault(); speed = speed === 0 ? savedSpeed : 0; }
   if (e.key === '1') speed = savedSpeed = 1;
   if (e.key === '2') speed = savedSpeed = 2;
@@ -198,6 +202,7 @@ setTimeout(() => {
       click: (id) => clickNode(state, id),
       view: (x, y, w) => { cam.x = x; cam.y = y; cam.w = w; cam.tween = null; },
       setSpeed: (s) => { speed = s; },
+      hud,
       renderStats: renderer.stats,
       renderer,
       tick: (seconds, fps = 30) => { for (let i = 0; i < seconds * fps; i++) tick(1 / fps); },

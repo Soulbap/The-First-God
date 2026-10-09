@@ -1,0 +1,95 @@
+/* GUI-01 designtokens. All farge, avstand, typografi og bevegelse i grensesnittet hentes herfra.
+   Epoker overstyrer bare --gui-*-fargene via [data-epoch] på <html>; oppsett og samhandling er felles. */
+
+:root {
+  /* Avstand (8 px-system, 4 px-trinn) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /* Geometri */
+  --radius-sm: 6px;
+  --radius-card: 8px;
+  --radius-panel: 10px;
+  --border-w: 1px;
+
+  /* Typografi: lokal serif til visningstitler, systemets sans til alt funksjonelt */
+  --font-display: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  --font-ui: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --fs-title: 27px;
+  --fs-section: 19px;
+  --fs-card-title: 17px;
+  --fs-body: 14px;
+  --fs-value: 22px;
+  --fs-label: 15px;
+  --fs-button: 14px;
+  --fs-meta: 13px;
+  --lh-body: 1.45;
+
+  /* Bevegelse */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --t-hover: 150ms;
+  --t-card: 180ms;
+  --t-panel: 250ms;
+  --t-notice: 250ms;
+
+  /* Mål */
+  --drawer-w: clamp(344px, 22vw, 392px);
+  --edge: var(--space-4);
+  --bar-h: 62px;
+  --icon: 22px;
+
+  /* Genesis (standard) */
+  --gui-bg-primary: #171B19;
+  --gui-bg-secondary: #292D28;
+  --gui-bg-hover: #373B34;
+  --gui-accent: #D4B477;
+  --gui-accent-hover: #E2C58F;
+  --gui-accent-ink: #1E1A12;
+  --gui-text-primary: #F0E9DA;
+  --gui-text-secondary: #C8BEAA;
+  --gui-text-muted: #A9AA9F;
+  --gui-positive: #A8BA98;
+  --gui-warning: #D58A70;
+  --gui-border: #635843;
+  --gui-shadow: rgba(0, 0, 0, 0.45);
+
+  /* Avledede flater (samme palett, gjennomskinnelighet over verden) */
+  --gui-surface: rgba(23, 27, 25, 0.93);
+  --gui-surface-light: rgba(23, 27, 25, 0.86);
+  --gui-surface-card: rgba(41, 45, 40, 0.72);
+  --gui-border-soft: rgba(99, 88, 67, 0.55);
+  --gui-accent-wash: rgba(212, 180, 119, 0.12);
+  --gui-res-wood: #A8BA98;
+  --gui-res-stone: #BDB7A8;
+  --gui-res-people: #D4B477;
+  --gui-danger: #D58A70;
+}
+
+/* Genesis: organisk, kullgrønt og varmt gull. Senere epoker (f.eks. "civilization", "cosmos")
+   legges til som egne blokker som bare endrer --gui-*-verdier. */
+:root[data-epoch="genesis"] {
+  color-scheme: dark;
+}
+
+@media (max-width: 1400px), (max-height: 800px) {
+  :root {
+    --fs-title: 24px;
+    --fs-value: 19px;
+    --fs-label: 14px;
+    --bar-h: 54px;
+    --edge: var(--space-3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --t-hover: 0ms;
+    --t-card: 0ms;
+    --t-panel: 0ms;
+    --t-notice: 0ms;
+  }
+}
