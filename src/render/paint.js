@@ -95,3 +95,19 @@ export function drawSprite(ctx, s, x, y, alpha = 1) {
   ctx.drawImage(s.canvas, x - s.ax, y - s.ay, s.w, s.h);
   if (alpha < 1) ctx.globalAlpha = 1;
 }
+
+// Periodisk støy (flislegges sømløst med periode P) — brukes til fine bakketekstur-fliser.
+export function tileNoise(seed, P) {
+  const rnd = mulberry(seed);
+  const v = new Float32Array(P * P);
+  for (let i = 0; i < v.length; i++) v[i] = rnd();
+  const w = (n) => ((n % P) + P) % P;
+  return (x, y) => {
+    const xi = Math.floor(x), yi = Math.floor(y);
+    const xf = x - xi, yf = y - yi;
+    const x0 = w(xi), y0 = w(yi), x1 = w(xi + 1), y1 = w(yi + 1);
+    const u = xf * xf * (3 - 2 * xf), t = yf * yf * (3 - 2 * yf);
+    const a = v[y0 * P + x0], b = v[y0 * P + x1], c = v[y1 * P + x0], d = v[y1 * P + x1];
+    return a + (b - a) * u + (c - a) * t + (a - b - c + d) * u * t;
+  };
+}

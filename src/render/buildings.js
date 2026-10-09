@@ -5,18 +5,24 @@ const STEPS = 48; // kvantisering av byggefremdrift for mellomlagring
 
 function groundAndStones(ctx, rnd, rx, ry, p, stoneCount) {
   const a = smooth(0, 0.1, p);
-  dab(ctx, 0, 0, rx + 6, ry + 3.5, 0, rgba([96, 80, 60], 0.45 * a));
-  for (let i = 0; i < 40 * a; i++) dab(ctx, (rnd() - 0.5) * rx * 2.2, (rnd() - 0.5) * ry * 2.2, 1 + rnd() * 2, 0.6, 0, rgba(jitter([110, 92, 68], rnd, 0.3), 0.35));
+  // Tråkket jord med ujevn kant — ikke en ren ellipse.
+  dab(ctx, 0, 0, rx + 7, ry + 4, 0, rgba([92, 76, 56], 0.4 * a));
+  for (let i = 0; i < 70 * a; i++) {
+    const t = rnd() * Math.PI * 2, d = 0.55 + rnd() * 0.75;
+    dab(ctx, Math.cos(t) * (rx + 3) * d, Math.sin(t) * (ry + 2) * d, 1 + rnd() * 2.4, 0.5 + rnd() * 0.7, rnd() * 3, rgba(jitter([108, 90, 66], rnd, 0.3), 0.3));
+  }
   const n = Math.floor(clamp(p / 0.14) * stoneCount);
   const order = [];
   for (let i = 0; i < stoneCount; i++) order.push(((i / stoneCount) * Math.PI * 2) + Math.PI);
   for (let i = 0; i < n; i++) {
     const t = order[i];
-    const x = Math.cos(t) * (rx + 1), y = Math.sin(t) * (ry + 0.6);
-    const k = 0.8 + rnd() * 0.4;
-    dab(ctx, x + 0.4, y + 0.6, 1.9, 1.0, 0, 'rgba(25,22,18,0.4)');
-    dab(ctx, x, y, 1.7, 1.15, rnd(), rgba([124 * k, 118 * k, 106 * k], 1));
-    dab(ctx, x - 0.5, y - 0.4, 0.8, 0.5, 0, 'rgba(190,184,170,0.6)');
+    const x = Math.cos(t) * (rx + 1) + (rnd() - 0.5) * 0.8, y = Math.sin(t) * (ry + 0.6);
+    const k = 0.78 + rnd() * 0.45, sz = 1.4 + rnd() * 0.9;
+    dab(ctx, x + 0.5, y + 0.7, sz * 1.1, sz * 0.6, 0, 'rgba(22,19,14,0.42)');
+    dab(ctx, x, y, sz, sz * 0.7, rnd(), rgba([124 * k, 118 * k, 106 * k], 1));
+    dab(ctx, x - sz * 0.3, y - sz * 0.25, sz * 0.45, sz * 0.28, 0, 'rgba(196,190,176,0.6)');
+    dab(ctx, x + sz * 0.15, y + sz * 0.3, sz * 0.7, sz * 0.22, 0, 'rgba(30,26,20,0.25)');
+    if (rnd() < 0.22) dab(ctx, x - sz * 0.1, y - sz * 0.35, sz * 0.5, sz * 0.22, 0, rgba([78, 98, 50], 0.8));
   }
 }
 
@@ -74,6 +80,40 @@ function paintShelter(seed, p) {
         ctx.lineTo(sx * 1.5, apexY + 3);
         ctx.stroke();
       }
+      // Hudene har ulik alder og tone; røyk sverter toppen, regn gir striper og kanten er smusset av jord.
+      const seams2 = [-1.05, -0.62, -0.25, 0.12, 0.5, 0.85, 1.1];
+      for (let pi = 0; pi < seams2.length - 1; pi++) {
+        const a0 = seams2[pi], a1 = seams2[pi + 1];
+        const yb = (v) => Math.sqrt(Math.max(0, 1 - Math.min(1, v * v))) * ry;
+        const light = (pi * 5 + 3) % 4 < 2;
+        ctx.fillStyle = light ? `rgba(220,196,150,${0.05 + (pi % 3) * 0.035})` : `rgba(40,28,18,${0.05 + (pi % 3) * 0.04})`;
+        ctx.beginPath();
+        ctx.moveTo(a0 * rx, yb(a0) + 1);
+        ctx.lineTo(a1 * rx, yb(a1) + 1);
+        ctx.lineTo(a1 * 1.5, apexY + 3);
+        ctx.lineTo(a0 * 1.5, apexY + 3);
+        ctx.closePath();
+        ctx.fill();
+      }
+      for (let i = 0; i < 46; i++) {
+        const x = (rnd() - 0.5) * rx * 1.8, y0 = apexY + 8 + rnd() * 30;
+        ctx.strokeStyle = `rgba(46,32,22,${0.1 + rnd() * 0.12})`;
+        ctx.lineWidth = 0.3 + rnd() * 0.3;
+        ctx.beginPath();
+        ctx.moveTo(x * (0.3 + (y0 - apexY) / 60), y0);
+        ctx.lineTo(x * (0.35 + (y0 + 8 + rnd() * 10 - apexY) / 60), y0 + 8 + rnd() * 10);
+        ctx.stroke();
+      }
+      const soot = ctx.createLinearGradient(0, apexY, 0, apexY + 22);
+      soot.addColorStop(0, 'rgba(22,16,12,0.55)');
+      soot.addColorStop(1, 'rgba(22,16,12,0)');
+      ctx.fillStyle = soot;
+      ctx.fillRect(-40, apexY, 80, 24);
+      const mud = ctx.createLinearGradient(0, ry - 7, 0, ry + 1.5);
+      mud.addColorStop(0, 'rgba(70,52,34,0)');
+      mud.addColorStop(1, 'rgba(70,52,34,0.5)');
+      ctx.fillStyle = mud;
+      ctx.fillRect(-40, ry - 7, 80, 9);
       const sg = ctx.createLinearGradient(-rx, 0, rx, 0);
       sg.addColorStop(0, 'rgba(255,236,200,0.10)');
       sg.addColorStop(0.55, 'rgba(0,0,0,0)');
@@ -96,6 +136,8 @@ function paintShelter(seed, p) {
       ctx.clip();
       poles.forEach((pl) => drawPole(pl, 1));
       ctx.restore();
+      // Skinnreim surrer stengene sammen under toppen.
+      for (let i = 0; i < 2; i++) taper(ctx, -2.4, apexY + 6 + i * 2.6, 2.4, apexY + 6.6 + i * 2.6, 0.7, 0.7, 'rgb(74,56,40)');
     }
     const f = smooth(0.9, 1, p);
     if (f > 0) {
@@ -161,6 +203,16 @@ function paintHut(seed, p) {
     wall(false);
     posts.forEach((pt, i) => { if (!pt.back) { const l = clamp(pp - i); if (l > 0) drawPost(pt, l); } });
     wall(true);
+    // Steinfundament langs foten.
+    if (q > 0.25) {
+      for (let i = 0; i < 26; i++) {
+        const t = (i / 25) * Math.PI;
+        const x = Math.cos(t) * (rx + 0.6), y = Math.sin(t) * (ry + 0.5);
+        const k = 0.78 + rnd() * 0.4;
+        dab(ctx, x, y + 0.2, 1.9, 1.15, rnd() * 0.3, rgba([116 * k, 110 * k, 98 * k], 1));
+        dab(ctx, x - 0.4, y - 0.3, 0.8, 0.45, 0, 'rgba(190,184,170,0.5)');
+      }
+    }
     // Takstoler.
     const r = clamp((p - 0.58) / 0.14);
     const rafters = [];
@@ -203,6 +255,24 @@ function paintHut(seed, p) {
         ctx.lineTo(x + Math.cos(ang) * len, y + Math.sin(ang) * len);
         ctx.stroke();
       }
+      // Stråtaket legges i kurser: tydelige bånd av bunter, mose på eldre partier og sverte rundt røykhullet.
+      for (let yy = apexY + 5; yy < eaveY + ery + 1; yy += 4.4) {
+        const k = (yy - apexY) / (eaveY + ery - apexY);
+        ctx.strokeStyle = `rgba(52,40,22,${0.16 + 0.1 * (k % 0.3)})`;
+        ctx.lineWidth = 0.45;
+        ctx.beginPath();
+        ctx.ellipse(0, yy - ery * k * 0.1, erx * k * 1.02, ery * k * 0.62, 0, 0.05, Math.PI - 0.05);
+        ctx.stroke();
+      }
+      for (let i = 0; i < 90; i++) {
+        const x = (rnd() - 0.5) * erx * 1.8, y = apexY + 8 + rnd() * 34;
+        dab(ctx, x, y, 0.8 + rnd() * 1.6, 0.4 + rnd() * 0.6, rnd() * 3, rgba(jitter([82, 98, 50], rnd, 0.3), 0.3));
+      }
+      const hs = ctx.createLinearGradient(0, apexY, 0, apexY + 14);
+      hs.addColorStop(0, 'rgba(26,18,10,0.5)');
+      hs.addColorStop(1, 'rgba(26,18,10,0)');
+      ctx.fillStyle = hs;
+      ctx.fillRect(-40, apexY - 2, 80, 16);
       const sg = ctx.createLinearGradient(-erx, 0, erx, 0);
       sg.addColorStop(0, 'rgba(255,236,190,0.08)');
       sg.addColorStop(0.5, 'rgba(0,0,0,0)');
@@ -210,6 +280,17 @@ function paintHut(seed, p) {
       ctx.fillStyle = sg;
       ctx.fillRect(-40, apexY - 2, 80, 80);
       ctx.restore();
+      // Ujevn takkant: stråene henger ned i frynser.
+      for (let i = 0; i < 70; i++) {
+        const tt = (i / 69) * Math.PI;
+        const x = Math.cos(tt) * erx * 0.99, y = eaveY + Math.sin(tt) * ery * 0.99;
+        ctx.strokeStyle = rgba(jitter([128, 106, 66], rnd, 0.3), 0.85);
+        ctx.lineWidth = 0.4;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + (rnd() - 0.5) * 0.8, y + 1.2 + rnd() * 2.2);
+        ctx.stroke();
+      }
       // Skygge under takskjegget.
       if (t > 0.9) {
         ctx.save();
@@ -239,25 +320,35 @@ function paintHut(seed, p) {
 
 // ---------- Bålplass (statisk del; flammer tegnes levende) ----------
 function paintFirePit(seed, p) {
-  return paintSprite(30, 18, 15, 11, (ctx) => {
+  return paintSprite(36, 22, 18, 13, (ctx) => {
     const rnd = mulberry(seed);
-    dab(ctx, 0, 0, 10, 5, 0, rgba([60, 50, 40], 0.5 * smooth(0, 0.1, p)));
-    dab(ctx, 0, 0, 6, 3, 0, rgba([36, 30, 26], 0.8 * smooth(0, 0.2, p)));
-    const n = Math.floor(clamp(p / 0.55) * 11);
+    // Bar jord rundt, svidd bakke og aske — bålet har preget stedet.
+    dab(ctx, 0, 0.5, 15, 7, 0, rgba([100, 84, 60], 0.5 * smooth(0, 0.1, p)));
+    for (let i = 0; i < 36 * smooth(0, 0.3, p); i++) {
+      const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd());
+      dab(ctx, Math.cos(a) * 12 * d, Math.sin(a) * 5.5 * d, 0.8 + rnd() * 1.8, 0.4 + rnd() * 0.7, rnd() * 3, rgba(jitter([94, 78, 56], rnd, 0.3), 0.35));
+    }
+    dab(ctx, 0, 0, 8.4, 4.1, 0, rgba([22, 18, 14], 0.8 * smooth(0, 0.2, p)));
+    dab(ctx, 0.5, 0.2, 5.6, 2.8, 0, rgba([84, 80, 74], 0.55 * smooth(0.5, 0.9, p)));
+    const n = Math.floor(clamp(p / 0.55) * 12);
     for (let i = 0; i < n; i++) {
-      const t = (i / 11) * Math.PI * 2 + Math.PI;
-      const x = Math.cos(t) * 7.5, y = Math.sin(t) * 3.8;
-      const k = 0.75 + rnd() * 0.4;
-      dab(ctx, x + 0.3, y + 0.5, 1.8, 1.0, 0, 'rgba(20,16,12,0.45)');
-      dab(ctx, x, y, 1.6, 1.15, rnd(), rgba([118 * k, 112 * k, 102 * k], 1));
-      dab(ctx, x - 0.4, y - 0.4, 0.7, 0.45, 0, 'rgba(186,178,164,0.55)');
+      const t = (i / 12) * Math.PI * 2 + Math.PI;
+      const x = Math.cos(t) * 8, y = Math.sin(t) * 4.0;
+      const k = 0.7 + rnd() * 0.45, sz = 1.5 + rnd() * 0.5;
+      dab(ctx, x + 0.4, y + 0.6, sz * 1.1, sz * 0.62, 0, 'rgba(18,14,10,0.5)');
+      dab(ctx, x, y, sz, sz * 0.72, rnd(), rgba([118 * k, 112 * k, 102 * k], 1));
+      dab(ctx, x - sz * 0.25, y - sz * 0.25, sz * 0.45, sz * 0.28, 0, 'rgba(186,178,164,0.5)');
+      dab(ctx, x - Math.cos(t) * sz * 0.5, y - Math.sin(t) * sz * 0.35, sz * 0.7, sz * 0.4, 0, 'rgba(18,14,10,0.45)');
     }
     const logs = clamp((p - 0.55) / 0.4) * 4;
     const ang = [-0.5, 0.45, -0.15, 0.2];
     for (let i = 0; i < Math.floor(logs); i++) {
       const a = ang[i];
-      taper(ctx, -Math.cos(a) * 5, Math.sin(a) * 1.5, Math.cos(a) * 5, -Math.sin(a) * 1.5 - 1, 1.5, 1.3, 'rgb(84,62,44)');
-      dab(ctx, Math.cos(a) * 5, -Math.sin(a) * 1.5 - 1, 0.7, 0.7, 0, 'rgb(150,120,86)');
+      const x0 = -Math.cos(a) * 5.2, y0 = Math.sin(a) * 1.6, x1 = Math.cos(a) * 5.2, y1 = -Math.sin(a) * 1.6 - 1;
+      taper(ctx, x0, y0, x1, y1, 1.6, 1.4, 'rgb(74,54,38)');
+      taper(ctx, x0, y0 + 0.3, x1, y1 + 0.3, 0.7, 0.6, 'rgba(0,0,0,0.35)');
+      taper(ctx, x1 - Math.cos(a) * 1.4, y1 + Math.sin(a) * 0.4, x1, y1, 1.5, 1.3, 'rgb(26,22,18)');
+      dab(ctx, x1, y1, 0.65, 0.65, 0, 'rgb(48,38,30)');
     }
   });
 }
@@ -278,58 +369,116 @@ export function buildingSprite(b) {
 export const pileCount = (amount) => Math.min(28, Math.ceil(Math.sqrt(Math.max(0, amount)) * 2.2));
 
 const woodCache = new Map(), stoneCache = new Map(), matCache = new Map();
+
+// En stokk sett fra siden: bark med skyggeside, høylys og (valgfritt) synlig kappflate i høyre ende.
+function logSide(ctx, x, y, len, rad, rnd, end) {
+  const bark = jitter([[98, 74, 52], [108, 84, 58], [84, 64, 46], [118, 98, 72]][Math.floor(rnd() * 4)], rnd, 0.18);
+  const tilt = (rnd() - 0.5) * 0.9;
+  dab(ctx, x + 0.5, y + rad * 0.75, len * 0.55, rad * 0.55, 0, 'rgba(22,16,10,0.4)');
+  taper(ctx, x - len / 2, y - tilt / 2, x + len / 2, y + tilt / 2, rad * 2, rad * 1.9, rgba(bark, 1));
+  taper(ctx, x - len / 2, y + rad * 0.5 - tilt / 2, x + len / 2, y + rad * 0.5 + tilt / 2, rad * 0.9, rad * 0.85, 'rgba(0,0,0,0.3)');
+  taper(ctx, x - len / 2, y - rad * 0.55 - tilt / 2, x + len / 2, y - rad * 0.55 + tilt / 2, rad * 0.35, rad * 0.3, 'rgba(232,210,170,0.3)');
+  for (let i = 0; i < len * 0.9; i++) dab(ctx, x - len / 2 + rnd() * len, y + (rnd() - 0.5) * rad * 1.6, 0.4 + rnd() * 0.9, 0.18 + rnd() * 0.2, 0, 'rgba(44,32,22,0.5)');
+  if (end) {
+    const ex = x + len / 2, ey = y + tilt / 2;
+    dab(ctx, ex, ey, rad * 0.42, rad * 0.98, 0, rgba(jitter([196, 162, 116], rnd, 0.15), 1));
+    dab(ctx, ex, ey, rad * 0.2, rad * 0.5, 0, 'rgba(130,98,64,0.65)');
+  }
+}
+// En stokk rettet mot betrakteren: kappflaten med årringer.
+function logEnd(ctx, x, y, rad, rnd) {
+  const bark = jitter([100, 76, 54], rnd, 0.18);
+  dab(ctx, x + 0.4, y + 0.45, rad * 1.05, rad * 0.95, 0, 'rgba(24,16,10,0.45)');
+  dab(ctx, x, y, rad, rad * 0.95, 0, rgba(bark, 1));
+  dab(ctx, x - 0.1, y - 0.1, rad * 0.78, rad * 0.74, 0, rgba(jitter([196, 164, 118], rnd, 0.14), 1));
+  dab(ctx, x - 0.1, y - 0.1, rad * 0.4, rad * 0.38, 0, 'rgba(136,102,68,0.7)');
+  dab(ctx, x - 0.1, y - 0.1, rad * 0.12, rad * 0.12, 0, 'rgba(90,64,40,0.9)');
+}
+
+// Fast oppsett per stokk-indeks, slik at haugen vokser uten å stokkes om og alltid speiler beholdningen.
+const WOOD_LAYOUT = (() => {
+  const r = mulberry(4242), rows = [6, 5, 5, 4, 3, 3, 2], out = [];
+  rows.forEach((cnt, row) => {
+    for (let c = 0; c < cnt; c++) {
+      out.push({ x: (c - (cnt - 1) / 2) * 5.3 + (r() - 0.5) * 1.1, y: -1.6 - row * 2.7 + (r() - 0.5) * 0.4, len: 8.5 + r() * 4, rad: 1.35 + r() * 0.6, end: r() < 0.28, seed: Math.floor(r() * 1e6) });
+    }
+  });
+  return out;
+})();
+
 export function woodPileSprite(n) {
   if (woodCache.has(n)) return woodCache.get(n);
-  const s = paintSprite(34, 26, 17, 22, (ctx) => {
-    const rnd = mulberry(77);
-    if (n > 0) dab(ctx, 0, 0.5, 15, 3, 0, 'rgba(22,18,12,0.35)');
-    let i = 0;
-    for (let row = 0; row < 7 && i < n; row++) {
-      const per = 7 - row;
-      for (let c = 0; c < per && i < n; c++, i++) {
-        const x = (c - (per - 1) / 2) * 3.7 + (rnd() - 0.5) * 0.4, y = -1.7 - row * 3.1;
-        dab(ctx, x + 0.4, y + 0.4, 1.9, 1.75, 0, 'rgba(30,22,14,0.5)');
-        dab(ctx, x, y, 1.8, 1.65, 0, rgba(jitter([92, 70, 48], rnd, 0.2), 1));
-        dab(ctx, x - 0.15, y - 0.1, 1.25, 1.1, 0, rgba(jitter([176, 146, 104], rnd, 0.15), 1));
-        dab(ctx, x - 0.15, y - 0.1, 0.45, 0.4, 0, 'rgba(120,90,60,0.8)');
-      }
-    }
+  const s = paintSprite(40, 28, 20, 24, (ctx) => {
+    if (n > 0) dab(ctx, 0.5, 0.9, 15.5, 2.6, 0, 'rgba(20,16,10,0.26)');
+    WOOD_LAYOUT.slice(0, n).sort((a, b) => a.y - b.y).forEach((l) => {
+      const rnd = mulberry(l.seed);
+      if (l.end) logEnd(ctx, l.x, l.y, l.rad * 1.02, rnd);
+      else logSide(ctx, l.x, l.y, l.len, l.rad, rnd, (l.seed & 1) === 0);
+    });
+    // Kvister og avkapp ligger i kanten av haugen når den blir stor.
+    if (n > 6) for (let i = 0; i < Math.min(5, (n - 6) / 3); i++) taper(ctx, -16 + i * 2.2, 0.8 + (i % 2) * 0.6, -13 + i * 2.2, 0.2 + (i % 2) * 0.7, 0.6, 0.45, 'rgb(104,80,56)');
   });
   woodCache.set(n, s);
   return s;
 }
 
+// Fasettert stein med lys flate øverst til venstre, mørk underside og kontaktskygge.
+function stone(ctx, x, y, sz, rnd) {
+  const sides = 7, pts = [];
+  for (let i = 0; i < sides; i++) {
+    const a = (i / sides) * Math.PI * 2 + rnd() * 0.4;
+    const rr = 0.82 + rnd() * 0.34;
+    pts.push([x + Math.cos(a) * sz * rr, y - sz * 0.45 + Math.sin(a) * sz * rr * 0.62]);
+  }
+  const path = () => { ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < sides; i++) ctx.lineTo(pts[i][0], pts[i][1]); ctx.closePath(); };
+  const k = 0.78 + rnd() * 0.42;
+  dab(ctx, x + sz * 0.25, y + 0.3, sz * 1.1, sz * 0.3, 0, 'rgba(20,18,14,0.45)');
+  path();
+  ctx.fillStyle = rgba([118 * k, 112 * k, 100 * k], 1);
+  ctx.fill();
+  ctx.save();
+  path();
+  ctx.clip();
+  dab(ctx, x - sz * 0.3, y - sz * 0.75, sz * 0.7, sz * 0.38, 0, 'rgba(206,200,184,0.5)');
+  dab(ctx, x + sz * 0.25, y + sz * 0.05, sz * 0.9, sz * 0.32, 0, 'rgba(24,22,18,0.38)');
+  for (let i = 0; i < sz * 2; i++) dab(ctx, x + (rnd() - 0.5) * sz * 1.6, y - sz * 0.45 + (rnd() - 0.5) * sz * 0.8, 0.3 + rnd() * 0.5, 0.2 + rnd() * 0.3, 0, rgba([90 * k, 86 * k, 76 * k], 0.5));
+  ctx.restore();
+  path();
+  ctx.strokeStyle = 'rgba(34,30,24,0.4)';
+  ctx.lineWidth = 0.3;
+  ctx.stroke();
+}
+
+const STONE_LAYOUT = (() => {
+  const r = mulberry(9191), out = [];
+  for (let i = 0; i < 28; i++) {
+    const row = Math.floor(Math.sqrt(i * 1.5));
+    out.push({ x: (r() - 0.5) * (23 - row * 4.2), y: -1 - row * 2.5 + (r() - 0.5) * 0.8, sz: Math.max(1.3, 3.1 - row * 0.28) * (0.75 + r() * 0.5), seed: Math.floor(r() * 1e6) });
+  }
+  return out;
+})();
+
 export function stonePileSprite(n) {
   if (stoneCache.has(n)) return stoneCache.get(n);
-  const s = paintSprite(34, 24, 17, 20, (ctx) => {
-    const rnd = mulberry(91);
-    const spots = [];
-    for (let i = 0; i < 28; i++) {
-      const row = Math.floor(Math.sqrt(i * 1.6));
-      spots.push({ x: (rnd() - 0.5) * (22 - row * 4), y: -1.2 - row * 2.4 + (rnd() - 0.5) });
-    }
-    if (n > 0) dab(ctx, 0, 0.5, 13, 3, 0, 'rgba(22,18,12,0.35)');
-    spots.slice(0, n).sort((a, b) => a.y - b.y).forEach((sp) => {
-      const k = 0.78 + rnd() * 0.4;
-      dab(ctx, sp.x + 0.4, sp.y + 0.6, 2.1, 1.3, 0, 'rgba(20,18,14,0.45)');
-      dab(ctx, sp.x, sp.y, 2.0, 1.45, rnd(), rgba([122 * k, 116 * k, 104 * k], 1));
-      dab(ctx, sp.x - 0.6, sp.y - 0.5, 0.9, 0.55, 0, 'rgba(196,190,176,0.5)');
-    });
+  const s = paintSprite(36, 26, 18, 22, (ctx) => {
+    if (n > 0) dab(ctx, 0.5, 0.9, 12.5, 2.4, 0, 'rgba(20,16,10,0.24)');
+    STONE_LAYOUT.slice(0, n).sort((a, b) => a.y - b.y).forEach((q) => stone(ctx, q.x, q.y, q.sz, mulberry(q.seed)));
   });
   stoneCache.set(n, s);
   return s;
 }
 
+// Byggematerialer ved en byggeplass: staker og noen stein.
 export function materialSprite(n) {
   if (matCache.has(n)) return matCache.get(n);
-  const s = paintSprite(26, 14, 13, 10, (ctx) => {
+  const s = paintSprite(28, 16, 14, 11, (ctx) => {
     const rnd = mulberry(55);
-    if (n > 0) dab(ctx, 0, 0.5, 10, 2.4, 0, 'rgba(22,18,12,0.3)');
+    if (n > 0) dab(ctx, 0.5, 0.7, 11, 2.6, 0, 'rgba(20,16,10,0.34)');
     for (let i = 0; i < n; i++) {
-      const y = -1 - (i % 3) * 1.5;
-      taper(ctx, -8 + (rnd() - 0.5) * 2, y, 3 + (rnd() - 0.5) * 2, y - 0.4, 1.4, 1.3, 'rgb(98,74,52)');
-      dab(ctx, 3 + (i % 2) * 2 + 4, -0.8, 1.4, 1.0, 0, 'rgb(120,114,102)');
+      const y = -1.1 - (i % 3) * 1.5;
+      logSide(ctx, -4 + (rnd() - 0.5) * 2, y, 10 + rnd() * 2, 0.7, rnd, i % 2 === 0);
     }
+    for (let i = 0; i < Math.min(3, n); i++) stone(ctx, 7 + i * 2.1, -0.4 - (i % 2) * 0.7, 1.4 + rnd() * 0.5, rnd);
   });
   matCache.set(n, s);
   return s;

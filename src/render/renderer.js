@@ -1,47 +1,78 @@
 // Verdenspresentasjon: oversetter spilltilstand til et levende, dybdesortert bilde.
 // Leser tilstanden, men eier ingen spilleregler.
-import { makeCanvas, drawSprite, clamp, smooth, taper } from './paint.js';
-import { buildTerrain, TERRAIN_SCALE } from './terrain.js';
-import { generateDecor, decorSprites } from './decor.js';
-import { treeSprite, growthLevels, treeHeight } from './trees.js';
+import { makeCanvas, drawSprite, clamp, smooth, taper, dab, makeNoise, fbm, mulberry, rgba } from './paint.js';
+import { buildTerrain, buildGrain, GRAIN_UNITS, TERRAIN_SCALE } from './terrain.js';
+import { buildEnvironment } from './environment.js';
+import { generateDecor, decorSprites, SWAY_STEPS } from './decor.js';
+import { treeSprite, growthLevels, treeHeight, lookVariant } from './trees.js';
 import { rockSprite, visibleBoulders } from './rocks.js';
 import { buildingSprite, woodPileSprite, stonePileSprite, materialSprite, pileCount } from './buildings.js';
 import { drawHuman, drawHumanShadow } from './people.js';
-import { createFx, emit, flyToPile, popup, shake, updateFx, shakeAngle, drawParticles, drawArcs, drawFireGlow, drawFlames } from './fx.js';
+import { createFx, emit, flyToPile, popup, shake, updateFx, shakeAngle, drawParticles, drawArcs, drawFireGlow, drawFlames, drawEmbers } from './fx.js';
 import { zoomOf, viewH, screenToWorld, worldToScreen, VIEW } from '../view/camera.js';
 import { gatherInterval } from '../sim/humans.js';
 import { treeCapacity } from '../sim/nature.js';
-import { wearAt } from '../sim/wear.js';
 
 export const wind = (x, t) => 0.6 * Math.sin(t * 0.9 + x * 0.003) + 0.4 * Math.sin(t * 2.1 + x * 0.009 + 1.3);
 
-// Myk, rund skyggeflekk som skaleres til ellipser.
+// Myk, rund skyggeflekk som skaleres og roteres til skygger (lys fra øvre venstre).
 const SOFT = (() => {
   const c = makeCanvas(64, 64);
   const g = c.getContext('2d');
   const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
   grad.addColorStop(0, 'rgba(14,12,6,0.5)');
-  grad.addColorStop(0.55, 'rgba(14,12,6,0.32)');
+  grad.addColorStop(0.35, 'rgba(14,12,6,0.4)');
+  grad.addColorStop(0.65, 'rgba(14,12,6,0.18)');
   grad.addColorStop(1, 'rgba(14,12,6,0)');
   g.fillStyle = grad;
   g.fillRect(0, 0, 64, 64);
   return c;
 })();
 
-const WOOD_PILE_OFFSET ={ x: -13, y: 0 }, STONE_PILE_OFFSET = { x: 15, y: 2 };
+const WOOD_PILE_OFFSET = { x: -13, y: 0 }, STONE_PILE_OFFSET = { x: 15, y: 2 };
+const WS = 3; // slitasjekartets oppløsning (piksler per slitasjecelle)
+const SHADOW_ROT = 0;
+
+const lowerBound = (arr, y) => {
+  let lo = 0, hi = arr.length;
+  while (lo < hi) { const m = (lo + hi) >> 1; if (arr[m].y < y) lo = m + 1; else hi = m; }
+  return lo;
+};
 
 export function createRenderer(canvas) {
   const ctx = canvas.getContext('2d');
-  const R = { ctx, terrain: null, decor: null, wearCanvas: null, wearImg: null, wearTimer: 0, fx: createFx(), clouds: [], emitTimers: new Map() };
+  const R = { ctx, terrain: null, decor: null, env: null, grain: null, wearCanvas: null, wearImg: null, exposure: null, wearBox: null, fx: createFx(), emitTimers: new Map(), stats: { frameMs: 0 } };
+  const litterCache = new Map();
 
   R.reset = (state) => {
-    R.terrain = buildTerrain(state);
-    R.decor = generateDecor(state);
+    R.env = buildEnvironment(state);
+    R.terrain = buildTerrain(state, R.env);
+    // Nedskalerte kopier (mip) så utzoomet visning ikke må minifisere hele det store bildet hvert bilde.
+    R.terrainMips = [{ s: TERRAIN_SCALE, c: R.terrain }];
+    for (const sc of [1, 0.5]) {
+      const c = makeCanvas(state.world.width * sc, state.world.height * sc);
+      const g = c.getContext('2d');
+      g.imageSmoothingQuality = 'high';
+      g.drawImage(R.terrain, 0, 0, c.width, c.height);
+      R.terrainMips.push({ s: sc, c });
+    }
+    R.decor = generateDecor(state, R.env);
+    R.grain = ctx.createPattern(buildGrain(state.seed), 'repeat');
+    R.grain.setTransform(new DOMMatrix().scale(GRAIN_UNITS / 768));
     decorSprites();
-    R.wearCanvas = makeCanvas(state.wear.cols, state.wear.rows);
-    R.wearImg = R.wearCanvas.getContext('2d').createImageData(state.wear.cols, state.wear.rows);
+    const { cols, rows } = state.wear;
+    R.wearCanvas = makeCanvas(cols * WS, rows * WS);
+    R.wearImg = R.wearCanvas.getContext('2d').createImageData(cols * WS, rows * WS);
+    R.exposure = new Float32Array(cols * rows);
+    R.wearBox = null;
+    // Fast kornmønster som gir slitt jord en ujevn kant (deterministisk fra seed).
+    const nz = makeNoise(state.seed + 313), rnd = mulberry(state.seed + 317);
+    R.wearNoise = new Float32Array(cols * WS * rows * WS);
+    for (let j = 0; j < rows * WS; j++) for (let i = 0; i < cols * WS; i++) {
+      R.wearNoise[j * cols * WS + i] = 0.62 * fbm(nz, i / 9, j / 9, 3) + 0.38 * rnd();
+    }
+    litterCache.clear();
     R.fx = createFx();
-    R.clouds = [0, 1, 2, 3, 4].map((i) => ({ x: (i / 5) * state.world.width, y: 200 + ((i * 677) % 1200), r: 380 + (i % 3) * 120 }));
   };
 
   // ---------- Hendelser fra simuleringen → visuelle reaksjoner ----------
@@ -107,8 +138,8 @@ export function createRenderer(canvas) {
     const w = wind(0, renderTime);
     for (const b of state.buildings) {
       if (b.type === 'fire' && b.complete) {
-        if (every('smoke' + b.id, 0.28, dt)) emit(fx, 'smoke', b.x, b.y - 9, 1, { spread: 2, wind: w, z: 0, alpha: 0.24 });
-        if (every('spark' + b.id, 0.5, dt)) emit(fx, 'spark', b.x, b.y - 4, 1, { spread: 3 });
+        if (every('smoke' + b.id, 0.22, dt)) emit(fx, 'smoke', b.x + (Math.random() - 0.5) * 2, b.y - 8, 1, { spread: 2, wind: w, z: 2, alpha: 0.2 });
+        if (every('spark' + b.id, 0.9, dt)) emit(fx, 'spark', b.x, b.y - 4, 1, { spread: 3 });
       } else if (b.complete && simDt > 0) {
         if (every('chimney' + b.id, 1.4, dt)) emit(fx, 'smoke', b.x, b.y - 40, 1, { spread: 1.5, wind: w, light: true, alpha: 0.13 });
       } else if (!b.complete && b.divine) {
@@ -119,11 +150,59 @@ export function createRenderer(canvas) {
     }
   };
 
+  // Bosettingen preger bakken: slitasje fra gange (simuleringen) pluss bar jord rundt bygg, bål og lager.
+  // Alt leses fra spilltilstanden; ingenting her påvirker regler.
+  const stamp = (state, x, y, r0, r1, v) => {
+    const { cols, rows, cell } = state.wear;
+    const i0 = Math.max(0, Math.floor((x - r1) / cell)), i1 = Math.min(cols - 1, Math.ceil((x + r1) / cell));
+    const j0 = Math.max(0, Math.floor((y - r1) / cell)), j1 = Math.min(rows - 1, Math.ceil((y + r1) / cell));
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+      const d = Math.hypot((i + 0.5) * cell - x, ((j + 0.5) * cell - y) * 1.5);
+      const a = v * (1 - smooth(r0, r1, d));
+      if (a > R.exposure[j * cols + i]) R.exposure[j * cols + i] = a;
+    }
+  };
+  R.worn = (state, x, y) => {
+    const w = state.wear, cx = Math.floor(x / w.cell), cy = Math.floor(y / w.cell);
+    if (cx < 0 || cy < 0 || cx >= w.cols || cy >= w.rows) return 0;
+    return Math.max(w.data[cy * w.cols + cx], R.exposure[cy * w.cols + cx]);
+  };
+
   R.updateWear = (state) => {
-    const d = state.wear.data, px = R.wearImg.data;
-    for (let i = 0; i < d.length; i++) {
-      const a = Math.min(1, d[i] * 1.6);
-      px[i * 4] = 108; px[i * 4 + 1] = 92; px[i * 4 + 2] = 66; px[i * 4 + 3] = a * 200;
+    const { cols, rows, data } = state.wear;
+    R.exposure.fill(0);
+    for (const b of state.buildings) {
+      const p = b.complete ? 1 : Math.max(0.15, b.progress);
+      if (b.type === 'fire') stamp(state, b.x, b.y, 10, 38, 0.95 * p);
+      else stamp(state, b.x, b.y, b.radius * 0.8, b.radius * 1.9, 0.85 * p);
+    }
+    const sp = state.stockpile;
+    stamp(state, sp.x, sp.y, 12, 34, 0.55 * Math.min(1, 0.3 + state.totals.wood / 30));
+    // Skriv bare der noe er slitt (nå eller forrige gang).
+    let minI = cols, maxI = -1, minJ = rows, maxJ = -1;
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+      const k = j * cols + i;
+      if (data[k] > 0.004 || R.exposure[k] > 0.004) { if (i < minI) minI = i; if (i > maxI) maxI = i; if (j < minJ) minJ = j; if (j > maxJ) maxJ = j; }
+    }
+    const prev = R.wearBox;
+    const cur = maxI >= 0 ? { i0: Math.max(0, minI - 1), i1: Math.min(cols - 1, maxI + 1), j0: Math.max(0, minJ - 1), j1: Math.min(rows - 1, maxJ + 1) } : null;
+    const box = cur && prev ? { i0: Math.min(cur.i0, prev.i0), i1: Math.max(cur.i1, prev.i1), j0: Math.min(cur.j0, prev.j0), j1: Math.max(cur.j1, prev.j1) } : (cur || prev);
+    R.wearBox = cur;
+    if (!box) return;
+    const Wp = cols * WS, px = R.wearImg.data, nz = R.wearNoise;
+    const get = (i, j) => { i = i < 0 ? 0 : i >= cols ? cols - 1 : i; j = j < 0 ? 0 : j >= rows ? rows - 1 : j; const k = j * cols + i; return data[k] > R.exposure[k] ? data[k] : R.exposure[k]; };
+    for (let py = box.j0 * WS; py < (box.j1 + 1) * WS; py++) {
+      const fy = (py + 0.5) / WS - 0.5, j = Math.floor(fy), v = fy - j;
+      for (let pxx = box.i0 * WS; pxx < (box.i1 + 1) * WS; pxx++) {
+        const fx = (pxx + 0.5) / WS - 0.5, i = Math.floor(fx), u = fx - i;
+        const w = (get(i, j) * (1 - u) + get(i + 1, j) * u) * (1 - v) + (get(i, j + 1) * (1 - u) + get(i + 1, j + 1) * u) * v;
+        const n = nz[py * Wp + pxx];
+        const o = (py * Wp + pxx) * 4;
+        // Gresset slites først i flekker; ved mye slitasje blir jorda sammenhengende bar.
+        const a = smooth(0.38, 0.62, w * 1.15 + (n - 0.5) * 0.7);
+        const shade = 0.78 + n * 0.5;
+        px[o] = 112 * shade; px[o + 1] = 94 * shade; px[o + 2] = 68 * shade; px[o + 3] = a * 215;
+      }
     }
     R.wearCanvas.getContext('2d').putImageData(R.wearImg, 0, 0);
   };
@@ -149,8 +228,24 @@ export function createRenderer(canvas) {
     return best;
   };
 
+  // Arbeidsspor: kvister, flis og barkbiter som samler seg der det hugges, lagres og bygges.
+  // Antall følger spillets totaler; plasseringen er deterministisk per kilde.
+  const litterFor = (key, count, rx, ry, seed) => {
+    let L = litterCache.get(key);
+    if (!L) { L = []; litterCache.set(key, L); }
+    if (L.length < count) {
+      const r = mulberry(seed + L.length * 977);
+      while (L.length < count) {
+        const a = r() * Math.PI * 2, d = Math.sqrt(r());
+        L.push({ x: Math.cos(a) * d * rx, y: Math.sin(a) * d * ry, rot: (r() - 0.5) * 1.4, len: 2 + r() * 4, kind: r() < 0.55 ? 0 : r() < 0.75 ? 1 : 2, k: r() });
+      }
+    }
+    return L;
+  };
+
   // ---------- Tegning ----------
   R.render = (state, cam, renderTime, hoverId) => {
+    const t0 = performance.now();
     const dpr = cam.dpr || 1;
     const z = zoomOf(cam);
     const S = dpr * z;
@@ -160,18 +255,41 @@ export function createRenderer(canvas) {
     const vx0 = cam.x - cam.w / 2, vx1 = cam.x + cam.w / 2, vy0 = cam.y - vh / 2, vy1 = cam.y + vh / 2;
     const inView = (x, y, mx = 70, up = 150) => x > vx0 - mx && x < vx1 + mx && y > vy0 - 20 && y < vy1 + up;
     const detailed = cam.w < VIEW.semanticAreaW;
+    const C = state.settlement.center;
+    // Detaljnivå: finkorn og småplanter tones inn når vi zoomer nær og forsvinner jevnt når vi trekker ut.
+    const detail = smooth(0.8, 1.6, S);
+    const mid = smooth(0.4, 0.8, S);
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = '#2c3222';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.setTransform(S, 0, 0, S, E, F);
     ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
+    // Sprites males med 3 px/enhet: ved vanlig zoom er nedskalering liten, og bilineær er nok (og mye raskere enn 'high').
+    ctx.imageSmoothingQuality = S > 2.4 ? 'medium' : 'low';
 
-    // Terreng og stier.
-    const TS = TERRAIN_SCALE;
+    // Terreng.
     const sx0 = clamp(vx0 - 4, 0, W), sy0 = clamp(vy0 - 4, 0, H), sx1 = clamp(vx1 + 4, 0, W), sy1 = clamp(vy1 + 4, 0, H);
-    ctx.drawImage(R.terrain, sx0 * TS, sy0 * TS, (sx1 - sx0) * TS, (sy1 - sy0) * TS, sx0, sy0, sx1 - sx0, sy1 - sy0);
+    // Velg det minste terrengbildet som fortsatt gir minst ett kildepiksel per skjermpiksel.
+    let tm = R.terrainMips[0];
+    for (const m of R.terrainMips) if (m.s >= S * 0.85) tm = m;
+    ctx.imageSmoothingQuality = 'low'; // bilineær er rask og nok når mip-nivået velges etter zoom
+    ctx.drawImage(tm.c, sx0 * tm.s, sy0 * tm.s, (sx1 - sx0) * tm.s, (sy1 - sy0) * tm.s, sx0, sy0, sx1 - sx0, sy1 - sy0);
+
+    ctx.imageSmoothingQuality = S > 2.4 ? 'medium' : 'low';
+    // Finkorn: en sømløs flis holder bakken levende ved nærzoom uten synlig gjentakelse.
+    if (detail > 0.02) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(sx0, sy0, sx1 - sx0, sy1 - sy0);
+      ctx.clip();
+      ctx.globalAlpha = 0.22 * detail;
+      ctx.fillStyle = R.grain;
+      ctx.fillRect(sx0, sy0, sx1 - sx0, sy1 - sy0);
+      ctx.restore();
+    }
+
+    // Slitasje og bar jord rundt bosettingen.
     ctx.drawImage(R.wearCanvas, 0, 0, W, H);
 
     // Lysglimt på vannet.
@@ -185,59 +303,74 @@ export function createRenderer(canvas) {
       ctx.fill();
     }
 
-    // Gress (kun i nær lesning — semantisk detaljnivå).
-    const { tufts: tuftS, bushes: bushS } = decorSprites();
+    const sprs = decorSprites();
     const blockers = state.buildings;
     const sp = state.stockpile;
-    if (z * dpr > 1.1) {
-      for (const t of R.decor.tufts) {
-        if (!inView(t.x, t.y, 20, 20)) continue;
-        const wr = wearAt(state, t.x, t.y);
-        const alpha = 1 - clamp(wr * 1.5);
+    const fx = R.fx;
+
+    // Bakkedekor (gress, bregner, kvister, småstein) — kun ved nærlesning, tonet inn med zoom.
+    if (detail > 0.02) {
+      const ground = R.decor.ground;
+      const from = lowerBound(ground, vy0 - 24), to = lowerBound(ground, vy1 + 12);
+      let lastAlpha = -1;
+      for (let i = from; i < to; i++) {
+        const t = ground[i];
+        if (t.x < vx0 - 22 || t.x > vx1 + 22) continue;
+        const wr = R.worn(state, t.x, t.y);
+        const alpha = (1 - clamp(wr * 1.6)) * detail;
         if (alpha < 0.05) continue;
         let hidden = Math.abs(t.x - sp.x) < 30 && Math.abs(t.y - sp.y) < 10;
-        for (const b of blockers) if (Math.abs(t.x - b.x) < b.radius * 0.8 && Math.abs(t.y - b.y) < b.radius * 0.45) { hidden = true; break; }
+        if (!hidden) for (const b of blockers) if (Math.abs(t.x - b.x) < b.radius * 0.8 && Math.abs(t.y - b.y) < b.radius * 0.45) { hidden = true; break; }
         if (hidden) continue;
-        const s = tuftS[t.v];
-        const sk = wind(t.x, renderTime + t.phase * 0.1) * 0.22;
-        const k = S * t.s;
-        ctx.setTransform(k, 0, k * -sk, k, E + t.x * S, F + t.y * S);
-        ctx.globalAlpha = alpha;
-        ctx.drawImage(s.canvas, -s.ax, -s.ay, s.w, s.h);
+        let s;
+        if (t.kind === 'tuft' || t.kind === 'fern') {
+          const sw = wind(t.x, renderTime + t.phase * 0.1) * (t.kind === 'tuft' ? 1 : 0.32);
+          const fr = sprs[t.kind === 'tuft' ? 'tufts' : 'ferns'][t.v];
+          s = fr[Math.max(0, Math.min(SWAY_STEPS - 1, Math.round(sw * 2 + 2)))];
+        } else s = t.kind === 'stick' ? sprs.sticks[t.v] : sprs.stones[t.v];
+        if (alpha !== lastAlpha) { ctx.globalAlpha = alpha; lastAlpha = alpha; }
+        ctx.drawImage(s.canvas, t.x - s.ax * t.s, t.y - s.ay * t.s, s.w * t.s, s.h * t.s);
       }
       ctx.globalAlpha = 1;
-      ctx.setTransform(S, 0, 0, S, E, F);
+
+      // Arbeidsspor fra spilltilstanden.
+      drawWorkLitter(state);
     }
 
-    // Kontaktskygger (lys fra øvre venstre).
-    // Myk skygge fra kronen + en tettere kontaktskygge ved foten.
+    // Skygger (lys fra øvre venstre → skygge mot nedre høyre): lang og myk, med tettere kontaktskygge ved foten.
     for (const n of state.nodes) {
-      if (n.kind !== 'tree' || n.state !== 'alive' || !inView(n.x, n.y)) continue;
+      if (n.kind !== 'tree' || n.state !== 'alive' || !inView(n.x, n.y, 90)) continue;
       const h = treeHeight(n.species, n.growth);
-      const rx = h * (n.species === 'spruce' ? 0.3 : 0.4), ry = 3 + h * 0.08;
-      ctx.globalAlpha = 0.55;
-      ctx.drawImage(SOFT, n.x + h * 0.18 - rx, n.y + 1 - ry, rx * 2, ry * 2);
-      ctx.globalAlpha = 0.6;
-      ctx.drawImage(SOFT, n.x - 3 - h * 0.03, n.y - 1.2, 7 + h * 0.06, 3);
+      if (n.species === 'spruce') {
+        shadow(n.x + h * 0.2, n.y + h * 0.045, h * 0.34, 3 + h * 0.07, 0.5);
+      } else {
+        shadow(n.x + h * 0.08, n.y + h * 0.02, h * 0.3, 2 + h * 0.035, 0.3);
+        shadow(n.x + h * 0.3, n.y + h * 0.05, h * 0.3, 3 + h * 0.07, 0.3);
+      }
+      shadow(n.x + 0.8, n.y + 0.2, 3.4 + h * 0.03, 1.6, 0.55);
     }
-    ctx.globalAlpha = 0.7;
     for (const b of state.buildings) {
       if (b.type === 'fire' || b.progress < 0.5) continue;
-      ctx.drawImage(SOFT, b.x + 8 - b.radius * 1.1, b.y + 3 - b.radius * 0.4, b.radius * 2.2, b.radius * 0.8);
+      shadow(b.x + b.radius * 0.45, b.y + b.radius * 0.18, b.radius * 1.3, b.radius * 0.42, 0.55);
     }
-    ctx.globalAlpha = 1;
     for (const h of state.humans) if (inView(h.x, h.y)) drawHumanShadow(ctx, h);
 
     // Dybdesorterte objekter.
     const list = [];
-    const fx = R.fx;
     for (const n of state.nodes) {
       if (!inView(n.x, n.y)) continue;
       list.push({ y: n.y, draw: () => (n.kind === 'tree' ? drawTree(n) : drawRock(n)) });
     }
-    for (const b of R.decor.bushes) {
-      if (!inView(b.x, b.y) || blockers.some((q) => Math.hypot(q.x - b.x, q.y - b.y) < q.radius + 8)) continue;
-      list.push({ y: b.y, draw: () => drawSprite(ctx, bushS[b.v], b.x, b.y) });
+    if (mid > 0.02) {
+      const up = R.decor.upright;
+      const from = lowerBound(up, vy0 - 10), to = lowerBound(up, vy1 + 90);
+      for (let i = from; i < to; i++) {
+        const u = up[i];
+        if (u.x < vx0 - 60 || u.x > vx1 + 60) continue;
+        if (u.kind === 'sapling' && detail < 0.3) continue;
+        if (blockers.some((q) => Math.hypot(q.x - u.x, q.y - u.y) < q.radius + 8)) continue;
+        list.push({ y: u.y, draw: () => drawUpright(u) });
+      }
     }
     for (const b of state.buildings) {
       list.push({ y: b.y, draw: () => drawBuilding(b) });
@@ -260,30 +393,38 @@ export function createRenderer(canvas) {
     for (const b of state.buildings) {
       if (b.type !== 'fire' || !b.complete) continue;
       drawFireGlow(ctx, b.x, b.y, renderTime);
+      drawEmbers(ctx, b.x, b.y, renderTime);
       drawFlames(ctx, b.x, b.y - 1, renderTime);
     }
     drawParticles(ctx, fx, true);
     ctx.globalCompositeOperation = 'source-over';
     drawArcs(ctx, fx);
 
-    // Skyskygger som driver over landskapet.
-    for (const c of R.clouds) {
-      const x = ((c.x + renderTime * 6) % (W + 800)) - 400;
-      const g = ctx.createRadialGradient(x, c.y, 0, x, c.y, c.r);
-      g.addColorStop(0, 'rgba(20,26,30,0.05)');
-      g.addColorStop(1, 'rgba(20,26,30,0)');
-      ctx.fillStyle = g;
-      ctx.fillRect(x - c.r, c.y - c.r, c.r * 2, c.r * 2);
+    // Visuell hierarki: leiren er blikkfanget, skogen lenger ute dempes svakt.
+    if (state.buildings.length) {
+      const gx0 = sx0, gy0 = sy0, gw = sx1 - sx0, gh = sy1 - sy0;
+      const dim = ctx.createRadialGradient(C.x, C.y, 340, C.x, C.y, 1250);
+      dim.addColorStop(0, 'rgba(10,14,8,0)');
+      dim.addColorStop(1, 'rgba(10,14,8,0.2)');
+      ctx.fillStyle = dim;
+      ctx.fillRect(gx0, gy0, gw, gh);
+      ctx.globalCompositeOperation = 'lighter';
+      const warm = ctx.createRadialGradient(C.x, C.y, 10, C.x, C.y, 300);
+      warm.addColorStop(0, 'rgba(255,228,170,0.055)');
+      warm.addColorStop(1, 'rgba(255,228,170,0)');
+      ctx.fillStyle = warm;
+      ctx.fillRect(gx0, gy0, gw, gh);
+      ctx.globalCompositeOperation = 'source-over';
     }
 
-    // Skjermrom: fargetone, vignett, små gevinsttall og områdeetikett.
+    // Skjermrom: fargetone, lett vignett, små gevinsttall og områdeetikett.
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const sw = cam.screenW, sh = cam.screenH;
-    ctx.fillStyle = 'rgba(255,214,160,0.05)';
+    ctx.fillStyle = 'rgba(255,214,160,0.04)';
     ctx.fillRect(0, 0, sw, sh);
-    const vg = ctx.createRadialGradient(sw / 2, sh / 2, Math.min(sw, sh) * 0.35, sw / 2, sh / 2, Math.max(sw, sh) * 0.75);
+    const vg = ctx.createRadialGradient(sw / 2, sh / 2, Math.min(sw, sh) * 0.4, sw / 2, sh / 2, Math.max(sw, sh) * 0.78);
     vg.addColorStop(0, 'rgba(10,8,4,0)');
-    vg.addColorStop(1, 'rgba(10,8,4,0.3)');
+    vg.addColorStop(1, 'rgba(10,8,4,0.18)');
     ctx.fillStyle = vg;
     ctx.fillRect(0, 0, sw, sh);
 
@@ -300,7 +441,6 @@ export function createRenderer(canvas) {
 
     const areaK = smooth(VIEW.semanticAreaW * 0.9, VIEW.semanticAreaW * 1.25, cam.w);
     if (areaK > 0 && state.buildings.length) {
-      const C = state.settlement.center;
       const s = worldToScreen(cam, C.x, C.y - 120);
       const pop = state.humans.length, homes = state.buildings.filter((b) => b.complete && b.type !== 'fire').length;
       ctx.globalAlpha = areaK;
@@ -314,23 +454,86 @@ export function createRenderer(canvas) {
       ctx.fillText(`${pop} mennesker · ${homes} hjem`, s.x, s.y + 17);
       ctx.globalAlpha = 1;
     }
+    R.stats.frameMs += (performance.now() - t0 - R.stats.frameMs) * 0.1;
 
     // --- lokale tegnefunksjoner ---
+    function shadow(x, y, rx, ry, a) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(SHADOW_ROT);
+      ctx.globalAlpha = a;
+      ctx.drawImage(SOFT, -rx, -ry, rx * 2, ry * 2);
+      ctx.restore();
+      ctx.globalAlpha = 1;
+    }
+    function drawWorkLitter(st) {
+      const lit = (key, count, rx, ry, seed, cx, cy, wood) => {
+        const L = litterFor(key, count, rx, ry, seed);
+        for (let i = 0; i < count; i++) {
+          const q = L[i], x = cx + q.x, y = cy + q.y;
+          if (x < vx0 - 10 || x > vx1 + 10 || y < vy0 - 10 || y > vy1 + 10) continue;
+          if (q.kind === 0 && wood) { // kvist / avkapp
+            taper(ctx, x - q.len, y - q.rot * q.len * 0.4, x + q.len, y + q.rot * q.len * 0.4, 0.9 + q.k * 0.5, 0.6, q.k < 0.5 ? 'rgb(94,72,52)' : 'rgb(122,98,68)');
+            dab(ctx, x + q.len, y + q.rot * q.len * 0.4, 0.35, 0.45, 0, 'rgba(206,178,132,0.9)');
+          } else if (q.kind === 1) { // flis / bark
+            dab(ctx, x, y, 0.9 + q.k * 0.7, 0.45, q.rot, wood ? 'rgba(196,168,120,0.85)' : 'rgba(160,156,144,0.85)');
+          } else { // bark / grus
+            dab(ctx, x, y, 0.8 + q.k * 0.8, 0.5, q.rot, wood ? 'rgba(86,62,44,0.85)' : 'rgba(110,106,96,0.85)');
+          }
+        }
+      };
+      // Ved lageret: spon og kvister øker med innhøstet trevirke; steingrus med brutt stein.
+      lit('sp-w', Math.min(46, Math.floor(st.totals.wood / 2.5)), 38, 15, 11, sp.x - 6, sp.y + 4, true);
+      lit('sp-s', Math.min(34, Math.floor(st.totals.stone / 2.5)), 30, 11, 23, sp.x + 22, sp.y + 4, false);
+      // Rundt byggeplasser og bygg: sagflis og avkapp.
+      for (const b of st.buildings) {
+        const k = b.complete ? 1 : 0.4 + b.progress * 0.6;
+        lit('b' + b.id, Math.round((b.type === 'fire' ? 8 : 22) * k), b.radius * 1.5, b.radius * 0.6, b.id * 53, b.x, b.y + b.radius * 0.35, true);
+      }
+      // Ved felte trær: bark og flis rundt stubben.
+      for (const n of st.nodes) {
+        if (n.kind !== 'tree' || !n.stump || !inView(n.x, n.y, 20)) continue;
+        lit('st' + n.id, 7, 9, 3.4, n.id * 31, n.x, n.y + 1, true);
+      }
+    }
+    // Svai uten skjev transformasjon: sprite tegnes i tre vannrette skiver forskjøvet mot toppen (rask, aksejustert).
+    function swaySprite(s, x, y, sk, flip, alpha) {
+      if (alpha <= 0) return;
+      if (alpha < 1) ctx.globalAlpha = alpha;
+      const N = Math.abs(sk) * s.h < 0.35 ? 1 : 3, ph = s.canvas.height / N, uh = s.h / N, w = s.canvas.width;
+      for (let i = 0; i < N; i++) {
+        const sy = i * ph, over = i < N - 1 ? 2 : 0;
+        const dx = -sk * ((i + 0.5) * uh - s.ay);
+        const dh = ph + over;
+        ctx.save();
+        ctx.translate(x + dx, y);
+        if (flip) ctx.scale(-1, 1);
+        ctx.drawImage(s.canvas, 0, sy, w, Math.min(dh, s.canvas.height - sy), -s.ax, i * uh - s.ay, s.w, (Math.min(dh, s.canvas.height - sy) / ph) * uh);
+        ctx.restore();
+      }
+      if (alpha < 1) ctx.globalAlpha = 1;
+    }
+    function drawUpright(u) {
+      if (u.kind === 'bush') drawSprite(ctx, sprs.bushes[u.v], u.x, u.y);
+      else if (u.kind === 'log') {
+        const s = sprs.logs[u.v];
+        if (u.flip) { ctx.save(); ctx.translate(u.x, u.y); ctx.scale(-1, 1); drawSprite(ctx, s, 0, 0); ctx.restore(); } else drawSprite(ctx, s, u.x, u.y);
+      } else {
+        swaySprite(treeSprite(u.species, u.variant, u.k), u.x, u.y, wind(u.x, renderTime) * 0.02, u.flip, 1);
+      }
+    }
     function drawTree(n) {
       if (n.stump) drawStump(n);
       if (n.state !== 'alive') return;
       const { k, f } = growthLevels(n.growth);
-      const s0 = treeSprite(n.species, n.variant, k), s1 = treeSprite(n.species, n.variant, k + 1);
+      const v = lookVariant(n);
+      const s0 = treeSprite(n.species, v, k);
       const sk = wind(n.x, renderTime) * 0.012 * (0.4 + n.growth) + shakeAngle(fx, n.id);
-      ctx.save();
-      ctx.translate(n.x, n.y);
-      ctx.transform(1, 0, -sk, 1, 0, 0);
-      if (n.id % 2) ctx.scale(-1, 1);
       if (hoverId === n.id) ctx.filter = 'brightness(1.16)';
-      drawSprite(ctx, s0, 0, 0);
-      if (f > 0.02) drawSprite(ctx, s1, 0, 0, f);
+      swaySprite(s0, n.x, n.y, sk, n.id % 2 === 1, 1);
+      // Blanding mellom vekststadier hoppes over når treet er langt unna (usynlig forskjell, halv kostnad).
+      if (f > 0.02 && S > 0.7) swaySprite(treeSprite(n.species, v, k + 1), n.x, n.y, sk, n.id % 2 === 1, f);
       ctx.filter = 'none';
-      ctx.restore();
       if (n.chopped > 0) {
         // Hogstskår i stammen: dypere jo mer som er hugget.
         const cap = Math.max(1, treeCapacity(n));
@@ -350,19 +553,29 @@ export function createRenderer(canvas) {
       const g = n.fellGrowth || 0.6;
       const r = 1 + g * 2.6;
       const h = 2 + g * 1.5;
-      ctx.fillStyle = n.species === 'birch' ? '#a8a294' : '#5c4432';
-      ctx.fillRect(n.x - r, n.y - h, r * 2, h);
-      ctx.fillStyle = 'rgba(0,0,0,0.25)';
-      ctx.fillRect(n.x + r * 0.2, n.y - h, r * 0.8, h);
+      const birch = n.species === 'birch';
+      // Rotanlegg og skygge ved foten.
+      dab(ctx, n.x + 0.6, n.y + 0.4, r * 1.5, r * 0.5, 0, 'rgba(20,16,10,0.35)');
+      ctx.fillStyle = birch ? '#a8a294' : '#5c4432';
+      ctx.beginPath();
+      ctx.moveTo(n.x - r * 1.25, n.y + 0.2);
+      ctx.quadraticCurveTo(n.x - r, n.y - h * 0.5, n.x - r * 0.9, n.y - h);
+      ctx.lineTo(n.x + r * 0.9, n.y - h);
+      ctx.quadraticCurveTo(n.x + r, n.y - h * 0.5, n.x + r * 1.25, n.y + 0.2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = 'rgba(0,0,0,0.28)';
+      ctx.fillRect(n.x + r * 0.25, n.y - h, r * 0.75, h);
+      ctx.strokeStyle = 'rgba(30,22,14,0.5)';
+      ctx.lineWidth = 0.25;
+      for (let i = -2; i <= 2; i++) { ctx.beginPath(); ctx.moveTo(n.x + i * r * 0.35, n.y - h); ctx.lineTo(n.x + i * r * 0.42, n.y); ctx.stroke(); }
       ctx.fillStyle = '#c9ab7e';
       ctx.beginPath();
       ctx.ellipse(n.x, n.y - h, r, r * 0.42, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = 'rgba(120,90,60,0.6)';
-      ctx.lineWidth = 0.25;
-      ctx.beginPath();
-      ctx.ellipse(n.x, n.y - h, r * 0.55, r * 0.22, 0, 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.lineWidth = 0.22;
+      for (const q of [0.78, 0.52, 0.28]) { ctx.beginPath(); ctx.ellipse(n.x, n.y - h, r * q, r * 0.42 * q, 0, 0, Math.PI * 2); ctx.stroke(); }
     }
     function drawRock(n) {
       const s = rockSprite(n, visibleBoulders(n));
@@ -378,25 +591,45 @@ export function createRenderer(canvas) {
     function drawFall(f) {
       const T = 1.3;
       const len = treeHeight(f.species, f.growth);
-      if (f.t < T) {
-        const { k } = growthLevels(f.growth);
-        const s = treeSprite(f.species, f.variant, Math.min(k + 1, 11));
-        const a = Math.pow(f.t / T, 2.2) * (Math.PI / 2) * f.dir * 0.92;
+      const v = lookVariant(f);
+      const { k } = growthLevels(f.growth);
+      const s = treeSprite(f.species, v, Math.min(k + 1, 11));
+      const fall = (Math.PI / 2) * f.dir * 0.92;
+      // Treet faller, blir liggende med krone og greiner, og går gradvis over i en kappet stokk.
+      const lying = f.t < T ? 1 : 1 - clamp((f.t - 3.2) / 3);
+      if (lying > 0) {
+        const a = f.t < T ? Math.pow(f.t / T, 2.2) * fall : fall + Math.sin(clamp((f.t - T) / 0.5) * Math.PI) * 0.04 * f.dir;
         ctx.save();
         ctx.translate(f.x, f.y);
         ctx.rotate(a);
+        ctx.globalAlpha = lying;
         drawSprite(ctx, s, 0, 0);
         ctx.restore();
-      } else {
-        const alpha = 1 - clamp((f.t - 6) / 3);
+        ctx.globalAlpha = 1;
+      }
+      if (f.t >= 3.2) {
+        const alpha = clamp((f.t - 3.2) / 2) * (1 - clamp((f.t - 6) / 3));
+        if (alpha <= 0) return;
+        const L = clamp(len * 0.42, 14, 44), r = 0.9 + f.growth * 2.3;
+        const x0 = f.x + f.dir * 2.5, y0 = f.y + 1.2, x1 = x0 + f.dir * L, y1 = y0 + 1;
+        const bark = f.species === 'birch' ? [170, 164, 150] : [92, 68, 48];
         ctx.globalAlpha = alpha;
-        const L = len * 0.62;
-        taper(ctx, f.x + f.dir * 3, f.y + 1, f.x + f.dir * (3 + L), f.y + 2.5, 1.2 + f.growth * 4, 0.6, f.species === 'birch' ? '#cfc9bb' : '#6a4c36');
-        taper(ctx, f.x + f.dir * 3, f.y + 1.8, f.x + f.dir * (3 + L), f.y + 3, (1.2 + f.growth * 4) * 0.4, 0.3, 'rgba(0,0,0,0.25)');
+        dab(ctx, (x0 + x1) / 2 + 0.6, y0 + r * 0.8, L * 0.52, r * 0.8, 0.02, 'rgba(18,14,8,0.35)');
+        taper(ctx, x0, y0 - r, x1, y1 - r * 0.9, r * 2, r * 1.65, rgba(bark, 1));
+        taper(ctx, x0, y0 - r * 0.45, x1, y1 - r * 0.4, r * 0.9, r * 0.75, 'rgba(0,0,0,0.28)');
+        taper(ctx, x0, y0 - r * 1.4, x1, y1 - r * 1.3, r * 0.35, r * 0.3, 'rgba(236,220,186,0.28)');
         ctx.fillStyle = '#d4b688';
         ctx.beginPath();
-        ctx.ellipse(f.x + f.dir * 3, f.y + 1, 0.4 + f.growth * 0.8, 0.6 + f.growth * 2, 0, 0, Math.PI * 2);
+        ctx.ellipse(x0, y0 - r, r * 0.45, r, 0, 0, Math.PI * 2);
         ctx.fill();
+        ctx.strokeStyle = 'rgba(120,90,60,0.6)';
+        ctx.lineWidth = 0.2;
+        ctx.beginPath();
+        ctx.ellipse(x0, y0 - r, r * 0.22, r * 0.55, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        for (let i = 0; i < 3; i++) taper(ctx, x0 + f.dir * L * (0.3 + i * 0.22), y0 - r * 1.6, x0 + f.dir * (L * (0.3 + i * 0.22) + 3), y0 - r * 1.6 - 2.4 - i * 0.6, 0.6, 0.3, rgba(bark, 1));
+        // Grønne kvister og nåler ved toppen.
+        for (let i = 0; i < 9; i++) dab(ctx, x1 + f.dir * (1 + (i % 3) * 1.6), y1 - r * 0.6 + ((i * 7) % 5) * 0.5 - 1, 1.6, 0.7, (i % 4) * 0.5, f.species === 'birch' ? 'rgba(96,114,52,0.85)' : 'rgba(34,52,38,0.9)');
         ctx.globalAlpha = 1;
       }
     }

@@ -1,5 +1,31 @@
 // Små, dempede effekter: flis, løv, støv, røyk, gnister, bønnelys og ressurser som flyr til lageret.
-import { clamp } from './paint.js';
+import { clamp, makeCanvas } from './paint.js';
+
+// Myk røykpuff (forhåndstegnet), tonet ved tegning.
+const PUFF = (() => {
+  const c = makeCanvas(48, 48), g = c.getContext('2d');
+  const gr = g.createRadialGradient(24, 24, 0, 24, 24, 24);
+  gr.addColorStop(0, 'rgba(255,255,255,0.9)');
+  gr.addColorStop(0.45, 'rgba(255,255,255,0.4)');
+  gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gr;
+  g.fillRect(0, 0, 48, 48);
+  return c;
+})();
+const PUFF_TINT = new Map();
+const puffTint = (rgb) => {
+  let c = PUFF_TINT.get(rgb);
+  if (!c) {
+    c = makeCanvas(48, 48);
+    const g = c.getContext('2d');
+    g.drawImage(PUFF, 0, 0);
+    g.globalCompositeOperation = 'source-in';
+    g.fillStyle = `rgb(${rgb})`;
+    g.fillRect(0, 0, 48, 48);
+    PUFF_TINT.set(rgb, c);
+  }
+  return c;
+};
 
 export function createFx() {
   return { parts: [], arcs: [], popups: [], shakes: new Map(), falls: [] };
@@ -14,7 +40,7 @@ export function emit(fx, kind, x, y, n = 1, opts = {}) {
       case 'chip': p.vx = (rand() - 0.5) * 30; p.vz = 14 + rand() * 18; p.max = 0.7 + rand() * 0.4; p.size = 0.6 + rand() * 0.5; p.color = rand() < 0.5 ? '#c8a878' : '#8a6a48'; break;
       case 'leaf': p.vx = (rand() - 0.5) * 8; p.vz = -3 - rand() * 3; p.max = 2 + rand() * 1.5; p.size = 0.9; p.color = rand() < 0.5 ? '#6f7f3a' : '#9a9a50'; break;
       case 'dust': p.vx = (rand() - 0.5) * 10; p.vz = 4 + rand() * 6; p.max = 0.9 + rand() * 0.4; p.size = 1.5 + rand() * 1.5; p.color = '150,140,122'; break;
-      case 'smoke': p.vx = (opts.wind || 0) * 4 + (rand() - 0.5) * 2; p.vz = 7 + rand() * 4; p.max = 4 + rand() * 2.5; p.size = 1.5 + rand(); p.color = opts.light ? '170,166,160' : '120,116,110'; p.alpha = opts.alpha || 0.22; break;
+      case 'smoke': p.vx = (opts.wind || 0) * 4 + (rand() - 0.5) * 2; p.vz = 7 + rand() * 4; p.max = 4 + rand() * 2.5; p.size = 1.2 + rand() * 0.8; p.color = opts.light ? '176,172,164' : '132,126,118'; p.alpha = opts.alpha || 0.22; break;
       case 'spark': p.vx = (rand() - 0.5) * 6; p.vz = 14 + rand() * 12; p.max = 0.6 + rand() * 0.6; p.size = 0.35; break;
       case 'mote': p.vx = (rand() - 0.5) * 3; p.vz = 7 + rand() * 4; p.max = 2.2 + rand(); p.size = 0.45 + rand() * 0.35; break;
       case 'sprout': p.vx = (rand() - 0.5) * 4; p.vz = 5 + rand() * 4; p.max = 1.4; p.size = 0.5; break;
@@ -70,10 +96,10 @@ export function drawParticles(ctx, fx, additive) {
     if (glow !== additive) continue;
     const y = p.y - p.z;
     if (p.kind === 'smoke') {
-      ctx.fillStyle = `rgba(${p.color},${(p.alpha * Math.sin(Math.PI * Math.min(1, k * 1.3 + 0.05))).toFixed(3)})`;
-      ctx.beginPath();
-      ctx.arc(p.x, y, p.size, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.globalAlpha = p.alpha * Math.sin(Math.PI * Math.min(1, k * 1.3 + 0.05)) * 1.4;
+      const r = p.size * 1.6;
+      ctx.drawImage(puffTint(p.color), p.x - r, y - r, r * 2, r * 2);
+      ctx.globalAlpha = 1;
     } else if (p.kind === 'dust') {
       ctx.fillStyle = `rgba(${p.color},${(0.35 * (1 - k)).toFixed(3)})`;
       ctx.beginPath();
@@ -126,32 +152,60 @@ export function drawArcs(ctx, fx) {
   }
 }
 
-// Levende bål: glød på bakken, flammer og gnister.
+// Levende bål: varm lyspytt på bakken, glør, lagdelte flammer og få gnister.
 export function drawFireGlow(ctx, x, y, t, strength = 1) {
-  const flick = 0.85 + Math.sin(t * 7.3) * 0.06 + Math.sin(t * 13.1) * 0.05;
-  const g = ctx.createRadialGradient(x, y - 3, 2, x, y, 70);
-  g.addColorStop(0, `rgba(255,170,80,${(0.28 * flick * strength).toFixed(3)})`);
-  g.addColorStop(0.4, `rgba(255,130,50,${(0.09 * flick * strength).toFixed(3)})`);
+  const flick = 0.86 + Math.sin(t * 7.3) * 0.05 + Math.sin(t * 13.1 + 1) * 0.04 + Math.sin(t * 3.1) * 0.03;
+  const R = 78;
+  ctx.save();
+  ctx.translate(x, y - 2);
+  ctx.scale(1, 0.72); // lyset lander flatt på bakken
+  const g = ctx.createRadialGradient(0, 0, 2, 0, 0, R);
+  g.addColorStop(0, `rgba(255,176,86,${(0.3 * flick * strength).toFixed(3)})`);
+  g.addColorStop(0.25, `rgba(255,140,56,${(0.15 * flick * strength).toFixed(3)})`);
+  g.addColorStop(0.6, `rgba(240,110,40,${(0.04 * flick * strength).toFixed(3)})`);
   g.addColorStop(1, 'rgba(255,120,40,0)');
   ctx.fillStyle = g;
-  ctx.fillRect(x - 70, y - 70, 140, 140);
+  ctx.fillRect(-R, -R, R * 2, R * 2);
+  ctx.restore();
 }
 
-export function drawFlames(ctx, x, y, t) {
-  const tongues = [[-2.2, 0.9, 6.5], [1.8, 1.3, 7.5], [0, 2.1, 10], [-0.6, 3.1, 6], [2.6, 0.4, 5]];
-  for (const [ox, ph, h] of tongues) {
-    const hh = h * (0.75 + 0.25 * Math.sin(t * 9 + ph * 3) + 0.12 * Math.sin(t * 17 + ph));
-    const sway = Math.sin(t * 5 + ph) * 1.2;
-    const g = ctx.createLinearGradient(0, y, 0, y - hh);
-    g.addColorStop(0, 'rgba(255,236,170,0.95)');
-    g.addColorStop(0.35, 'rgba(255,170,70,0.85)');
-    g.addColorStop(1, 'rgba(200,70,30,0)');
-    ctx.fillStyle = g;
+// Glør i asken: små, pulserende punkter under flammene.
+export function drawEmbers(ctx, x, y, t) {
+  for (let i = 0; i < 7; i++) {
+    const a = i * 2.4 + 0.7, d = 1.0 + (i % 4) * 1.2;
+    const ex = x + Math.cos(a) * d * 1.3, ey = y + Math.sin(a) * d * 0.55;
+    const p = 0.55 + 0.45 * Math.sin(t * (2.2 + (i % 3) * 0.9) + i * 1.7);
+    ctx.fillStyle = `rgba(255,${110 + (i % 3) * 25},40,${(0.3 + 0.35 * p).toFixed(3)})`;
     ctx.beginPath();
-    ctx.moveTo(x + ox - 2, y - 0.5);
-    ctx.quadraticCurveTo(x + ox - 2.2 + sway * 0.3, y - hh * 0.5, x + ox + sway, y - hh);
-    ctx.quadraticCurveTo(x + ox + 2.2 + sway * 0.3, y - hh * 0.5, x + ox + 2, y - 0.5);
-    ctx.closePath();
+    ctx.ellipse(ex, ey, 0.6 + (i % 2) * 0.3, 0.38, 0, 0, Math.PI * 2);
     ctx.fill();
+  }
+}
+
+// Tre lag flammer (ytre rød/oransje, midtre oransje, indre gulhvit) med uavhengig svaiing.
+export function drawFlames(ctx, x, y, t) {
+  const layers = [
+    { s: 1, c0: 'rgba(255,196,104,0.8)', c1: 'rgba(214,84,30,0)', cm: 'rgba(240,120,40,0.62)', w: 2.3 },
+    { s: 0.72, c0: 'rgba(255,230,150,0.9)', c1: 'rgba(255,150,50,0)', cm: 'rgba(255,176,70,0.75)', w: 1.8 },
+    { s: 0.42, c0: 'rgba(255,248,214,0.95)', c1: 'rgba(255,214,120,0)', cm: 'rgba(255,230,150,0.8)', w: 1.2 },
+  ];
+  const tongues = [[-2.4, 0.9, 6.2], [1.9, 1.3, 7.2], [0, 2.1, 9.6], [-0.8, 3.1, 5.8], [2.8, 0.4, 4.8]];
+  for (const L of layers) {
+    for (const [ox, ph, h] of tongues) {
+      const hh = h * L.s * (0.74 + 0.22 * Math.sin(t * 8.3 + ph * 3) + 0.1 * Math.sin(t * 17.3 + ph) + 0.05 * Math.sin(t * 31 + ph * 2));
+      const sway = Math.sin(t * 4.6 + ph) * 1.1 + Math.sin(t * 9.1 + ph * 2) * 0.4;
+      const bx = x + ox * (0.6 + 0.4 * L.s);
+      const g = ctx.createLinearGradient(0, y, 0, y - hh);
+      g.addColorStop(0, L.c0);
+      g.addColorStop(0.45, L.cm);
+      g.addColorStop(1, L.c1);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(bx - L.w, y - 0.4);
+      ctx.quadraticCurveTo(bx - L.w * 1.05 + sway * 0.25, y - hh * 0.5, bx + sway, y - hh);
+      ctx.quadraticCurveTo(bx + L.w * 1.05 + sway * 0.25, y - hh * 0.5, bx + L.w, y - 0.4);
+      ctx.closePath();
+      ctx.fill();
+    }
   }
 }

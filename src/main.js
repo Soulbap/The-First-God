@@ -198,6 +198,8 @@ setTimeout(() => {
       click: (id) => clickNode(state, id),
       view: (x, y, w) => { cam.x = x; cam.y = y; cam.w = w; cam.tween = null; },
       setSpeed: (s) => { speed = s; },
+      renderStats: renderer.stats,
+      renderer,
       tick: (seconds, fps = 30) => { for (let i = 0; i < seconds * fps; i++) tick(1 / fps); },
     };
   }
