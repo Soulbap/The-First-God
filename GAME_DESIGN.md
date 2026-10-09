@@ -311,6 +311,7 @@ Grensesnittet skal oppleves som en stille, guddommelig intelligens som observere
 - **Faste plasseringer på tvers av epoker:** ressurser øverst til venstre, guddommelig kraft øverst til høyre, hovedmeny nederst i midten, fart/zoom nederst til høyre, Innsikter som panel fra høyre. Senere epoker endrer uttrykk (farger, ikoner, kategorier), ikke oppsett.
 - **Ingen døde knapper.** Navigasjon vises bare når et system står bak (Milepæler etter første milepæl; «Verden» er utelatt til det finnes et verdenskart).
 - Panelet pauser ikke simuleringen. Ragnarok er alltid frivillig og kan avbrytes.
+- **GUI-02 · evolusjonsfeedback.** Oppdagelser og milepæler presenteres som korte, ikke-blokkerende HUD-meldinger. Én melding vises om gangen; milepæler prioriteres foran vanlige oppdagelser, og Ragnarok fjerner foreldede meldinger. Første ly, Vekkelse og Felles ild er betydningsfulle oppdagelser; Sammenhengende bosetting er en større milepæl. Kamera og simulering avbrytes ikke.
 
 ### Antakelser — åpne
 

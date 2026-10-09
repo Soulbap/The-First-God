@@ -93,10 +93,9 @@ function updateHint() {
 }
 
 function handleEvents(events) {
+  hud.present(events.filter((e) => e.type === 'discovered' || e.type === 'milestone'));
   for (const e of events) {
-    if (e.type === 'discovered') hud.discovered(e.id);
     if (e.type !== 'milestone') continue;
-    hud.toast(e.title, e.text);
     if (e.unlock === 'zoomArea') {
       setZoomLimits(cam, true);
       pendingGlide = 1.4; // kort pause så spilleren rekker å lese meldingen

@@ -35,6 +35,7 @@ export async function run() {
   ok('NY-merke på nyoppdaget kort', shelter && !shelter.querySelector('.chip-new').hidden);
   ok('deaktivert knapp med forklaring', shelter.querySelector('.btn').disabled && /Mangler 7 trevirke og 5 stein/.test(shelter.innerText));
   ok('bare oppdagede kort vises', document.querySelectorAll('.card').length === 1);
+  ok('ny innsikt vises som én betydningsfull melding', document.querySelectorAll('#toasts .toast').length <= 1);
 
   key('Escape'); settle();
   ok('Escape lukker panelet', !drawerOpen());
@@ -60,6 +61,7 @@ export async function run() {
   const visible = [...document.querySelectorAll('.card:not(.leave)')].filter((c) => !c.hidden).map((c) => c.dataset.id);
   ok('Tro-fanen filtrerer kortene', visible.join() === 'common_fire');
   $('.tab[data-tab="all"]').click(); settle();
+  ok('aktiv kategori faller tilbake når innholdet endrer seg', $('#drawer-tabs').querySelector('[aria-selected="true"]') != null);
 
   $('[data-nav="milestones"]').click(); settle();
   ok('Milepæler bytter innhold i samme panel', drawerOpen() && $('#drawer-title').textContent === 'Milepæler' && $('#milestone-list').children.length >= 1);
@@ -85,6 +87,7 @@ export async function run() {
   $('#ragnarok-confirm').click(); settle();
   ok('bekreftet Ragnarok gir ny syklus i samme verden', T.state.humans.length === 0 && T.state.buildings.length === 0 && Object.keys(T.state.discovered).length === 0);
   ok('HUD nullstilt: ingen kort, Folk/PP/Milepæler skjult', document.querySelectorAll('.card:not(.leave)').length === 0 && !$('[data-res="people"]') && $('#divine').hidden && $('[data-nav="milestones"]').hidden);
+  ok('Ragnarok rydder synlige varsler', document.querySelectorAll('#toasts .toast').length <= 1);
 
   return { pass: results.filter((x) => x.ok).length, fail: results.filter((x) => !x.ok).map((x) => x.name), results };
 }

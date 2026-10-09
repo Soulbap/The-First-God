@@ -72,7 +72,7 @@ button { font: inherit; color: inherit; }
 .cards { display: flex; flex-direction: column; gap: var(--space-3); }
 .card {
   display: grid; grid-template-columns: 52px 1fr; gap: var(--space-2) var(--space-3);
-  padding: var(--space-3); border: var(--border-w) solid var(--gui-border-soft); border-radius: var(--radius-card);
+  padding: var(--space-4); border: var(--border-w) solid var(--gui-border-soft); border-radius: var(--radius-card);
   background: var(--gui-surface-card);
   transition: border-color var(--t-card) var(--ease), background var(--t-card) var(--ease);
 }
@@ -80,7 +80,7 @@ button { font: inherit; color: inherit; }
 .card.is-available { border-color: rgba(212, 180, 119, 0.6); }
 .card.enter { animation: rise var(--t-notice) var(--ease); }
 .card.leave { animation: fade-out var(--t-card) var(--ease) forwards; }
-.card-icon { width: 52px; height: 52px; display: grid; place-items: center; border-radius: var(--radius-sm); border: var(--border-w) solid var(--gui-border-soft); background: radial-gradient(circle at 50% 40%, rgba(212, 180, 119, 0.16), rgba(0, 0, 0, 0.2) 75%); color: var(--gui-accent); }
+.card-icon { width: 46px; height: 46px; display: grid; place-items: center; border-radius: var(--radius-sm); border: var(--border-w) solid var(--gui-border-soft); background: radial-gradient(circle at 50% 40%, rgba(212, 180, 119, 0.16), rgba(0, 0, 0, 0.2) 75%); color: var(--gui-accent); }
 .card-icon .ico { width: 30px; height: 30px; }
 .card-main { min-width: 0; }
 .card-head { display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
@@ -88,7 +88,7 @@ button { font: inherit; color: inherit; }
 .chip-new { padding: 1px 6px; border-radius: 4px; background: var(--gui-accent); color: var(--gui-accent-ink); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; line-height: 1.5; }
 .level { margin-left: auto; font-size: var(--fs-meta); color: var(--gui-text-muted); font-variant-numeric: tabular-nums; }
 .card-desc { margin: var(--space-1) 0 0; font-size: var(--fs-body); line-height: var(--lh-body); color: var(--gui-text-secondary); }
-.card-world { margin: var(--space-1) 0 0; font-size: var(--fs-meta); line-height: 1.4; color: var(--gui-text-muted); font-style: italic; }
+.card-world { margin: var(--space-2) 0 0; font-size: var(--fs-body); line-height: var(--lh-body); color: var(--gui-text-muted); font-style: italic; }
 .card-foot, .card .status-line, .card .meter { grid-column: 1 / -1; }
 .card-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin-top: var(--space-1); flex-wrap: wrap; }
 .cost { display: flex; gap: var(--space-3); margin: 0; padding: 0; list-style: none; font-size: var(--fs-body); font-variant-numeric: tabular-nums; }
@@ -153,10 +153,14 @@ button { font: inherit; color: inherit; }
 .toast { padding: var(--space-3) var(--space-5); text-align: center; border-color: rgba(212, 180, 119, 0.45); animation: toast 6s var(--ease) forwards; }
 .toast .t { font-family: var(--font-display); font-size: 21px; color: var(--gui-text-primary); }
 .toast .s { font-size: var(--fs-body); color: var(--gui-text-secondary); margin-top: 2px; }
-.toast.minor { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-4); text-align: left; animation-duration: 4s; }
-.toast.minor .ico { color: var(--gui-accent); }
+.toast.minor, .toast.significant, .toast.major { display: flex; align-items: center; gap: var(--space-3); text-align: left; }
+.toast.minor { padding: var(--space-2) var(--space-4); animation-duration: 3.8s; }
+.toast.significant { max-width: min(520px, calc(100vw - 32px)); padding: var(--space-3) var(--space-5); animation-duration: 4.8s; border-color: rgba(212, 180, 119, 0.7); }
+.toast.major { max-width: min(560px, calc(100vw - 32px)); padding: var(--space-4) var(--space-5); animation-duration: 5.8s; border-color: var(--gui-accent); box-shadow: 0 10px 32px var(--gui-shadow), inset 0 0 0 1px rgba(212, 180, 119, 0.12); }
+.toast.minor .ico, .toast.significant .ico, .toast.major .ico { color: var(--gui-accent); }
 .toast.minor .t { font-family: var(--font-ui); font-size: var(--fs-body); font-weight: 600; }
-.toast.minor .k { color: var(--gui-accent); font-weight: 600; margin-right: var(--space-1); }
+.toast.significant .t, .toast.major .t { font-family: var(--font-display); font-size: var(--fs-section); }
+.toast .k { color: var(--gui-accent); font-weight: 600; margin-right: var(--space-1); }
 .toast.minor .s { margin: 0; font-size: var(--fs-meta); }
 
 /* ---------- Ragnarok-dialog ---------- */

@@ -21,7 +21,7 @@
   --font-ui: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
   --fs-title: 27px;
   --fs-section: 19px;
-  --fs-card-title: 17px;
+  --fs-card-title: 19px;
   --fs-body: 14px;
   --fs-value: 22px;
   --fs-label: 15px;
@@ -32,9 +32,9 @@
   /* Bevegelse */
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --t-hover: 150ms;
-  --t-card: 180ms;
+  --t-card: 220ms;
   --t-panel: 250ms;
-  --t-notice: 250ms;
+  --t-notice: 320ms;
 
   /* Mål */
   --drawer-w: clamp(344px, 22vw, 392px);

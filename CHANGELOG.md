@@ -32,6 +32,17 @@ Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på ve
 ## [Unreleased]
 
 ### Added
+- **GUI-02 · evolusjonsfeedback** (`src/ui/presentation.js`): en liten, deterministisk presentasjonskø samordner oppdagelser, valg og milepæler. Den viser aldri overlappende meldinger, prioriterer milepæler, avviser dubletter, begrenser ventende informasjon og tømmes ved Ragnarok. (Kontroll: 4 nye enhetstester.)
+- **GUI-02 · visuell gjennomgang** (`docs/gui-02/`): faste før/etter-bilder, rapport og dokumentert kontroll av kortlesbarhet ved lyst terreng.
+
+### Changed
+- **GUI-02 · innsiktskort** (`src/ui/tokens.css`, `src/ui/style.css`): større titler og lesbarere verdenskonsekvens, mer luft og mindre ikonflis gir tydeligere rekkefølge fra effekt til konsekvens, kostnad og handling, uten å endre panelbredden eller økonomien.
+- **GUI-02 · oppdagelser og milepæler** (`src/ui/hud.js`, `src/main.js`): første ly, Vekkelse og Felles ild presenteres som betydningsfulle oppdagelser; bosettingsmilepælen får en sterkere, gjenbrukbar variant. Animasjoner følger redusert-bevegelse-innstillingen.
+
+### Tests
+- **GUI-02**: `tests/presentation.test.js` og utvidet `tools/gui-smoke.js` dekker varslingsprioritet, deduplisering, Ragnarok-opprydding og grunnleggende varsling/faner. (Kontroll: `npm test` 34/34 bestått.)
+
+### Added
 - **VISUAL-01 · miljøfelt** (`src/render/environment.js`): deterministisk rutenett (fukt, kronedekke, bart jordsmonn) avledet fra seed, trær, stein og tjern. Terreng og dekor leser det, så bakken henger sammen med skogen, vannet og leiren. (Kontroll: enhetstester for determinisme, verdiområde og at feltet speiler verden.)
 - **VISUAL-01 · bakkedetalj**: terrenget males nå med lagdelte strøk, barnåler/løv/kvister etter kronedekke, mose i fuktige skyggepartier, bart jord i uregelmessige flekker og småstein i grupper (2 px/enhet). Et sømløst finkornslag (`buildGrain`) holder bakken levende ved nærzoom, og terrenget har mip-nivåer (2×, 1×, 0,5×) slik at utzoomet visning er rask og uskarp-fri.
 - **VISUAL-01 · dekor**: bregner i skyggen, kvister, steingrupper, lyng/ener/bærbusker på skogkanten, falne stammer og opptil 240 unge trær som undervegetasjon; gress i flekker som tynnes under tett skog og i leiren. Alt plasseres deterministisk fra miljøfeltet.

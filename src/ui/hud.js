@@ -2,7 +2,7 @@
 // Leser tilstand via visningsmodellen i insights.js; endrer den kun via callbacks.
 import { icon } from './icons.js';
 import { RESOURCES } from '../data/gui.js';
-import { upgradeById } from '../data/upgrades.js';
+import { PresentationCoordinator } from './presentation.js';
 import { selectInsights, selectResources, selectDivine, currentEpoch, reachedMilestones, fmtAmount, fmtRate } from './insights.js';
 
 const TITLES = { insights: 'Innsikter', milestones: 'Milepæler' };
@@ -30,6 +30,7 @@ export function createHud({ onBuy, onSpeed, onView, onZoom, onRagnarok }) {
   let dialogReturn = null;
   const seen = new Set();   // innsikter spilleren har sett i panelet (styrer «NY»)
   const cards = new Map();  // id → element
+  const presentations = new PresentationCoordinator();
 
   // ---------- Panel ----------
   function markSeen() {
@@ -81,8 +82,7 @@ export function createHud({ onBuy, onSpeed, onView, onZoom, onRagnarok }) {
     const id = b.closest('.card').dataset.id;
     const r = onBuy(id);
     if (r && r.ok) {
-      const def = upgradeById(id);
-      notice({ icon: def.icon, kicker: 'Valgt', title: def.name, text: def.world });
+      present([{ type: 'selected', id, at: Date.now() }]);
     }
   });
 
@@ -239,12 +239,20 @@ export function createHud({ onBuy, onSpeed, onView, onZoom, onRagnarok }) {
     else if (mode) setMode(null);
   });
 
-  function notice({ icon: ic, kicker, title, text }) {
+  function showNotice({ icon: ic, kicker, title, text, kind = 'minor' }) {
     const d = document.createElement('div');
-    d.className = 'toast minor panel';
+    d.className = `toast ${kind} panel`;
     d.innerHTML = `${ic ? icon(ic) : ''}<div><div class="t"><span class="k">${kicker}</span>${title}</div>${text ? `<div class="s">${text}</div>` : ''}</div>`;
     els.toasts.appendChild(d);
-    setTimeout(() => d.remove(), 4200);
+    setTimeout(() => { d.remove(); showNext(); }, kind === 'minor' ? 3800 : kind === 'major' ? 5800 : 4800);
+  }
+  function showNext() {
+    const item = presentations.dismiss();
+    if (item) showNotice(item);
+  }
+  function present(events) {
+    const item = presentations.push(events);
+    if (item) showNotice(item);
   }
 
   function render(state) {
@@ -293,17 +301,8 @@ export function createHud({ onBuy, onSpeed, onView, onZoom, onRagnarok }) {
         }
       }
     },
-    toast(title, text) {
-      const d = document.createElement('div');
-      d.className = 'toast panel';
-      d.innerHTML = `<div class="t">${title}</div><div class="s">${text}</div>`;
-      els.toasts.appendChild(d);
-      setTimeout(() => d.remove(), 6200);
-    },
-    discovered(id) {
-      const def = upgradeById(id);
-      if (def) notice({ icon: def.icon, kicker: 'Ny innsikt', title: def.name });
-    },
+    toast(title, text) { present([{ type: 'milestone', id: `message-${title}`, title, text }]); },
+    present,
     hint(text) {
       if (!text) { els.hint.classList.add('hide'); return; }
       if (els.hint.textContent !== text) els.hint.textContent = text;
@@ -325,6 +324,8 @@ export function createHud({ onBuy, onSpeed, onView, onZoom, onRagnarok }) {
     reset() {
       seen.clear();
       cards.clear();
+      presentations.reset();
+      els.toasts.replaceChildren();
       els.list.innerHTML = '';
       els.res.innerHTML = '';
       els.divine.innerHTML = '';
