@@ -70,6 +70,21 @@ export const BALANCE = {
     well: { radius: 15, work: 18, minRing: 44 },
     warehouse: { radius: 40, work: 50, minRing: 100 },
     sanctuary: { radius: 22, work: 36, minRing: 40 },
+    // OPUS-08: elektrisitet, petroleum og motorisering.
+    generator: { radius: 36, work: 58, minRing: 150 },
+    grid_station: { radius: 24, work: 30, minRing: 150 },
+    oil_well: { radius: 30, work: 44, minRing: 170 },
+    refinery: { radius: 46, work: 70, minRing: 170 },
+    combustion_engine: { radius: 34, work: 50, minRing: 150 },
+    motor_depot: { radius: 44, work: 60, minRing: 165 },
+    // OPUS-09: presisjon, flyverksted og flyplass.
+    precision_works: { radius: 40, work: 62, minRing: 150 },
+    aircraft_works: { radius: 50, work: 80, minRing: 175 },
+    airfield: { radius: 60, work: 96, minRing: 230 },
+    // OPUS-10: elektronikk, kommunikasjon og vitenskap.
+    electronics_works: { radius: 38, work: 66, minRing: 160 },
+    telegraph: { radius: 22, work: 34, minRing: 150 },
+    research_institute: { radius: 48, work: 84, minRing: 165 },
   },
   // Boligkapasitet per bygg (tidlig sivilisasjon brukte 2 per hjem).
   housing: { shelter: 2, hut: 2, townhouse: 4 },
@@ -89,6 +104,11 @@ export const BALANCE = {
     carry: 2, gatherSeconds: 2.1, charcoal: { wood: 3, out: 1, seconds: 9 },
     copper: { ore: 2, fuel: 1, out: 1, seconds: 12 }, bronze: { copper: 2, tin: 1, fuel: 1, out: 1, seconds: 15 }, iron: { ore: 2, fuel: 2, out: 1, seconds: 17 },
     storageCap: 40, tradeSecondsPerStep: 38, maxTrade: 3,
+    // Malmbudsjett: kobber/tinn/jern-årer ~100 enheter hver (tidligere 22–34). Iron krever 2 malm per jern,
+    // så jern fra én åre er ca. 50; industrikjeden trenger flere hundre jern totalt, og handel gir resten.
+    oreReserve: 100, oreSpread: 40,
+    // Folk fortsetter å hente malm til lageret når denne summen er under målet (tidligere 18: stoppet for tidlig).
+    oreStockTarget: 40,
   },
   // Kunnskap kommer bare fra faktisk virksomhet: foredling, verksteder og kunnskapshallen.
   knowledge: { perCycle: 0.25, workshopSeconds: 14, workshopYield: 0.25, hallSeconds: 8, hallYield: 0.5, hallPerPerson: 0.08, hallPopCap: 10, cityBonus: 1.25 },
@@ -112,14 +132,57 @@ export const BALANCE = {
     wearPerSecond: 0.0012, repairAt: 0.42, repair: { wood: 2, mechanicalComponents: 1 },
   },
   industrial: {
+    // Kullbudsjett (dokumentert i docs/opus-08-10/REPORT.md): reserve ≈ 6 timer industri før nye felt eller handel.
+    coalReserve: 800, coalReserveSpread: 160,
     coalMine: { wood: 46, stone: 34, planks: 10, iron: 2 },
-    engine: { cost: { wood: 34, stone: 24, planks: 12, iron: 4, mechanicalComponents: 4 }, minCoal: 4, coalPerSecond: 0.025, power: 5, wearPerSecond: 0.0015, repairAt: 0.44, repair: { wood: 2, mechanicalComponents: 1 } },
+    // coalPerSecond brukes når det finnes forbruk; standbyCoalPerSecond når dampmaskinen bare står klar.
+    engine: { cost: { wood: 34, stone: 24, planks: 12, iron: 4, mechanicalComponents: 4 }, minCoal: 4, coalPerSecond: 0.025, standbyCoalPerSecond: 0.002, power: 5, wearPerSecond: 0.0015, repairAt: 0.44, repair: { wood: 2, mechanicalComponents: 1 } },
+    // electric: strøm per sekund når fabrikken kjører på strøm i stedet for mekanisk kraft (OPUS-08).
     factories: {
-      metalworks: { cost: { wood: 62, stone: 48, planks: 18, iron: 5, mechanicalComponents: 4 }, inputs: { iron: 1, coal: 1 }, outputs: { industrialMachinery: 1 }, seconds: 18, power: 1 },
-      locomotive_workshop: { cost: { wood: 54, stone: 38, planks: 16, iron: 4, mechanicalComponents: 3 }, inputs: { industrialMachinery: 1, iron: 1 }, outputs: { railwayComponents: 1 }, seconds: 20, power: 1 },
+      metalworks: { cost: { wood: 62, stone: 48, planks: 18, iron: 5, mechanicalComponents: 4 }, inputs: { iron: 1, coal: 1 }, outputs: { industrialMachinery: 1 }, seconds: 18, power: 1, electric: 1.5, cap: { industrialMachinery: 8 } },
+      locomotive_workshop: { cost: { wood: 54, stone: 38, planks: 16, iron: 4, mechanicalComponents: 3 }, inputs: { industrialMachinery: 1, iron: 1 }, outputs: { railwayComponents: 1 }, seconds: 20, power: 1, electric: 1.5, cap: { railwayComponents: 4 } },
+      // OPUS-08: raffinering og lastebilbygging bruker de samme reglene for innsatsvarer og kraft.
+      refinery: { cost: { wood: 50, stone: 36, planks: 12, iron: 6, industrialMachinery: 2 }, inputs: { crudeOil: 2 }, outputs: { fuel: 1 }, seconds: 14, power: 1, electric: 1.5 },
+      // cap: verkstedet slutter å bygge når flåten er full, slik at jern ikke tømmes på lastebiler som ingen trenger.
+      motor_depot: { cost: { wood: 40, stone: 24, planks: 14, iron: 6, industrialMachinery: 2 }, inputs: { iron: 2, industrialMachinery: 1, planks: 4 }, outputs: { truck: 1 }, seconds: 24, power: 1, electric: 1.5, cap: { truck: 3 } },
+      // OPUS-09: presisjonskomponenter er en gruppert mellomvare; flyverket bygger fly bare av slike komponenter.
+      precision_works: { cost: { wood: 44, stone: 30, planks: 12, iron: 8, industrialMachinery: 2 }, inputs: { iron: 1, industrialMachinery: 1, copper: 1 }, outputs: { precisionComponents: 1 }, seconds: 22, power: 1, electric: 1.5, cap: { precisionComponents: 12 } },
+      // OPUS-10: elektronikk krever elektrisk kraft alene (ingen mekanisk reserve) og gir styringskomponenter.
+      electronics_works: { cost: { wood: 40, stone: 26, planks: 14, copper: 10, iron: 6, industrialMachinery: 2 }, inputs: { precisionComponents: 1, copper: 1, industrialMachinery: 1 }, outputs: { electronics: 1 }, seconds: 30, power: 0, electricOnly: true, electric: 1.5, cap: { electronics: 6 } },
+      aircraft_works: { cost: { wood: 60, stone: 40, planks: 22, iron: 10, precisionComponents: 4, industrialMachinery: 2 }, inputs: { precisionComponents: 3, planks: 6, iron: 2 }, outputs: { aircraft: 1 }, seconds: 40, power: 1, electric: 1.5, cap: { aircraft: 2 } },
     },
     rail: { cost: { wood: 70, planks: 24, iron: 8, railwayComponents: 2 }, maxDistance: 1200, travelSeconds: 28, load: 3 },
     locomotive: { wood: 20, iron: 6, industrialMachinery: 2, railwayComponents: 2 },
+  },
+  // OPUS-08: elektrisk kraft er kapasitet, ikke lager. Generatoren krever damp eller
+  // forbrenningskraft i sin bosetning; nettstasjonen dekker bare den bosettingen (ingen overføring).
+  electric: {
+    generator: { cost: { wood: 40, stone: 26, planks: 12, iron: 6, copper: 4 }, steamPower: 4, output: 6 },
+    grid: { cost: { planks: 14, copper: 6, iron: 4 } },
+    speed: 1.35, // elektriske fabrikker arbeider raskere enn mekaniske (ingen global bonus)
+  },
+  // OPUS-08: petroleum er en begrenset åre (oljefelt) som pumpes av en brønn og raffineres.
+  petroleum: {
+    well: { cost: { wood: 40, stone: 20, planks: 10, iron: 4, industrialMachinery: 1 }, crudePerSecond: 0.05, reach: [70, 200] },
+  },
+  // OPUS-08: forbrenningsmotor er kraftkilde som bruker raffinert drivstoff; lastebiler frakter planker på land.
+  combustion: {
+    engine: { cost: { wood: 20, iron: 6, industrialMachinery: 2, mechanicalComponents: 2 }, power: 4, fuelPerSecond: 0.02, wearPerSecond: 0.0012, repairAt: 0.44, repair: { iron: 1, planks: 2 } },
+    road: { maxDistance: 700, load: 4, cargo: 'planks', reserve: 40, fuelPerTrip: 1, travelSeconds: 20, tripsBeforeService: 3, service: { iron: 1, planks: 2 } },
+  },
+  // OPUS-09: fly er lokale oppdrag, ikke et globalt flysystem. Hver flyvning bruker drivstoff og tid,
+  // har begrenset rekkevidde og gir kartkunnskap bare over steder som allerede er kjent.
+  aviation: {
+    airfield: { cost: { planks: 40, stone: 30, cutstone: 12, iron: 4, industrialMachinery: 1 } },
+    flight: { maxSteps: 3, fuelPerStep: 1, secondsPerStep: 30, serviceAfter: 2, service: { precisionComponents: 1, iron: 1 } },
+    // Den første flyvningen gir en lesbar kronikk; luftmålinger teller bare når de faktisk er fullført.
+    surveysForCamera: 3,
+  },
+  // OPUS-10: kommunikasjon og forskning. Telegrafen dekker bare sin bosetting og krever strøm; flyoppdrag
+  // koordineres bare via en aktiv telegraf. Forskningsinstituttet bruker strøm og gir den eksisterende kunnskapen.
+  science: {
+    telegraph: { cost: { copper: 6, electronics: 1, planks: 6 }, electric: 0.3 },
+    institute: { cost: { planks: 40, stone: 30, cutstone: 14, copper: 8, electronics: 2, industrialMachinery: 2 }, electric: 1, knowledgePerSecond: 0.35, minPopulation: 20 },
   },
   // OPUS-01 · Høstfest: overskuddsmat blir en samling ved ildstedet med dobbel bønn. Automatisk (idle), aldri tvunget.
   festival: { minFood: 30, base: 10, perPerson: 0.8, interval: 110, duration: 28, prayerMultiplier: 2, joinChance: 0.7 },

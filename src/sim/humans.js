@@ -8,7 +8,7 @@ import { recordAuto } from './stats.js';
 import { addWear } from './wear.js';
 import { inBounds, inPond, dist } from './world.js';
 import { startConstruction } from './construction.js';
-import { harvestMineral, materialEnabled } from './materials.js';
+import { harvestMineral, materialEnabled, mineralHarvestable } from './materials.js';
 import { beginDelivery, pickupDelivery, completeDelivery, recordTrip } from './regional.js';
 import { isHome, settlementById } from './settlements.js';
 import { partyArrive, partyTick } from './realm.js';
@@ -37,9 +37,10 @@ const hearthOf = (state) => state.buildings.find((b) => b.type === 'hearth' && b
 const storeOf = (state) => state.buildings.find((b) => b.type === 'storage' && b.complete);
 const deliveryPoint = (state) => storeOf(state) || state.stockpile;
 
-export function nodeUsable(n) {
+export function nodeUsable(n, state) {
   if (n.kind === 'tree') return n.state === 'alive' && n.growth >= B.tree.harvestMinGrowthHuman && treeAvailable(n) > 0;
-  if (n.kind === 'mineral') return n.amount > 0 && n.discovered;
+  // Mineraler som ikke kan håndtas (olje, eller kull uten gruve) skal ikke velges som mål: ellers står folk fast uten utbytte.
+  if (n.kind === 'mineral') return n.amount > 0 && n.discovered && (!state || mineralHarvestable(state, n));
   return n.stone > 0;
 }
 
@@ -87,10 +88,10 @@ function chooseResourceKind(state) {
   return kind;
 }
 
-function findNode(state, h, kind) {
+function findNode(state, h, kind, mineral = null) {
   let best = null, bestD = Infinity;
   for (const n of state.nodes) {
-    if (n.kind !== kind || !nodeUsable(n) || !nodeHasRoom(n, h)) continue;
+    if (n.kind !== kind || (mineral && n.mineral !== mineral) || !nodeUsable(n, state) || !nodeHasRoom(n, h)) continue;
     const d = Math.hypot(n.x - h.x, n.y - h.y);
     if (d < bestD) { bestD = d; best = n; }
   }
@@ -211,8 +212,12 @@ function chooseTask(state, h) {
   if (maybeExplore(state, h)) return;
   // 2) Sanking.
   const kind = chooseResourceKind(state);
-  const needsOre = materialEnabled(state) && state.nodes.some((n) => n.kind === 'mineral' && n.discovered && n.amount > 0) && (state.resources.copperOre + state.resources.tinOre + state.resources.ironOre + (state.industrial?.enabled ? state.resources.coal : 99) < 18);
-  const n = (needsOre && findNode(state, h, 'mineral')) || findNode(state, h, kind) || findNode(state, h, kind === 'tree' ? 'rock' : 'tree');
+  const needsOre = materialEnabled(state) && state.nodes.some((n) => n.kind === 'mineral' && n.discovered && n.amount > 0) && (state.resources.copperOre + state.resources.tinOre + state.resources.ironOre + (state.industrial?.enabled ? state.resources.coal : 0) < B.materials.oreStockTarget);
+  // Før industri teller kull ikke som en mangel: ellers ble malm aldri hentet og metallkjeden ble aldri startet.
+  // OPUS-08: når gruven står og kull er knapt, prioriteres kullet. Ellers blir det liggende urørt,
+  // fordi nærmere malm alltid vinner og damp/elektrisitet aldri får brensel.
+  const coalShort = materialEnabled(state) && state.industrial?.enabled && state.resources.coal < 20 && state.buildings.some((b) => b.complete && b.type === 'coal_mine');
+  const n = (coalShort && findNode(state, h, 'mineral', 'coal')) || (needsOre && findNode(state, h, 'mineral')) || findNode(state, h, kind) || findNode(state, h, kind === 'tree' ? 'rock' : 'tree');
   if (n) {
     n.reservedBy.push(h.id);
     h.targetId = n.id;
@@ -274,13 +279,13 @@ export function stepHuman(state, h, dt) {
       break;
     case 'toNode': {
       const n = nodeById(state, h.targetId);
-      if (!n || !nodeUsable(n)) { abandonTarget(state, h); break; }
+      if (!n || !nodeUsable(n, state)) { abandonTarget(state, h); break; }
       if (moveTo(state, h, dt)) { h.state = 'gather'; h.timer = 0; }
       break;
     }
     case 'gather': {
       const n = nodeById(state, h.targetId);
-      if (!n || !nodeUsable(n)) { abandonTarget(state, h); break; }
+      if (!n || !nodeUsable(n, state)) { abandonTarget(state, h); break; }
       h.dir = n.x > h.x ? 1 : -1;
       h.timer += dt;
       const interval = gatherInterval(state, h, h.gatherKind);
@@ -293,7 +298,7 @@ export function stepHuman(state, h, dt) {
           h.carry.amount += got;
           state.events.push({ type: 'hit', nodeId: n.id, by: 'human', res: h.gatherKind, x: n.x, y: n.y });
         }
-        if (h.carry.amount >= carryCapacity(state, h) || !nodeUsable(n)) { release(state, h); goStore(state, h); }
+        if (h.carry.amount >= carryCapacity(state, h) || !nodeUsable(n, state)) { release(state, h); goStore(state, h); }
       }
       break;
     }

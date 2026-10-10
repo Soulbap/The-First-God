@@ -19,6 +19,12 @@ export const RESOURCES = {
   mechanicalComponents: { name: 'Maskindeler', unit: 'maskindeler', icon: 'sawmill' },
   industrialMachinery: { name: 'Industrimaskiner', unit: 'industrimaskiner', icon: 'sawmill' },
   railwayComponents: { name: 'Jernbanedeler', unit: 'jernbanedeler', icon: 'road' },
+  crudeOil: { name: 'Råolje', unit: 'råolje', icon: 'stone' },
+  fuel: { name: 'Drivstoff', unit: 'drivstoff', icon: 'stone' },
+  truck: { name: 'Lastebiler', unit: 'lastebiler', icon: 'road' },
+  precisionComponents: { name: 'Presisjonskomponenter', unit: 'komponenter', icon: 'sawmill' },
+  aircraft: { name: 'Fly', unit: 'fly', icon: 'globe' },
+  electronics: { name: 'Elektronikk', unit: 'elektronikk', icon: 'book' },
   knowledge: { name: 'Kunnskap', unit: 'kunnskap', icon: 'book' },
   pp: { name: 'Bønn (PP)', unit: 'PP', icon: 'pp' },
 };

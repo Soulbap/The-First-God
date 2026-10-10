@@ -84,10 +84,18 @@ export function createWorld(seed = 20261009) {
     // OPUS-05: transportkapasitet er sykluslokal. Fartøy og kai må bygges av ekte lager.
     navigation: { enabled: false, advanced: false, docks: 0, boats: 0, vesselsBuilt: 0, nextSurveyAt: Infinity },
     mechanical: { enabled: false, componentsMade: 0, waterSuitability: 0, windSuitability: 0, operatingPower: 0, requiredPower: 0, repairs: 0 },
-    industrial: { enabled: false, operatingPower: 0, repairs: 0, factoryCycles: 0, rails: [], locomotives: 0, shipments: [], deliveries: 0, announced: false },
+    // OPUS-08: `electric*`, `petroleum`, `refining`, `combustion` og `roads` er evnene (kunnskap); `electricBudget`
+    // er kapasitet per simuleringssteg, ikke et lager. `wear`/`repairs` er slitasje på motorvogner.
+    industrial: { enabled: false, operatingPower: 0, repairs: 0, factoryCycles: 0, rails: [], locomotives: 0, shipments: [], deliveries: 0, announced: false,
+      electric: false, petroleum: false, refining: false, combustion: false, roads: false, precision: false, electronics: false,
+      electricBudget: {}, litSettlements: [], generated: 0, crudeExtracted: 0, fuelBurned: 0, roadDeliveries: 0, roadTrips: 0, truckWear: 0, serviceCount: 0 },
+    // OPUS-09: luftfart. `surveys` er fullførte luftmålinger (grunnlaget for planetkameraet); `flights` er aktive oppdrag.
+    aviation: { enabled: false, surveyEnabled: false, flights: [], surveys: 0, flightsDone: 0, flightWear: 0, services: 0, announcedFlight: false, announcedSurvey: false, nextFlightAt: Infinity, fuelBurned: 0 },
+    // OPUS-10: `telegraphActive` er avledet per steg fra en strømført telegraf. `researchKnowledge` teller kunnskap fra institutt.
+    science: { communication: false, research: false, rocketryFoundations: false, telegraphActive: false, researchKnowledge: 0, announcedElectronics: false, announcedResearch: false },
     stockpile: { x: C.x + 4, y: C.y + 48 },
-    resources: { wood: 0, stone: 0, food: 0, planks: 0, cutstone: 0, copperOre: 0, tinOre: 0, ironOre: 0, coal: 0, charcoal: 0, copper: 0, bronze: 0, iron: 0, mechanicalComponents: 0, industrialMachinery: 0, railwayComponents: 0, knowledge: 0, pp: 0 },
-    totals: { wood: 0, stone: 0, food: 0, planks: 0, cutstone: 0, copperOre: 0, tinOre: 0, ironOre: 0, coal: 0, charcoal: 0, copper: 0, bronze: 0, iron: 0, mechanicalComponents: 0, industrialMachinery: 0, railwayComponents: 0, knowledge: 0, pp: 0, manualClicks: 0 },
+    resources: { wood: 0, stone: 0, food: 0, planks: 0, cutstone: 0, copperOre: 0, tinOre: 0, ironOre: 0, coal: 0, charcoal: 0, copper: 0, bronze: 0, iron: 0, mechanicalComponents: 0, industrialMachinery: 0, railwayComponents: 0, crudeOil: 0, fuel: 0, truck: 0, precisionComponents: 0, aircraft: 0, electronics: 0, knowledge: 0, pp: 0 },
+    totals: { wood: 0, stone: 0, food: 0, planks: 0, cutstone: 0, copperOre: 0, tinOre: 0, ironOre: 0, coal: 0, charcoal: 0, copper: 0, bronze: 0, iron: 0, mechanicalComponents: 0, industrialMachinery: 0, railwayComponents: 0, crudeOil: 0, fuel: 0, truck: 0, precisionComponents: 0, aircraft: 0, electronics: 0, knowledge: 0, pp: 0, manualClicks: 0 },
     upgrades: {},
     discovered: {}, // innsikt-id → spilltid da den ble synlig (se discovery.js)
     modifiers: { gatherSpeed: 1, carry: 0, buildSpeed: 1, exploration: false, craftSpeed: 1, knowledge: 1, foodBonus: 0, townhouseBonus: 0, regionalCarry: 0, rockRegen: 1, treeGrowth: 1, walkSpeed: 1, clickBonus: 0, awakenBonus: 0, prayerMult: 1, expeditionSpeed: 1 },
@@ -159,12 +167,17 @@ export function createWorld(seed = 20261009) {
     const d = k === 0 ? range(rng, 360, 620) : range(rng, 680, 1050);
     let x = C.x + Math.cos(a) * d, y = C.y + Math.sin(a) * d * 0.68;
     if (!inBounds(state, x, y, 80) || inPond(state, x, y, 60)) { x = C.x + (k - 1) * 440; y = C.y - 430; }
-    addMineral(state, mineralKinds[k], x, y, 22 + Math.floor(rand(rng) * 12));
+    // Malmårer er dimensjonert etter metallbehovet i industrikjeden (se Kullbudsjett/Malmbudsjett i REPORT.md).
+    addMineral(state, mineralKinds[k], x, y, B.materials.oreReserve + Math.floor(rand(rng) * B.materials.oreSpread));
   }
   // Kull er alltid mulig å finne i samme seedede verden, men aldri universelt:
   // én begrenset åre ligger langt nok ute til at utforskning og transport betyr noe.
   let coalX = C.x + range(rng, -1, 1) * 760, coalY = C.y - range(rng, 420, 700);
   if (!inBounds(state, coalX, coalY, 80) || inPond(state, coalX, coalY, 60)) { coalX = C.x + 740; coalY = C.y - 420; }
-  addMineral(state, 'coal', coalX, coalY, 42 + Math.floor(rand(rng) * 18));
+  // Kullreserven er dimensjonert etter forbruk (docs/opus-08-10/REPORT.md, «Kullbudsjett»): ca. 6 timer
+  // industri ved ~90 kull/t for en dampmaskin og ~60 kull/t for et metallverk på 30 % utnyttelse.
+  addMineral(state, 'coal', coalX, coalY, B.industrial.coalReserve + Math.floor(rand(rng) * B.industrial.coalReserveSpread));
+  // OPUS-08: oljefeltet legges IKKE til her. Det opprettes deterministisk når petroleumskunnskapen
+  // aktiveres (ensureOilField i src/sim/petroleum.js). Slik er verdenen før det identisk med tidligere spill.
   return state;
 }

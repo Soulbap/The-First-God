@@ -9,6 +9,7 @@ import { discoveredRegions, outpostRegions } from './worldmap.js';
 import { enableMaterials } from './materials.js';
 import { enableMechanical } from './mechanical.js';
 import { enableIndustry } from './industrial.js';
+import { ensureOilField } from './petroleum.js';
 
 export const upgradeCount = (state, id) => state.upgrades[id] || 0;
 
@@ -25,6 +26,7 @@ export function requirementMet(state, req) {
   if (req.built) return builtCount(state, req.built) > 0;
   if (req.builtCount) return builtCount(state, req.builtCount.types) >= req.builtCount.n;
   if (req.milestone) return state.milestones[req.milestone] != null;
+  if (req.airSurveys) return (state.aviation?.surveys || 0) >= req.airSurveys;
   if (req.people) return state.humans.length >= req.people;
   if (req.gathered) return state.totals.wood + state.totals.stone >= req.gathered;
   if (req.noPending) return !state.buildings.some((b) => b.type === req.noPending && !b.complete);
@@ -140,6 +142,29 @@ function applyAction(state, def, a) {
     enableMechanical(state);
   } else if (a.type === 'enableIndustry') {
     enableIndustry(state);
+  } else if (a.type === 'enableElectricity') {
+    state.industrial.electric = true;
+  } else if (a.type === 'enablePetroleum') {
+    state.industrial.petroleum = true; ensureOilField(state);
+  } else if (a.type === 'enableRefining') {
+    state.industrial.refining = true;
+  } else if (a.type === 'enableCombustion') {
+    state.industrial.combustion = true; state.industrial.roads = true;
+  } else if (a.type === 'enablePrecision') {
+    state.industrial.precision = true;
+  } else if (a.type === 'enableAviation') {
+    state.aviation.enabled = true;
+  } else if (a.type === 'enableAerialSurvey') {
+    state.aviation.enabled = true; state.aviation.surveyEnabled = true;
+  } else if (a.type === 'enableElectronics') {
+    state.industrial.electronics = true;
+  } else if (a.type === 'enableCommunication') {
+    state.science.communication = true;
+  } else if (a.type === 'enableResearch') {
+    state.science.research = true;
+  } else if (a.type === 'enableRocketFoundations') {
+    // Bare kunnskapsgrunnlag. Ingen rakett, bane eller satellitt er implementert her.
+    state.science.rocketryFoundations = true;
   }
 }
 

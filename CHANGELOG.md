@@ -32,6 +32,26 @@ Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på ve
 ## [Unreleased]
 
 ### Added
+- **OPUS-08 · elektrisitet og motorisering (delvis)**: Generator som drives av damp i sin egen bosetting, nettstasjon som dekker kun den bosettingen, og elektriske fabrikker som arbeider raskere. Oljefelt (begrenset, seedet, kan ikke håndplukkes), brønn, raffineri (2 råolje → 1 drivstoff), forbrenningsmotor som bruker drivstoff, og lastebilverksted. Lastebiler frakter planker over land med drivstoff og vedlikehold, og kan ikke krysse dammen.
+- **OPUS-09 · luftfart og observasjon (delvis)**: Presisjonsverk (presisjonskomponenter), flyverk (fly med tak), autonom flyplass på gyldig tomt, og flyvninger med drivstoff, rekkevidde, tid og vedlikehold. Luftmålinger øker kartkunnskap ett trinn for kjente steder. Planetkameraet åpnes først etter tre fullførte målinger.
+- **OPUS-10 · elektronikk og vitenskap (delvis)**: Elektronikkverk (kun elektrisk kraft), telegraf som krever strøm og er nødvendig for flyoppdrag, forskningsinstitutt som krever strøm og minst 20 mennesker og gir kunnskap, og et rakettgrunnlag som bare er kunnskap (ingen rakett eller bane).
+
+### Changed
+- Save-formatet er v10. Lagringer v2–v9 får nye felt fra en ny verden med samme seed uten å endre eksisterende verdenskart; Ragnarok starter fortsatt en ren syklus.
+- Planetkameraet låses ikke lenger av kjøpet av «Luftmåling». Milepælen «En verden måles» krever nå tre fullførte luftmålinger. Dette endrer en OPUS-03-regel som var en midlertidig representasjon.
+- Oljefeltet legges til etter kullet i verdensgenerereringen. Eksisterende felt og tidligere trekk er uendret.
+- Menneskene prioriterer kull når gruven står og kull er knapt. Mineraler som ikke kan håndtas (olje, kull uten gruve) velges ikke lenger som mål.
+
+### Fixed
+- Menneskene kunne stå fast på et mineral de ikke kunne høste (kull uten gruve, og olje). Det var en reell blokkering i industrikjeden.
+
+### Tests
+- **OPUS-08**: 11 tester for oljefelt, generator/nett, damp-avhengighet, raffinering av råolje, brønn, forbrenning, lastebiltransport over land (ikke over vann), oppgraderinger og v7-lagring.
+- **OPUS-09**: 8 tester for presisjonsverk, flyverk og tak, flyplassplassering, drivstoff og tid, rekkevidde, målinger og kartkunnskap, planetkameraets gate, og lagring midt i flyvning.
+- **OPUS-10**: 8 tester for elektronikk (kun strøm og tak), telegraf (krever strøm), flyoppdrag via telegraf, forskning (kun med strøm), låste oppgraderinger, rakettgrunnlag uten orbitale bygg og v9-lagring.
+- Oppdaterte OPUS-03-testen for planetkameraet til ny regel.
+
+### Added
 - **OPUS-07 · damp og industri**: En seedet, begrenset kullåre, autonom kullgruve, kullfyrt dampmaskin med vedlikehold, dampdrevne metallverk/maskinverksted og en ressursbetalt regional jernbane med lokomotiv og kull i transit. Ingen av anleggene plasseres eller styres av spilleren.
 
 ### Changed

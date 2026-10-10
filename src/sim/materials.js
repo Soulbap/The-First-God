@@ -14,7 +14,8 @@ export const usableMineral = (n) => n?.kind === 'mineral' && n.amount > 0;
 
 export function discoverMinerals(state) {
   if (!materialEnabled(state)) return;
-  const mine = state.nodes.find((n) => n.kind === 'mineral' && n.amount > 0 && !n.discovered);
+  // Olje oppdages først når petroleumskunnskapen finnes. Før det skal feltet ikke påvirke tidligere spill.
+  const mine = state.nodes.find((n) => n.kind === 'mineral' && n.amount > 0 && !n.discovered && (n.mineral !== 'oil' || state.industrial?.petroleum));
   if (!mine) return;
   mine.discovered = true;
   state.events.push({ type: 'mineralDiscovered', mineral: mine.mineral, x: mine.x, y: mine.y });
@@ -37,9 +38,16 @@ function cycle(state, building, recipe, dt) {
   state.events.push({ type: 'materialMade', resource: recipe.out, amount: recipe.amount, x: building.x, y: building.y });
 }
 
+// Kull krever en gruve, og olje pumpes bare av en brønn (src/sim/petroleum.js). Ingen av dem håndplukkes.
+export function mineralHarvestable(state, node) {
+  if (node.mineral === 'oil') return false;
+  if (node.mineral === 'coal') return !!state.industrial?.enabled && state.buildings.some((b) => b.complete && b.type === 'coal_mine');
+  return true;
+}
+
 export function harvestMineral(state, node, amount = 1) {
   if (!materialEnabled(state) || !node || node.kind !== 'mineral' || node.amount <= 0) return 0;
-  if (node.mineral === 'coal' && (!state.industrial?.enabled || !state.buildings.some((b) => b.complete && b.type === 'coal_mine'))) return 0;
+  if (!mineralHarvestable(state, node)) return 0;
   const got = Math.min(amount, node.amount); node.amount -= got; node.stone = node.amount; node.discovered = true;
   return got;
 }

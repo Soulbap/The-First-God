@@ -54,11 +54,14 @@ test('OPUS-03: kartet kommer før planeten, og besøk krever ekte oppdagelse', (
   assert.equal(regionById(s, r.id).state, regionState.OPPDAGET);
 });
 
-test('OPUS-03: luftmåling åpner planetkameraet etter sen sivilisasjon', () => {
+test('OPUS-03/09: planetkameraet åpnes av fullførte luftmålinger, ikke av kjøp alene', () => {
   const s = createGame(7);
-  s.milestones.first_world_civilization = 1; s.upgrades.cartography = 1;
+  s.milestones.first_world_civilization = 1; s.upgrades.cartography = 1; s.upgrades.aviation = 1;
   s.resources.planks = 100; s.resources.cutstone = 100; s.resources.food = 100; s.resources.knowledge = 500;
   assert.equal(purchase(s, 'aerial_survey').ok, true);
+  checkMilestones(s);
+  assert.notEqual(s.unlocks.worldView, true, 'kjøpet alene åpner ikke planetkameraet');
+  s.aviation.surveys = 3;
   checkMilestones(s);
   assert.equal(s.unlocks.worldView, true);
 });

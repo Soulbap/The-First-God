@@ -507,6 +507,12 @@ export function buildingSprite(b, variant = 0) {
           : b.type === 'windmill' ? paintMill(seed, p, true)
           : (b.type === 'metalworks' || b.type === 'locomotive_workshop') ? paintFactory(seed, p, b.type === 'metalworks')
           : (b.type === 'steam_engine' || b.type === 'coal_mine' || b.type === 'rail_terminal') ? paintWorkshop(seed, p)
+          // OPUS-08: foreløpig gjenbruk av eksisterende malerier; egne sprites er PARTIAL (se docs/opus-08-10/REPORT.md).
+          : (b.type === 'generator' || b.type === 'grid_station' || b.type === 'combustion_engine' || b.type === 'oil_well') ? paintWorkshop(seed, p)
+          : (b.type === 'refinery' || b.type === 'motor_depot' || b.type === 'aircraft_works' || b.type === 'precision_works') ? paintFactory(seed, p, false)
+          : b.type === 'airfield' ? paintWorkshop(seed, p)
+          : (b.type === 'electronics_works' || b.type === 'research_institute') ? paintFactory(seed, p, false)
+          : b.type === 'telegraph' ? paintWorkshop(seed, p)
           : (b.type === 'workshop' || b.type === 'mine' || b.type === 'smelter' || b.type === 'dock' || b.type === 'boatyard') ? paintWorkshop(seed, p)
             : b.type === 'charcoal_kiln' ? paintFirePit(seed, p)
             : b.type === 'sawmill' ? paintSawmill(seed, p)

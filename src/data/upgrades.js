@@ -342,10 +342,61 @@ export const UPGRADES = [
   {
     id: 'aerial_survey', name: 'Luftmåling', category: 'rike', icon: 'globe',
     discover: [{ milestone: 'first_world_civilization' }], cost: { planks: 20, cutstone: 16, food: 20, knowledge: 120 },
-    requires: [{ milestone: 'first_world_civilization' }, { upgrade: 'cartography' }], requireText: 'Krever Verdens første sivilisasjon og karttegning',
-    effect: 'Målinger høyt over landet åpner planetkameraet. Ukjente områder forblir dempet.',
-    world: 'Målere leser horisonten fra høyder og tårn; verden blir en helhet uten å bli fullt kjent.',
-    actions: [{ type: 'enablePlanetCamera' }],
+    requires: [{ milestone: 'first_world_civilization' }, { upgrade: 'cartography' }, { upgrade: 'aviation' }], requireText: 'Krever Verdens første sivilisasjon, karttegning og Flyteknikk',
+    // OPUS-09: kunnskapen gir bare flyene. Planetkameraet åpnes først når målingene er gjennomført (milepælen «En verden måles»).
+    effect: 'Fly flyr ut fra flyplassen og måler kjente land fra luften. Hver fullført måling gjør kartet mer presist; ukjente områder forblir dempet.',
+    world: 'Flyplassen og hangaren blir brukt daglig; fly setter kurs mot land menneskene allerede har funnet.',
+    actions: [{ type: 'enableAerialSurvey' }],
+  },
+  // ---------- OPUS-09: Luftfart og global observasjon ----------
+  {
+    id: 'precision_manufacturing', name: 'Presisjonsarbeid', category: 'kunnskap', icon: 'sawmill',
+    discover: [{ upgrade: 'factory_manufacture' }], cost: { knowledge: 170, copper: 6, iron: 8, industrialMachinery: 3 },
+    requires: [{ upgrade: 'factory_manufacture' }, { built: 'metalworks' }], requireText: 'Krever Fabrikkhåndverk og et metallverk',
+    effect: 'Presisjonskomponenter lages av jern, maskiner og kobber i et eget verksted. Komponentene er flaskehalsen for fly.',
+    world: 'Et stille verksted med målebenker og tanker, og små gjenstander som bæres med forsiktighet.',
+    actions: [{ type: 'enablePrecision' }],
+  },
+  {
+    id: 'aviation', name: 'Flyteknikk', category: 'kunnskap', icon: 'globe',
+    discover: [{ upgrade: 'combustion_engine' }, { upgrade: 'precision_manufacturing' }], cost: { knowledge: 240, iron: 10, precisionComponents: 4, fuel: 4 },
+    requires: [{ upgrade: 'combustion_engine' }, { upgrade: 'precision_manufacturing' }, { built: 'combustion_engine' }], requireText: 'Krever Forbrenningsmotor og Presisjonsarbeid',
+    effect: 'Et flyverk bygger fly av presisjonskomponenter, og en flyplass bygges når verket står. Fly bruker drivstoff, har begrenset rekkevidde og må vedlikeholdes.',
+    world: 'En hangar med store dører, en rullebane av stein og et lite fly på gresset.',
+    actions: [{ type: 'enableAviation' }],
+  },
+  // ---------- OPUS-10: Avansert industri og vitenskapelig sivilisasjon ----------
+  {
+    id: 'electronics', name: 'Elektronikk', category: 'kunnskap', icon: 'book',
+    discover: [{ upgrade: 'precision_manufacturing' }, { upgrade: 'electric_power' }], cost: { knowledge: 260, copper: 10, precisionComponents: 6 },
+    requires: [{ upgrade: 'precision_manufacturing' }, { upgrade: 'electric_power' }, { built: 'precision_works' }], requireText: 'Krever Presisjonsarbeid, Elektrisk kraft og et presisjonsverk',
+    effect: 'Styringskomponenter lages av presisjonsdeler, kobber og maskiner, med elektrisk kraft som eneste drivkraft. Elektronikk er grunnlaget for kommunikasjon og instrumenter.',
+    world: 'Et rent verksted med varme lamper, små kretskort og måleinstrumenter på hyllene.',
+    actions: [{ type: 'enableElectronics' }],
+  },
+  {
+    id: 'communication', name: 'Telegrafi', category: 'kunnskap', icon: 'road',
+    discover: [{ upgrade: 'electronics' }], cost: { knowledge: 280, copper: 12, electronics: 3 },
+    requires: [{ upgrade: 'electronics' }, { built: 'electronics_works' }], requireText: 'Krever Elektronikk og et elektronikkverksted',
+    effect: 'En telegraf i bosettingen koordinerer flyoppdrag og sender ord raskere enn varer. Den trenger strøm og fungerer bare når den faktisk har kraft.',
+    world: 'En mast med tråder mot de andre bosettingene, og en kontorbenk med lydende klokke.',
+    actions: [{ type: 'enableCommunication' }],
+  },
+  {
+    id: 'research', name: 'Forskningsinstitutt', category: 'kunnskap', icon: 'book',
+    discover: [{ upgrade: 'communication' }], cost: { knowledge: 320, electronics: 4, copper: 14, planks: 40 },
+    requires: [{ upgrade: 'communication' }, { built: 'telegraph' }, { people: 20 }], requireText: 'Krever Telegrafi, en aktiv telegraf og minst 20 mennesker',
+    effect: 'Et institutt bygges av folk som kan lære og arbeide. Det bruker strøm og gir mer kunnskap, uten en egen valuta.',
+    world: 'Et stort bygg med laboratorier, tavler og lys som brenner sent.',
+    actions: [{ type: 'enableResearch' }],
+  },
+  {
+    id: 'rocket_foundations', name: 'Rakettgrunnlag', category: 'kunnskap', icon: 'globe',
+    discover: [{ upgrade: 'research' }], cost: { knowledge: 400, electronics: 6, precisionComponents: 6, fuel: 6 },
+    requires: [{ upgrade: 'research' }, { built: 'research_institute' }], requireText: 'Krever Forskningsinstitutt og et institutt i drift',
+    effect: 'Kunnskap om drivstoffkjemi, presisjon og styring legges til grunn for senere rakettarbeid. Ingen rakett eller bane er bygget av dette.',
+    world: 'Testbenker og merkede tanker, men ingen utskytingsrampe ennå.',
+    actions: [{ type: 'enableRocketFoundations' }],
   },
 
   // ---------- OPUS-04: Materialenes vei ----------
@@ -389,6 +440,39 @@ export const UPGRADES = [
     effect: 'Dampdrevne metallverk og maskinverksted vokser fram autonomt. De bruker jern og kull til reelle industrimaskiner og jernbanedeler.',
     world: 'Verkstedene blir større og får skorsteiner, kullgård og roterende maskineri.',
     actions: [],
+  },
+  // ---------- OPUS-08: Elektrisitet og motorisering ----------
+  {
+    id: 'petroleum_geology', name: 'Petroleumsgeologi', category: 'kunnskap', icon: 'stone',
+    discover: [{ upgrade: 'steam_power' }], cost: { knowledge: 120, planks: 16, iron: 4 },
+    requires: [{ upgrade: 'steam_power' }, { built: 'steam_engine' }], requireText: 'Krever Dampkraft og en virkende dampmaskin',
+    effect: 'Folket lærer å lete etter svart olje i fjell og sand. Når et felt er funnet, bygger de en brønn som pumper råolje til lageret. Oljen kan ikke håndplukkes.',
+    world: 'Et stål- og trebyggverk ved et svart felt, og en pumpe som går i takt med dampmaskinen.',
+    actions: [{ type: 'enablePetroleum' }],
+  },
+  {
+    id: 'electric_power', name: 'Elektrisk kraft', category: 'kunnskap', icon: 'sawmill',
+    discover: [{ upgrade: 'factory_manufacture' }], cost: { knowledge: 150, copper: 8, iron: 6, industrialMachinery: 2 },
+    requires: [{ upgrade: 'factory_manufacture' }, { built: 'metalworks' }], requireText: 'Krever Fabrikkhåndverk og et metallverk',
+    effect: 'En generator drevet av damp gir elektrisk kraft til den bosettingen den står i, gjennom én nettstasjon. Elektriske fabrikker arbeider raskere, men trenger fortsatt damp eller kraft nær seg.',
+    world: 'Generatorhus, ledninger mot verkstedene og en nettstasjon. Lys finnes bare der strømmen faktisk når frem.',
+    actions: [{ type: 'enableElectricity' }],
+  },
+  {
+    id: 'refining', name: 'Raffinering', category: 'kunnskap', icon: 'stone',
+    discover: [{ upgrade: 'petroleum_geology' }], cost: { knowledge: 170, iron: 6, industrialMachinery: 2 },
+    requires: [{ upgrade: 'petroleum_geology' }, { upgrade: 'factory_manufacture' }, { built: 'oil_well' }], requireText: 'Krever Petroleumsgeologi, Fabrikkhåndverk og en oljebrønn',
+    effect: 'Råolje blir raffinert drivstoff i et raffineri. Raffineriet bruker to enheter råolje for én enhet drivstoff og krever kraft.',
+    world: 'Destillasjonstårn, tanker og en lukt av parafin ved brønnen og på veien hjem.',
+    actions: [{ type: 'enableRefining' }],
+  },
+  {
+    id: 'combustion_engine', name: 'Forbrenningsmotor', category: 'kunnskap', icon: 'sawmill',
+    discover: [{ upgrade: 'refining' }], cost: { knowledge: 200, iron: 8, industrialMachinery: 3, fuel: 2 },
+    requires: [{ upgrade: 'refining' }, { built: 'refinery' }], requireText: 'Krever Raffinering og et raffineri',
+    effect: 'Motoren brenner raffinert drivstoff og gir mekanisk kraft til bosettingen. Når den går, bruker den drivstoff. Lastebiler lages i et lastebilverksted og reiser på land mellom bosettinger.',
+    world: 'En motorhall med eksospust, drivstofftank og de første lastebilene på veien mellom bosettingene.',
+    actions: [{ type: 'enableCombustion' }],
   },
 
   // ---------- OPUS-02: Takkoffer — langsiktig PP-sluk ----------
@@ -477,7 +561,7 @@ export const MILESTONES = [
   { id: 'age_of_knowledge', title: 'Kunnskapens tidsalder', text: 'Det folk lærer, deles nå på tvers av håndverk og hjem. Kunnskapshallen samler det som før gikk tapt.', when: { all: [{ milestone: 'city_rises' }, { techs: 4 }, { built: 'hall' }, { knowledge: 120 }] } },
   { id: 'connected_realm', title: 'Et sammenhengende rike', text: 'Flere bosettinger med hver sin rolle er bundet sammen av stier og leveranser. Verdenskartet viser nå landene menneskene kjenner.', when: { all: [{ milestone: 'age_of_knowledge' }, { settlements: 4 }, { stageMin: 'By' }, { delivery: 14 }, { roles: 3 }, { routes: 3 }, { upgrade: 'trade_roads' }] }, unlock: 'mapView' },
   { id: 'first_world_civilization', title: 'Verdens første sivilisasjon', text: 'Utposter i fjerne land sender varer hjem. En sivilisasjon som begynte med ett ly, kjenner nå verden.', when: { all: [{ milestone: 'connected_realm' }, { upgrade: 'connected_world' }, { regions: 4 }, { outposts: 2 }, { caravans: 6 }] } },
-  { id: 'planetary_survey', title: 'En verden måles', text: 'Folkets kart og målinger binder de kjente landene til én planet. Det ukjente er fortsatt ukjent.', when: { upgrade: 'aerial_survey' }, unlock: 'worldView' },
+  { id: 'planetary_survey', title: 'En verden måles', text: 'Folkets kart og målinger binder de kjente landene til én planet. Det ukjente er fortsatt ukjent.', when: { all: [{ upgrade: 'aerial_survey' }, { airSurveys: 3 }] }, unlock: 'worldView' },
 ];
 
 export const upgradeById = (id) => UPGRADES.find((u) => u.id === id);

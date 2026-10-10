@@ -26,7 +26,7 @@ export function siteIsValid(state, type, x, y) {
 const ZONE = {
   shelter: 'home', hut: 'home', townhouse: 'home',
   fire: 'core', hearth: 'core', storage: 'core', market: 'core', hall: 'core',
-  sawmill: 'work', mason: 'work', workshop: 'work', mine: 'work', coal_mine: 'work', charcoal_kiln: 'work', smelter: 'work', dock: 'work', boatyard: 'work', watermill: 'work', windmill: 'work', steam_engine: 'work', metalworks: 'work', locomotive_workshop: 'work', rail_terminal: 'work',
+  sawmill: 'work', mason: 'work', workshop: 'work', mine: 'work', coal_mine: 'work', charcoal_kiln: 'work', smelter: 'work', dock: 'work', boatyard: 'work', watermill: 'work', windmill: 'work', steam_engine: 'work', metalworks: 'work', locomotive_workshop: 'work', rail_terminal: 'work', generator: 'work', grid_station: 'work', oil_well: 'work', refinery: 'work', combustion_engine: 'work', motor_depot: 'work', precision_works: 'work', aircraft_works: 'work', airfield: 'work', electronics_works: 'work', telegraph: 'work', research_institute: 'work',
   field: 'field',
   well: 'core', warehouse: 'core', sanctuary: 'sanct',
 };
@@ -37,6 +37,8 @@ function resourceDir(state, anchor, kind) {
   let sx = 0, sy = 0;
   for (const n of state.nodes) {
     if (n.kind !== kind || (kind === 'tree' && n.state !== 'alive')) continue;
+    // Olje påvirker ikke plassering før petroleum er kjent (ellers endres tidligere spill).
+    if (n.mineral === 'oil' && !state.industrial?.petroleum) continue;
     const dx = n.x - anchor.x, dy = n.y - anchor.y, d = Math.hypot(dx, dy);
     if (d < 40 || d > 900) continue;
     const w = 1 / (d + 120);
