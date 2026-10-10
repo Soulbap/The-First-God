@@ -3,12 +3,12 @@
 // Skrår projeksjon: dybde (d) går opp til høyre, slik at front, side og tak leses som ett volum.
 import { mulberry, paintSprite, dab, taper, jitter, rgba, clamp, smooth } from './paint.js';
 
-const DX = 0.55, DY = 0.38; // dybdeakse i bildet
+export const DX = 0.55, DY = 0.38; // dybdeakse i bildet
 
-const stage = (p, a, b) => clamp((p - a) / (b - a));
+export const stage = (p, a, b) => clamp((p - a) / (b - a));
 
 // Boks: front-venstre-bunn (x, y), bredde w, dybde d, høyde h. Gir korte planke-/steinstriper.
-function box(ctx, rnd, x, y, w, d, h, front, side, top, { courses = 0, mortar = null } = {}) {
+export function box(ctx, rnd, x, y, w, d, h, front, side, top, { courses = 0, mortar = null } = {}) {
   const fx = (u) => x + u, ox = d * DX, oy = d * DY;
   // Høyre side.
   ctx.fillStyle = side;
@@ -37,7 +37,7 @@ function box(ctx, rnd, x, y, w, d, h, front, side, top, { courses = 0, mortar = 
 }
 
 // Saltak med mønet langs bredden. Sett fra front-oppe: forsiden av taket og gavlen til høyre.
-function gableRoof(ctx, rnd, x, y, w, d, rise, over, base, dark, lit) {
+export function gableRoof(ctx, rnd, x, y, w, d, rise, over, base, dark, lit) {
   const ox = d * DX, oy = d * DY, x0 = x - over, x1 = x + w + over;
   const mx = ox / 2, my = oy / 2;
   // Gavlfeltet (høyre).
@@ -63,10 +63,10 @@ function gableRoof(ctx, rnd, x, y, w, d, rise, over, base, dark, lit) {
   taper(ctx, x0, y + 1.5, x1, y + 1.5, 1.1, 1.1, 'rgba(20,12,6,0.45)'); // takskjegg
 }
 
-function contact(ctx, w, d, a) {
+export function contact(ctx, w, d, a) {
   dab(ctx, w * 0.1 + d * DX * 0.5, 2, w * 0.62 + d * 0.3, 4.6 + d * 0.12, 0, `rgba(16,12,6,${0.34 * a})`);
 }
-function groundPatch(ctx, rnd, rx, ry, p, tone = [96, 84, 62]) {
+export function groundPatch(ctx, rnd, rx, ry, p, tone = [96, 84, 62]) {
   const a = smooth(0, 0.1, p);
   dab(ctx, 0, 1, rx, ry, 0, rgba(tone, 0.45 * a));
   for (let i = 0; i < 46 * a; i++) {
@@ -74,7 +74,7 @@ function groundPatch(ctx, rnd, rx, ry, p, tone = [96, 84, 62]) {
     dab(ctx, Math.cos(t) * rx * d, Math.sin(t) * ry * d, 0.8 + rnd() * 2, 0.4 + rnd() * 0.7, rnd() * 3, rgba(jitter(tone, rnd, 0.3), 0.3));
   }
 }
-const stoneBlocks = (ctx, rnd, x, y, w, rows, perRow, bh, tone) => {
+export const stoneBlocks = (ctx, rnd, x, y, w, rows, perRow, bh, tone) => {
   for (let r = 0; r < rows; r++) for (let c = 0; c < perRow; c++) {
     const bw = w / perRow, bx = x + c * bw + (r % 2) * bw * 0.25, by = y - r * bh;
     const k = 0.82 + rnd() * 0.36;

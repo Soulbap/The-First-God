@@ -1,0 +1,35 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Spriteark — THE FIRST GOD</title>
+<style>body{margin:0;background:#4a5a36;color:#eee;font:12px sans-serif}canvas{display:block}</style>
+<canvas id="c"></canvas>
+<script type="module">
+// Utviklerverktøy: viser byggesprites ved ulike byggetrinn (?scale=2). Ikke del av spillet.
+import { paintTownhouse, paintSawmill, paintMason, paintMarket, paintHall } from '../src/render/city.js';
+import { paintWell, paintWarehouse, paintCottage, paintSanctuary } from '../src/render/civic.js';
+const q = new URLSearchParams(location.search), scale = Number(q.get('scale')) || 1.5;
+const only = q.get('only');
+const defs = [
+  ['townhouse', (p) => paintTownhouse(11, p)], ['cottage', (p) => paintCottage(11, p)], ['well', (p) => paintWell(11, p)],
+  ['warehouse', (p) => paintWarehouse(11, p)], ['sawmill', (p) => paintSawmill(11, p)], ['mason', (p) => paintMason(11, p)],
+  ['market', (p) => paintMarket(11, p)], ['hall', (p) => paintHall(11, p)],
+  ...[0, 1, 2, 3, 4, 5].map((n) => ['sanct' + n, (p) => paintSanctuary(11 + n, p, n)]),
+].filter(([n]) => !only || only.split(',').includes(n));
+const steps = (q.get('p') || '0.35,0.7,1').split(',').map(Number);
+const items = [];
+for (const [name, f] of defs) for (const p of steps) items.push({ name, p, s: f(p) });
+const c = document.getElementById('c'), W = innerWidth || 800;
+let x = 4, y = 4, rowH = 0; const place = [];
+for (const it of items) {
+  const w = it.s.w * scale + 8, h = it.s.h * scale + 18;
+  if (x + w > W) { x = 4; y += rowH; rowH = 0; }
+  place.push({ ...it, x, y }); x += w; rowH = Math.max(rowH, h);
+}
+c.width = W; c.height = y + rowH + 4;
+const ctx = c.getContext('2d'); ctx.imageSmoothingEnabled = true;
+for (const it of place) {
+  ctx.fillStyle = '#566a3d'; ctx.fillRect(it.x, it.y, it.s.w * scale + 4, it.s.h * scale + 14);
+  ctx.drawImage(it.s.canvas, it.x, it.y + 12, it.s.w * scale, it.s.h * scale);
+  ctx.fillStyle = '#fff'; ctx.fillText(it.name + ' ' + it.p, it.x + 2, it.y + 10);
+}
+</script>

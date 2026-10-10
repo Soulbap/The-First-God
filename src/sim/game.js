@@ -17,6 +17,8 @@ import { stepRealm } from './realm.js';
 import { stepWorld } from './worldmap.js';
 import { refreshRoles } from './settlements.js';
 import { applyLegacy } from './legacy.js';
+import { storyMilestone } from './story.js';
+import { stepUrban } from './urban.js';
 
 export const DT = B.dt;
 
@@ -29,6 +31,7 @@ export function checkMilestones(state) {
     state.milestones[m.id] = state.time;
     if (m.unlock) state.unlocks[m.unlock] = true;
     state.events.push({ type: 'milestone', id: m.id, title: m.title, text: m.text, unlock: m.unlock || null });
+    storyMilestone(state, m);
   }
 }
 
@@ -41,6 +44,7 @@ export function step(state, dt = DT) {
   stepCivilization(state, dt);
   stepProduction(state, dt);
   stepRealm(state, dt);
+  stepUrban(state, dt);
   stepWorld(state, dt);
   state.timers.roles += dt;
   if (state.timers.roles >= 1) { state.timers.roles = 0; refreshRoles(state); }

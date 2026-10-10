@@ -8,6 +8,7 @@ import { addWear } from './wear.js';
 import { recordTrip } from './regional.js';
 import { addKnowledge } from './production.js';
 import { settlementById } from './settlements.js';
+import { storyWorld } from './story.js';
 
 export const BIOMES = {
   skog: { name: 'Skogland', goods: [['wood', 8], ['planks', 1]], color: [72, 92, 58] },
@@ -132,6 +133,7 @@ function completeMission(state) {
     // Hver oppdagelse gir kunnskap, og de nærmeste naboene kommer i sikte.
     addKnowledge(state, 3 + region.steps * 2, settlementById(state, 'first'));
     state.events.push({ type: 'regionDiscovered', regionId: region.id, name: region.name, biome: region.biome });
+    storyWorld(state, 'discovered', region, m.members);
     for (const q of members) { q.away = false; q.x = m.edge.x; q.y = m.edge.y; q.state = 'expReturn'; const s = state.stockpile; q.tx = s.x; q.ty = s.y + 12; q.waypoints = null; }
   } else {
     // Utposten bemannes av følget: de forlater hjemmeregionen for godt.
@@ -139,6 +141,7 @@ function completeMission(state) {
     region.nextGrowAt = state.time + B.globe.outpostGrowSeconds;
     region.nextCaravanAt = state.time + B.globe.caravanSeconds;
     G.stats.outposts++;
+    storyWorld(state, 'outpost', region, m.members); // før følget forlater verden, så navnene finnes
     const gone = new Set(members.map((q) => q.id));
     state.humans = state.humans.filter((q) => !gone.has(q.id));
     for (const s of state.settlements) s.population = s.population.filter((id) => !gone.has(id));
@@ -158,6 +161,7 @@ function stepOutposts(state) {
       if (r.state === regionState.UTPOST && r.pop >= W.establishedPop) {
         r.state = regionState.ETABLERT; G.stats.established++;
         state.events.push({ type: 'regionEstablished', regionId: r.id, name: r.name });
+        storyWorld(state, 'established', r);
       }
     }
     if (state.time >= r.nextCaravanAt) {
@@ -190,6 +194,7 @@ function stepCaravans(state, dt) {
     r.caravans--; r.delivered++; G.stats.caravanDeliveries++;
     recordTrip(state, r.id, 'first', c.goods[0].res, c.goods[0].amount);
     state.events.push({ type: 'caravanArrived', regionId: r.id, x: c.x, y: c.y });
+    storyWorld(state, 'caravan', r);
   }
   if (G.caravans.some((q) => q.arrived)) G.caravans = G.caravans.filter((q) => !q.arrived);
 }

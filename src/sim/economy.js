@@ -110,6 +110,8 @@ function applyAction(state, def, a) {
     state.civilization.foodUnlocked = true;
     state.civilization.nextFoodAt = state.time + a.afterSeconds;
     state.civilization.nextPopulationAt = state.time + a.afterSeconds;
+  } else if (a.type === 'enableUrban') {
+    state.urban.enabled = true; state.urban.nextAt = state.time + 4;
   } else if (a.type === 'enableExchange') {
     state.civilization.exchangeUnlocked = true;
   } else if (a.type === 'enableFounding') {

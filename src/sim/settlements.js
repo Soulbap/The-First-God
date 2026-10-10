@@ -1,6 +1,7 @@
 // Bosettingers utviklingstrinn, roller og boligkapasitet. Rene spørringer på tilstanden — ingen sideeffekter.
 // Trinn og roller oppstår av faktiske bygg, folk og forbindelser; ingen timere og ingen spillerordre.
 import { BALANCE as B } from '../data/balance.js';
+import { storyStage } from './story.js';
 
 export const STAGES = ['Leir', 'Grend', 'Landsby', 'Voksende landsby', 'Tidlig by', 'By', 'Storby'];
 export const stageRank = (stage) => STAGES.indexOf(stage);
@@ -94,7 +95,11 @@ export const roleEffect = (role, key, fallback = 1) => ROLE_EFFECTS[role]?.[key]
 
 // Rollen mellomlagres på bosettingen (oppdateres jevnlig) så hyppige spørringer holder seg billige.
 export function refreshRoles(state) {
-  for (const s of state.settlements) { s.stage = settlementStage(state, s); s.role = settlementRole(state, s); }
+  for (const s of state.settlements) {
+    const before = s.stage;
+    s.stage = settlementStage(state, s); s.role = settlementRole(state, s);
+    if (s.stage !== before && stageRank(s.stage) > stageRank(before || 'Leir')) storyStage(state, s, s.stage);
+  }
 }
 export const cachedRole = (state, id) => settlementById(state, id)?.role || 'Skogbygd';
 

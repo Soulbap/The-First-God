@@ -34,3 +34,6 @@ debug-output/
 
 # OPUS-01: før/etter-skjermbilder er dokumentasjon og skal være med
 !docs/opus-01/screenshots/
+
+# OPUS-02: lokale tilstandsbilder fra bot-gjennomspilling (genereres av tools/snapshots.mjs)
+snap/

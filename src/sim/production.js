@@ -30,7 +30,8 @@ function stepRecipe(state, b, S, dt) {
   const recipe = recipeOf(b.type);
   const inputs = Object.entries(recipe.inputs);
   const enough = inputs.every(([k, n]) => state.resources[k] >= n + recipe.reserve);
-  const cap = recipe.cap * (state.buildings.some((q) => q.complete && q.type === 'market') ? B.production.marketCapMultiplier : 1);
+  const cap = recipe.cap * (state.buildings.some((q) => q.complete && q.type === 'market') ? B.production.marketCapMultiplier : 1)
+    * (state.buildings.some((q) => q.complete && q.type === 'warehouse') ? B.production.warehouseCapMultiplier : 1);
   if (b.cycle <= 0 && Object.keys(recipe.outputs).every((k) => state.resources[k] >= cap)) { b.active = false; b.idle = 'fullt'; return; }
   if (!staffed(S)) { b.active = false; b.idle = 'folk'; return; }
   if (!enough && b.cycle <= 0) { b.active = false; b.idle = 'råvare'; return; }

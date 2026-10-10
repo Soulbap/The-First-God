@@ -2,6 +2,7 @@
 import { BALANCE as B } from '../data/balance.js';
 import { spawnHumans } from './population.js';
 import { completedHomesOf, housingCapacity, roleEffect } from './settlements.js';
+import { storyFestival } from './story.js';
 
 const fields = (state) => state.buildings.filter((b) => b.complete && b.type === 'field');
 
@@ -19,6 +20,7 @@ function stepFestival(state) {
   C.nextFestivalAt = state.time + F.interval;
   C.festivals++;
   state.events.push({ type: 'festival', x: hearth.x, y: hearth.y, food: cost, n: C.festivals });
+  storyFestival(state, C.festivals, { x: hearth.x, y: hearth.y });
 }
 
 export function stepCivilization(state) {

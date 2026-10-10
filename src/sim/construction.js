@@ -3,12 +3,14 @@ import { BALANCE as B } from '../data/balance.js';
 import { dist, inBounds, inPond } from './world.js';
 import { spawnHumans } from './population.js';
 import { stampWear } from './wear.js';
+import { storyBuilt } from './story.js';
 
 export function siteIsValid(state, type, x, y) {
   const r = B.building[type].radius;
   if (!inBounds(state, x, y, 70) || inPond(state, x, y, r + 14)) return false;
   if (type !== 'field' && dist(x, y, state.stockpile.x, state.stockpile.y) < r + 34) return false;
-  for (const b of state.buildings) if (dist(x, y, b.x, b.y) < r + b.radius + 14) return false;
+  // Tettere enn før (OPUS-02): 9 mellom boliger og verksteder gir smale smau; åkre trenger fortsatt luft.
+  for (const b of state.buildings) if (dist(x, y, b.x, b.y) < r + b.radius + (type === 'field' || b.type === 'field' ? 14 : 9)) return false;
   for (const n of state.nodes) {
     const need = n.kind === 'tree' ? r + 22 : r + n.radius + 10;
     if (dist(x, y, n.x, n.y) < need) return false;
@@ -23,6 +25,7 @@ const ZONE = {
   fire: 'core', hearth: 'core', storage: 'core', market: 'core', hall: 'core',
   sawmill: 'work', mason: 'work', workshop: 'work',
   field: 'field',
+  well: 'core', warehouse: 'core', sanctuary: 'sanct',
 };
 export const zoneOf = (type) => ZONE[type] || 'core';
 
@@ -40,6 +43,31 @@ function resourceDir(state, anchor, kind) {
   return l > 1e-9 ? { x: sx / l, y: sy / l } : null;
 }
 
+// Gater følger de virkelige forbindelsene: retningene fra bosettingen mot de andre bosettingene den sender og
+// mottar varer fra. Hus legger seg langs en slik stråle, ved siden av gaten (ikke oppå den).
+export function streetRays(state, settlementId) {
+  const me = settlementId === 'first' ? state.settlement.center : state.settlements.find((s) => s.id === settlementId);
+  if (!me) return [];
+  const rays = [];
+  for (const s of state.settlements) {
+    if (s.id === settlementId || s.state !== 'active') continue;
+    const dx = s.x - me.x, dy = s.y - me.y, d = Math.hypot(dx, dy);
+    if (d > 1) rays.push({ x: dx / d, y: dy / d });
+  }
+  return rays;
+}
+function streetBonus(ctx, x, y, anchor) {
+  let best = 0;
+  for (const r of ctx.rays || []) {
+    const ax = x - anchor.x, ay = y - anchor.y;
+    const along = ax * r.x + ay * r.y, perp = Math.abs(-ax * r.y + ay * r.x);
+    if (along < 40) continue;
+    const t = (perp - 46) / 16;
+    best = Math.max(best, Math.exp(-t * t));
+  }
+  return best * 12;
+}
+
 function siteScore(state, type, x, y, ring, anchor, ctx) {
   const zone = zoneOf(type);
   let score = -ring * 0.12; // nærhet til hjertet
@@ -53,7 +81,7 @@ function siteScore(state, type, x, y, ring, anchor, ctx) {
     if (d < 120 && z === 'core') coreNear++;
   }
   const dx = (x - anchor.x) / (ring || 1), dy = (y - anchor.y) / (ring || 1);
-  if (zone === 'home') score += Math.min(3, homesNear) * 9 + Math.min(2, coreNear) * 4 - workNear * 7 - fieldsNear * 6;
+  if (zone === 'home') score += Math.min(3, homesNear) * 9 + Math.min(2, coreNear) * 4 - workNear * 7 - fieldsNear * 6 + streetBonus(ctx, x, y, anchor);
   else if (zone === 'core') score += coreNear * 5 - ring * 0.3; // torg og hall vil helt inn mot sentrum
   else if (zone === 'work') {
     const dir = ctx.dir;
@@ -74,12 +102,19 @@ export function findBuildSite(state, type, settlementId = 'first') {
   const home = state.settlements.find((s) => s.id === settlementId);
   const C = settlementId === 'first' || !home ? state.settlement.center : home;
   const fire = state.buildings.find((b) => b.type === 'fire' && (b.settlementId || 'first') === settlementId);
-  const anchor = type === 'fire' || !fire ? C : fire;
+  let anchor = type === 'fire' || !fire ? C : fire;
+  let minRing = def.minRing;
+  if (type === 'sanctuary') {
+    // Helligdommen vokser som en liten klynge for seg selv, et stykke fra torget: først et sted i utkanten, deretter rundt den første.
+    const first = state.buildings.find((b) => b.type === 'sanctuary');
+    if (first) { anchor = first; minRing = 46; }
+    else { const a = state.settlement.angleOffset + 2.4; anchor = { x: C.x + Math.cos(a) * 250, y: C.y + Math.sin(a) * 180 }; minRing = 0; }
+  }
   const zone = zoneOf(type);
-  const ctx = { settlementId, dir: type === 'sawmill' ? resourceDir(state, anchor, 'tree') : type === 'mason' ? resourceDir(state, anchor, 'rock') : null };
+  const ctx = { settlementId, rays: zone === 'home' ? streetRays(state, settlementId) : null, dir: type === 'sawmill' ? resourceDir(state, anchor, 'tree') : type === 'mason' ? resourceDir(state, anchor, 'rock') : null };
   const reach = zone === 'field' ? 150 : zone === 'work' ? 120 : 70; // hvor langt utover første ledige ring vi vurderer
   let best = null, firstRing = null;
-  for (let ring = def.minRing; ring <= 520; ring += 10) {
+  for (let ring = minRing; ring <= 520; ring += 10) {
     if (firstRing != null && ring > firstRing + reach) break;
     const steps = Math.max(12, Math.round(ring / 8));
     for (let k = 0; k < steps; k++) {
@@ -123,6 +158,7 @@ function completeBuilding(state, b) {
   b.builders = [];
   stampWear(state, b.x, b.y + b.radius * 0.5, b.radius * 0.9, 0.35);
   state.events.push({ type: 'constructionComplete', id: b.id, buildingType: b.type, x: b.x, y: b.y });
+  storyBuilt(state, b);
   if (b.source === 'founding') {
     state.expansion.founded = true;
     const settlement = state.settlements.find((s) => s.id === 'second');

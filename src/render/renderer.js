@@ -15,6 +15,8 @@ import { treeCapacity } from '../sim/nature.js';
 import { routeKey } from '../sim/regional.js';
 import { plankPileSprite, blockPileSprite } from './city.js';
 import { drawOverview } from './overview.js';
+import { stageRank } from '../sim/settlements.js';
+import { buildStreets } from './streets.js';
 
 export const wind = (x, t) => 0.6 * Math.sin(t * 0.9 + x * 0.003) + 0.4 * Math.sin(t * 2.1 + x * 0.009 + 1.3);
 
@@ -45,10 +47,11 @@ const lowerBound = (arr, y) => {
 export function createRenderer(canvas) {
   const mainCtx = canvas.getContext('2d');
   let ctx = mainCtx; // byttes midlertidig når hjemmeregionen males til planetens øyeblikksbilde
-  const R = { ctx, weather: { rain: 0, wind: 0 }, view: null, terrain: null, decor: null, env: null, ecologyOverlay: null, ecologyRevision: -1, grain: null, wearCanvas: null, wearImg: null, exposure: null, wearBox: null, fx: createFx(), emitTimers: new Map(), stats: { frameMs: 0, ecologyRefreshMs: 0 } };
+  const R = { tiers: new Map(), ctx, weather: { rain: 0, wind: 0 }, view: null, terrain: null, decor: null, env: null, ecologyOverlay: null, ecologyRevision: -1, grain: null, wearCanvas: null, wearImg: null, exposure: null, wearBox: null, fx: createFx(), emitTimers: new Map(), stats: { frameMs: 0, ecologyRefreshMs: 0 } };
   const litterCache = new Map();
 
   R.reset = (state) => {
+    R.tiers.clear();
     R.env = buildEnvironment(state);
     R.terrain = buildTerrain(state, R.env);
     R.ecologyOverlay = buildEcologyOverlay(state, R.env);
@@ -71,6 +74,8 @@ export function createRenderer(canvas) {
     R.wearImg = R.wearCanvas.getContext('2d').createImageData(cols * WS, rows * WS);
     R.exposure = new Float32Array(cols * rows);
     R.pave = new Float32Array(cols * rows); // brolagt torg i byen (presentasjon)
+    R.lane = new Float32Array(cols * rows); // grusgater i tidlige byer (presentasjon)
+    R.streetSig = ''; R.streets = [];
     R.wearBox = null;
     // Fast kornmønster som gir slitt jord en ujevn kant (deterministisk fra seed).
     const nz = makeNoise(state.seed + 313), rnd = mulberry(state.seed + 317);
@@ -175,7 +180,7 @@ export function createRenderer(canvas) {
       if ((b.type === 'fire' || b.type === 'hearth') && b.complete) {
         if (every('smoke' + b.id, 0.22, dt)) emit(fx, 'smoke', b.x + (Math.random() - 0.5) * 2, b.y - 8, 1, { spread: 2, wind: w, z: 2, alpha: 0.2 });
         if (every('spark' + b.id, 0.9, dt)) emit(fx, 'spark', b.x, b.y - 4, 1, { spread: 3 });
-      } else if (b.complete && simDt > 0 && !['field', 'market', 'mason', 'sawmill', 'hall'].includes(b.type)) {
+      } else if (b.complete && simDt > 0 && !['field', 'market', 'mason', 'sawmill', 'hall', 'well', 'warehouse', 'sanctuary'].includes(b.type)) {
         if (every('chimney' + b.id, 1.4, dt)) emit(fx, 'smoke', b.x, b.y - 40, 1, { spread: 1.5, wind: w, light: true, alpha: 0.13 });
       } else if (!b.complete && b.divine) {
         if (every('divine' + b.id, 0.1, dt)) emit(fx, 'mote', b.x, b.y, 1, { spread: 40, spreadY: 14, z: 4 });
@@ -228,9 +233,12 @@ export function createRenderer(canvas) {
         stamp(state, x, y, 3, 11 + (n % 2) * 3, strength * (0.55 + 0.45 * Math.sin(t * Math.PI)));
       }
     };
+    const rk = new Map(state.settlements.map((s) => [s.id, stageRank(s.stage)]));
     for (const b of state.buildings) {
       const p = b.complete ? 1 : Math.max(0.15, b.progress);
-      const occupation = b.complete ? 0.18 + activity * 0.82 : 0.12 + b.progress * 0.32;
+      // I byer legger gater og gårdsplasser seg over jorda: mindre bar jord rundt hvert hus.
+      const town = (rk.get(b.settlementId || 'first') ?? 0) >= 5 ? 0.55 : 1;
+      const occupation = (b.complete ? 0.18 + activity * 0.82 : 0.12 + b.progress * 0.32) * (b.type === 'fire' || b.type === 'hearth' ? 1 : town);
       if (b.type === 'fire' || b.type === 'hearth') {
         stamp(state, b.x, b.y, 8, 30 + activity * 10, occupation * p);
         trackTo(b, store, activity * 0.42);
@@ -261,7 +269,7 @@ export function createRenderer(canvas) {
       if (!['By', 'Storby'].includes(S.stage)) continue;
       for (const b of state.buildings) {
         if (!b.complete || (b.settlementId || 'first') !== S.id || !['market', 'hall', 'hearth'].includes(b.type)) continue;
-        const r1 = b.type === 'market' ? 72 : b.type === 'hall' ? 54 : 40;
+        const r1 = b.type === 'market' ? 50 : b.type === 'hall' ? 40 : 30;
         const i0 = Math.max(0, Math.floor((b.x - r1) / cell)), i1 = Math.min(cols - 1, Math.ceil((b.x + r1) / cell));
         const j0 = Math.max(0, Math.floor((b.y - r1) / cell)), j1 = Math.min(rows - 1, Math.ceil((b.y + r1) / cell));
         for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
@@ -273,7 +281,7 @@ export function createRenderer(canvas) {
       }
       // Gatene i storbyens kjerne: de mest brukte stiene får stein i stedet for grus.
       if (S.stage !== 'Storby') continue;
-      const coreR = 330;
+      const coreR = 120;
       const ci0 = Math.max(0, Math.floor((S.x - coreR) / cell)), ci1 = Math.min(cols - 1, Math.ceil((S.x + coreR) / cell));
       const cj0 = Math.max(0, Math.floor((S.y - coreR) / cell)), cj1 = Math.min(rows - 1, Math.ceil((S.y + coreR) / cell));
       for (let j = cj0; j <= cj1; j++) for (let i = ci0; i <= ci1; i++) {
@@ -282,18 +290,34 @@ export function createRenderer(canvas) {
         if (v > R.pave[k]) R.pave[k] = v;
       }
     }
+    // Gatenett (OPUS-02): grus i tidlige byer, stein i kjernen av byer og overalt i storbyer. Beregnes bare på nytt når bygg eller trinn endres.
+    const sig = state.settlements.map((S) => S.stage).join(',') + '|' + state.buildings.reduce((n, b) => n + (b.complete ? 1 : 0), 0);
+    if (sig !== R.streetSig) { R.streetSig = sig; R.streets = buildStreets(state); }
+    R.lane.fill(0);
+    const lay = (arr, x, y, r, v) => {
+      const i0 = Math.max(0, Math.floor((x - r) / cell)), i1 = Math.min(cols - 1, Math.ceil((x + r) / cell));
+      const j0 = Math.max(0, Math.floor((y - r) / cell)), j1 = Math.min(rows - 1, Math.ceil((y + r) / cell));
+      for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+        const a = v * (1 - smooth(r * 0.55, r, Math.hypot((i + 0.5) * cell - x, (j + 0.5) * cell - y)));
+        if (a > arr[j * cols + i]) arr[j * cols + i] = a;
+      }
+    };
+    for (const net of R.streets) for (const e of net.edges) {
+      const paved = net.rank >= 6 || (net.rank >= 5 && e.core);
+      for (const q of e.pts) { lay(R.lane, q.x, q.y, 11, 0.95); if (paved) lay(R.pave, q.x, q.y, 9, 0.95); }
+    }
     // Skriv bare der noe er slitt (nå eller forrige gang).
     let minI = cols, maxI = -1, minJ = rows, maxJ = -1;
     for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
       const k = j * cols + i;
-      if (data[k] > 0.004 || R.exposure[k] > 0.004 || R.pave[k] > 0.004) { if (i < minI) minI = i; if (i > maxI) maxI = i; if (j < minJ) minJ = j; if (j > maxJ) maxJ = j; }
+      if (data[k] > 0.004 || R.exposure[k] > 0.004 || R.pave[k] > 0.004 || R.lane[k] > 0.004) { if (i < minI) minI = i; if (i > maxI) maxI = i; if (j < minJ) minJ = j; if (j > maxJ) maxJ = j; }
     }
     const prev = R.wearBox;
     const cur = maxI >= 0 ? { i0: Math.max(0, minI - 1), i1: Math.min(cols - 1, maxI + 1), j0: Math.max(0, minJ - 1), j1: Math.min(rows - 1, maxJ + 1) } : null;
     const box = cur && prev ? { i0: Math.min(cur.i0, prev.i0), i1: Math.max(cur.i1, prev.i1), j0: Math.min(cur.j0, prev.j0), j1: Math.max(cur.j1, prev.j1) } : (cur || prev);
     R.wearBox = cur;
     if (!box) return;
-    const Wp = cols * WS, px = R.wearImg.data, nz = R.wearNoise, ex = R.exposure, pv = R.pave;
+    const Wp = cols * WS, px = R.wearImg.data, nz = R.wearNoise, ex = R.exposure, pv = R.pave, ln = R.lane;
     // Ytelse: maks(slitasje, eksponering) per celle beregnes én gang; interpolasjonen er skrevet ut uten funksjonskall.
     const M = R.wearMax || (R.wearMax = new Float32Array(cols * rows));
     for (let j = box.j0; j <= box.j1; j++) for (let i = box.i0; i <= box.i1; i++) { const k = j * cols + i; M[k] = data[k] > ex[k] ? data[k] : ex[k]; }
@@ -313,12 +337,14 @@ export function createRenderer(canvas) {
         const shade = 0.78 + n * 0.5;
         let r = 112 * shade, g = 94 * shade, b = 68 * shade;
         // Ønskelinjer modnes: det som går mest, blir til en lys grusvei med småstein (historien ligger i bakken).
-        const walk = (data[a00] * (1 - u) + data[a10] * u) * (1 - v) + (data[a01] * (1 - u) + data[a11] * u) * v;
+        const walk0 = (data[a00] * (1 - u) + data[a10] * u) * (1 - v) + (data[a01] * (1 - u) + data[a11] * u) * v;
+        const lane = (ln[a00] * (1 - u) + ln[a10] * u) * (1 - v) + (ln[a01] * (1 - u) + ln[a11] * u) * v;
+        const walk = walk0 > lane ? walk0 : lane;
         if (walk > 0.5) {
           const road = smooth(0.62, 0.9, walk + (n - 0.5) * 0.18);
           if (road > 0) {
             const grit = (n > 0.82 ? 1.18 : n < 0.12 ? 0.82 : 1) * (0.9 + n * 0.2);
-            r += (150 * grit - r) * road; g += (136 * grit - g) * road; b += (106 * grit - b) * road;
+            r += (160 * grit - r) * road; g += (146 * grit - g) * road; b += (116 * grit - b) * road;
             if (road > a) a = road;
           }
         }
@@ -329,9 +355,12 @@ export function createRenderer(canvas) {
           const hb = (((row * 73856093) ^ (col * 19349663)) >>> 0) % 1000 / 1000;
           const joint = (py % 3 === 0 && hb < 0.7) || ((pxx + cshift) % 4 === 0 && hb > 0.35);
           const k = smooth(0.15, 0.6, pave + (n - 0.5) * 0.4);
-          const tone = (joint ? 0.86 : 1) * (0.84 + hb * 0.18 + n * 0.1);
-          r += (140 * tone - r) * k; g += (130 * tone - g) * k; b += (112 * tone - b) * k;
+          const tone = (joint ? 0.84 : 1) * (0.86 + hb * 0.2 + n * 0.1);
+          // Kantstein: en mørk, smal kant der gata møter jord gjør løpet lesbart som gate.
+          const edge = smooth(0.08, 0.26, pave) * (1 - smooth(0.26, 0.5, pave));
+          r += (154 * tone * (1 - edge * 0.38) - r) * Math.max(k, edge * 0.7); g += (147 * tone * (1 - edge * 0.38) - g) * Math.max(k, edge * 0.7); b += (130 * tone * (1 - edge * 0.38) - b) * Math.max(k, edge * 0.7);
           if (k > a) a = k;
+          if (edge * 0.7 > a) a = edge * 0.7;
         }
         px[o] = r; px[o + 1] = g; px[o + 2] = b; px[o + 3] = a * 215;
       }
@@ -538,6 +567,9 @@ export function createRenderer(canvas) {
     list.push({ y: sp.y + WOOD_PILE_OFFSET.y, draw: () => drawSprite(ctx, woodPileSprite(pileCount(state.resources.wood)), sp.x + WOOD_PILE_OFFSET.x, sp.y + WOOD_PILE_OFFSET.y) });
     list.push({ y: sp.y + STONE_PILE_OFFSET.y, draw: () => drawSprite(ctx, stonePileSprite(pileCount(state.resources.stone)), sp.x + STONE_PILE_OFFSET.x, sp.y + STONE_PILE_OFFSET.y) });
     const hInfo = { time: state.time, gatherInterval: gatherInterval(state), renderTime };
+    const rankOf = new Map(state.settlements.map((q) => [q.id, stageRank(q.stage)]));
+    const sanctIdx = new Map(state.buildings.filter((q) => q.type === 'sanctuary').sort((a, b) => a.id - b.id).map((q, i) => [q.id, i]));
+    const variantOf = (b) => (b.type === 'hut' ? ((rankOf.get(b.settlementId || 'first') ?? 0) >= 4 ? 1 : 0) : b.type === 'sanctuary' ? sanctIdx.get(b.id) : 0);
     for (const h of state.humans) if (!h.away && inView(h.x, h.y)) list.push({ y: h.y, draw: () => drawHuman(ctx, h, hInfo) });
     // Karavaner fra fjerne land: ekte figurer som går inn over kartkanten med varer.
     for (const c of state.globe.caravans) if (inView(c.x, c.y)) list.push({ y: c.y, draw: () => drawHuman(ctx, caravanFigure(c), hInfo) });
@@ -559,6 +591,7 @@ export function createRenderer(canvas) {
     drawParticles(ctx, fx, false);
     ctx.globalCompositeOperation = 'lighter';
     for (const b of state.buildings) {
+      if (b.type === 'sanctuary' && b.complete && sanctIdx.get(b.id) === 3) { drawFireGlow(ctx, b.x, b.y - 38, renderTime); drawFlames(ctx, b.x, b.y - 38, renderTime); continue; }
       if ((b.type !== 'fire' && b.type !== 'hearth') || !b.complete) continue;
       drawFireGlow(ctx, b.x, b.y, renderTime);
       if (festival && b.type === 'hearth') drawFireGlow(ctx, b.x, b.y - 2, renderTime * 1.3); // høstfest: større, varmere ild
@@ -787,7 +820,12 @@ export function createRenderer(canvas) {
       return { id: c.id, x: c.x, y: c.y, dir: c.dir, look: c.look, walk: c.walk, state: 'toStore', carry: { type: res === 'wood' || res === 'planks' || res === 'food' ? 'wood' : 'stone', amount: 3 }, born: -10, anim: 0, gatherKind: null };
     }
     function drawBuilding(b) {
-      const s = buildingSprite(b);
+      const v = variantOf(b);
+      // Byen bygger om halmhyttene til tømmerstuer: et lite støvskyll når utseendet skifter.
+      const prevV = R.tiers.get(b.id);
+      if (prevV !== undefined && prevV !== v && !snapshot) { emit(fx, 'dust', b.x, b.y, 12, { spread: 26, spreadY: 9, z: 2 }); emit(fx, 'mote', b.x, b.y, 8, { spread: 20, spreadY: 8, z: 14 }); }
+      R.tiers.set(b.id, v);
+      const s = buildingSprite(b, v);
       drawSprite(ctx, s, b.x, b.y);
       if (b.type === 'sawmill' && b.complete && b.active) {
         // Sagbladet går opp og ned mens sagbruket arbeider.

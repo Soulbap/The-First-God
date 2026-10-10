@@ -13,6 +13,7 @@ import { isHome, settlementById } from './settlements.js';
 import { partyArrive, partyTick } from './realm.js';
 import { missionAtEdge, missionHome } from './worldmap.js';
 import { festivalActive } from './civilization.js';
+import { storyFounded } from './story.js';
 
 const H = B.human;
 
@@ -303,6 +304,8 @@ export function stepHuman(state, h, dt) {
       const b = buildingById(state, h.targetId);
       if (!b || b.complete) { release(state, h); goIdle(state, h, [0.5, 1.2]); break; }
       h.anim += dt;
+      if (!b.crew) b.crew = [];
+      if (!b.crew.includes(h.id)) b.crew.push(h.id);
       addWork(state, b, dt * H.buildRate * state.modifiers.buildSpeed);
       break;
     }
@@ -358,6 +361,7 @@ export function stepHuman(state, h, dt) {
           const first = state.settlements.find((s) => s.id === 'first');
           if (first) first.population = first.population.filter((id) => !state.expansion.founders.includes(id));
           startConstruction(state, 'hut', { source: 'founding', site: S, settlementId: 'second' });
+          storyFounded(state, state.settlements.find((q) => q.id === 'second'), state.expansion.founders);
         } else goIdle(state, h);
       }
       break;

@@ -2,16 +2,21 @@
 // Metatilstanden (meta) eies av main.js og lagres separat; selve syklusen får bare en kopi av det som gjelder.
 import { PRESTIGE, prestigeById, prestigeCost } from '../data/prestige.js';
 import { civilizationStage } from './civstage.js';
+import { BALANCE as B } from '../data/balance.js';
 
 export const emptyMeta = () => ({ prestige: 0, cycles: 0, bonuses: {}, legacy: [] });
+
+export const offeringPrp = (n) => Math.round(B.offering.prpScale * Math.sqrt(Math.max(0, n)));
 
 // Prestige Points for syklusen som avsluttes. Belønner bare det som faktisk er bygget opp; ingenting trekkes fra.
 export function ragnarokAward(state) {
   const homes = state.buildings.filter((b) => b.complete && (b.type === 'shelter' || b.type === 'hut' || b.type === 'townhouse')).length;
   const outposts = state.globe.regions.filter((r) => r.state === 'utpost' || r.state === 'etablert').length;
   const milestones = Object.keys(state.milestones).length;
+  // Takkoffer: avtagende (kvadratrot) — de første stykkene betyr mest.
+  const offerings = offeringPrp(state.buildings.filter((b) => b.complete && b.type === 'sanctuary').length);
   return Math.floor(Math.sqrt(state.totals.wood + state.totals.stone) / 4) + homes + Math.floor(state.totals.pp / 10)
-    + Math.floor(state.totals.knowledge / 40) + (state.settlements.length - 1) + outposts * 2 + milestones;
+    + Math.floor(state.totals.knowledge / 40) + (state.settlements.length - 1) + outposts * 2 + milestones + offerings;
 }
 
 // Kort minne om syklusen (vises som minnestein ved tjernet i senere sykluser).

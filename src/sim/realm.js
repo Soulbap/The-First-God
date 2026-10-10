@@ -5,6 +5,7 @@ import { dist, inPond } from './world.js';
 import { startConstruction } from './construction.js';
 import { planFor } from './regional.js';
 import { settlementById } from './settlements.js';
+import { storyFounded } from './story.js';
 
 const NAMES = { forest: 'Skogbrynet', stone: 'Steinvarden', farm: 'Åkerlia' };
 const ORDINAL = ['second', 'third', 'fourth', 'fifth', 'sixth'];
@@ -148,4 +149,5 @@ function foundSettlement(state, party, members) {
   Rm.party = null; Rm.lastFoundedAt = state.time; Rm.foundedCount++;
   startConstruction(state, 'hut', { source: `founding:${id}`, site, settlementId: id });
   state.events.push({ type: 'settlementFounded', id, name, x: site.x, y: site.y, kind: site.kind });
+  storyFounded(state, S, S.population);
 }

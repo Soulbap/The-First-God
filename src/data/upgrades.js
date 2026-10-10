@@ -214,6 +214,14 @@ export const UPGRADES = [
     actions: [{ type: 'construct', building: 'market' }],
   },
 
+  {
+    id: 'city_plan', name: 'Byplan', category: 'bosetning', icon: 'road',
+    discover: [{ milestone: 'dawn_civilization' }], cost: { wood: 70, stone: 50, planks: 6, cutstone: 4 },
+    requires: [{ milestone: 'dawn_civilization' }], requireText: 'Krever Sivilisasjonens morgen',
+    effect: 'Folket bygger selv videre når byen har overskudd: brønner, flere bolighus og et varehus. Du velger aldri tomtene.',
+    world: 'Smau blir til gater. Brønner, bolighus og varehus vokser fram langs dem, og torget blir et sentrum.',
+    actions: [{ type: 'enableUrban' }],
+  },
   // ---------- GAMEPLAY-08: Den organiserte sivilisasjonen ----------
   {
     id: 'organized_craft', name: 'Organisert håndverk', category: 'kunnskap', icon: 'book',
@@ -306,6 +314,16 @@ export const UPGRADES = [
     effect: 'Karavanene bærer 50 % mer, utpostene vokser større, og opptil fire utposter kan reises.',
     world: 'Veier møter hav og fjell. Fra alle kanter kommer lass til torget.',
     actions: [{ type: 'connectWorld' }],
+  },
+
+  // ---------- OPUS-02: Takkoffer — langsiktig PP-sluk ----------
+  {
+    id: 'thanksgiving', name: 'Takkoffer', category: 'tro', icon: 'pp', blessing: 'offering',
+    discover: [{ milestone: 'city_rises' }], cost: { pp: 70 }, costGrowth: 1.6, max: 6,
+    requires: [{ milestone: 'city_rises' }, { noPending: 'sanctuary' }], requireText: 'Krever En by reiser seg',
+    effect: 'Folket reiser ett nytt stykke av en helligdom. Hvert stykke gir litt mer Prestige ved Ragnarok (avtagende) — ellers ingenting.',
+    world: 'Et offersted, et varde, en bautastein, en ildskål, et lite tempel: helligdommen vokser ett stykke om gangen.',
+    actions: [{ type: 'construct', building: 'sanctuary' }],
   },
 
   // ---------- OPUS-01: Velsignelser (PP) ----------

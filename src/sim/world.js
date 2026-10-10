@@ -2,6 +2,7 @@
 import { BALANCE as B } from '../data/balance.js';
 import { createRng, rand, range } from '../core/rng.js';
 import { createGlobe } from './worldmap.js';
+import { createChronicle } from './chronicle.js';
 
 export const dist = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
 
@@ -67,6 +68,8 @@ export function createWorld(seed = 20261009) {
     region: { enabled: false, populationUnlocked: false, deliveries: [], reserved: { wood: 0, stone: 0, food: 0, planks: 0, cutstone: 0 }, completedDeliveries: 0, completedProjects: 0, projects: {}, nextPopulationAt: Infinity },
     realm: { autoFounding: false, limit: 2, party: null, lastFoundedAt: -Infinity, nextCheckAt: Infinity, foundedCount: 0, siteCache: null },
     network: { routes: {}, trips: 0 },
+    urban: { enabled: false, nextAt: 0, built: 0 }, // OPUS-02: Byplan
+    chronicle: createChronicle(),
     globe: createGlobe(seed),
     civilization: { foodUnlocked: false, exchangeUnlocked: false, nextFoodAt: Infinity, nextPopulationAt: Infinity, foodHarvests: 0, exchangeDeliveries: 0, festivalUntil: -Infinity, nextFestivalAt: 0, festivals: 0 },
     stockpile: { x: C.x + 4, y: C.y + 48 },

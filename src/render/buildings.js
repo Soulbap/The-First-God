@@ -1,6 +1,7 @@
 // Bygg som males i byggetrinn: grunn → stenger/stolper → vegger → tak/dekke → dør.
 import { mulberry, paintSprite, dab, taper, jitter, rgba, clamp, smooth, lerp } from './paint.js';
 import { paintTownhouse, paintSawmill, paintMason, paintMarket, paintHall } from './city.js';
+import { paintWell, paintWarehouse, paintCottage, paintSanctuary } from './civic.js';
 
 const STEPS = 48; // kvantisering av byggefremdrift for mellomlagring
 
@@ -462,14 +463,18 @@ function paintWorkshop(seed, p) {
 }
 
 const cache = new Map();
-export function buildingSprite(b) {
+// `variant`: hytte → 1 når byen har vokst fra halmhytter til tømmerstuer; helligdom → stykkets nummer (0–5).
+export function buildingSprite(b, variant = 0) {
   const level = b.complete ? STEPS : Math.floor(b.progress * STEPS);
   const entry = cache.get(b.id);
-  if (entry && entry.level === level) return entry.sprite;
+  if (entry && entry.level === level && entry.variant === variant) return entry.sprite;
   const p = level / STEPS;
   const seed = b.id * 101 + 7;
   const sprite = b.type === 'shelter' ? paintShelter(seed, p)
-    : b.type === 'hut' ? paintHut(seed, p)
+    : b.type === 'hut' ? (variant ? paintCottage(seed, p) : paintHut(seed, p))
+      : b.type === 'well' ? paintWell(seed, p)
+      : b.type === 'warehouse' ? paintWarehouse(seed, p)
+      : b.type === 'sanctuary' ? paintSanctuary(seed, p, variant)
       : b.type === 'storage' ? paintStorage(seed, p)
       : b.type === 'hearth' ? paintHearth(seed, p)
         : b.type === 'field' ? paintField(seed, p)
@@ -479,7 +484,7 @@ export function buildingSprite(b) {
                 : b.type === 'townhouse' ? paintTownhouse(seed, p)
                   : b.type === 'market' ? paintMarket(seed, p)
                     : b.type === 'hall' ? paintHall(seed, p) : paintFirePit(seed, p);
-  cache.set(b.id, { level, sprite });
+  cache.set(b.id, { level, variant, sprite });
   return sprite;
 }
 

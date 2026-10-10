@@ -6,6 +6,7 @@ import { BALANCE as B } from '../data/balance.js';
 import { startConstruction, siteIsValid } from './construction.js';
 import { spawnHumans } from './population.js';
 import { settlementById, completedHomesOf, housingCapacity } from './settlements.js';
+import { storyRoute } from './story.js';
 
 export { settlementStage, settlementRole, localCapacity } from './settlements.js';
 
@@ -53,6 +54,7 @@ export function recordTrip(state, from, to, goods, amount) {
     r.established = true;
     const A = settlementById(state, r.a), Bs = settlementById(state, r.b);
     state.events.push({ type: 'routeEstablished', a: r.a, b: r.b, x: ((A?.x ?? 0) + (Bs?.x ?? 0)) / 2, y: ((A?.y ?? 0) + (Bs?.y ?? 0)) / 2 });
+    if (A && Bs) storyRoute(state, A, Bs);
   }
 }
 export const establishedRoutes = (state) => Object.values(state.network.routes).filter((r) => r.established);
