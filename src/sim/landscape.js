@@ -86,6 +86,8 @@ function randomSpot(state, rng, minFromCamp, margin = 120) {
 export function generateGeography(state, rng, biome) {
   const prof = PROFILES[biome] || PROFILES.skog, W = state.world.width, H = state.world.height, L = B.landscape;
   state.world.biome = biome;
+  // Kystland: havet ligger som en stor vannflate på den ene siden (fartøy, kai og kystlinje er ekte geografi, ikke pynt).
+  if (biome === 'kyst') { const C = state.settlement.center; state.world.pond = { x: C.x - 520, y: C.y + 140, rx: 460, ry: 200 }; }
   state.world.waters = [];
   state.world.streams = [];
   state.world.zones = [];

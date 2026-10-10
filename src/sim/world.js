@@ -143,6 +143,7 @@ export function createWorld(seed = 20261009, biome = 'skog', { remote = false } 
     realm: { autoFounding: false, limit: 2, party: null, lastFoundedAt: -Infinity, nextCheckAt: Infinity, foundedCount: 0, siteCache: null },
     network: { routes: {}, trips: 0 },
     urban: { enabled: false, nextAt: 0, built: 0 }, // OPUS-02: Byplan
+    renovation: { done: 0 }, // OPUS-11: ombygde boliger (se renovation.js)
     chronicle: createChronicle(),
     globe: createGlobe(seed),
     civilization: { foodUnlocked: false, exchangeUnlocked: false, nextFoodAt: Infinity, nextPopulationAt: Infinity, foodHarvests: 0, exchangeDeliveries: 0, festivalUntil: -Infinity, nextFestivalAt: 0, festivals: 0 },

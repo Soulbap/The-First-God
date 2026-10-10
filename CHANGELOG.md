@@ -33,6 +33,18 @@ Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på ve
 
 ### OPUS-11 · integrasjon, verdensutvikling og kvalitet (pågår)
 
+#### Added (fase C/D · bygg som utvikler seg, industriens utseende, regionale besøk)
+- **Boligtrinn** (`src/sim/renovation.js`): 1 halmhytte → 2 tømmerstue → 3 steinhus → 4 bygård (flere etasjer, krever Fabrikkhåndverk og industri, bosetting «By») → 5 moderne blokk (krever Elektrisk kraft og at bosettingen faktisk har strøm). Ombygging er en ekte hendelse: kostnad trekkes ved start (ingen dobbel betaling), arbeid tar tid og krever folk i bosettingen, stillas vises mens det pågår, og boligplassen øker (2/2/3/4/6/8 per trinn). Én ombygging om gangen per bosetting, minst utviklede først. Det eldste halmhuset og det første lyet bevares som minnesteder (`heritage`) og bygges aldri om. Folketallet følger boligplassen (frø 701: 78 → 169 innen seks timer).
+- **Nye sprites**: `src/render/housing.js` (bygård, moderne blokk) og `src/render/industry.js` (oljebrønn med tårn, raffineri med tanker og fakkel, generator, nettstasjon, flyplass med rullebane/hangar/vindpølse, forskningsinstitutt, telegrafmast, gruvehode, dampmaskinhus, jernbanestasjon, garasje, rent verksted med sagtak). Tidligere gjenbrukte OPUS-08..10 verksted/fabrikk for alt dette.
+- **Strøm gir lys**: generator, institutt og elektronikkverk har lysende vinduer bare i bosettinger der nettet faktisk leverer strøm; gatelys er elektriske (hvitere, større) bare der; dampmaskiner og raffineri lyser når de er i drift.
+- **Fjerne land er besøkbare med eget landskap**: `projectRegionScene` bruker biomets landskap (bekk/elv i dal, hav i kystland, steinutspring i fjell), regionens boliger (`homes`), lager og gruvehode. Besøket skriver aldri tilbake til økonomien (testet med tilstandsavtrykk).
+
+#### Changed
+- `renovated`-flagget (OPUS-03) erstattes av `tier`; eldre lagringer avleder trinn fra `type` og `renovated`. Byplanen (`urban.js`) starter ikke lenger to prosjekter i samme kontroll når en ombygging startet.
+
+#### Tests (fase C/D)
+- `tests/opus11-economy.test.js` (12 tester): bevaring av varer fra forekomst via regionlager og karavane til hjemmelager, behovsstyrt last, regionale boliger bygget av eget lager, bosettingslager og prosjektbehov, lastebil med transitt/lagring/ankomst, boligtrinn (krav, kostnad, tid, lagring, minnested, strøm), avstand og luft, tomtesøk uten gjentakelse, determinisme og lagre/lese, besøk av fjernt land, Ragnarok-renhet.
+
 #### Changed (fase C · større kart, avstand og luft)
 - **Hjemmeregionen er større**: 3600 × 2400 (var 2400 × 1600), samme 3:2-forhold slik at planetprojeksjonen er uendret (på forespørsel fra prosjektansvarlig). Terrengbildet bruker 1,4 piksler per enhet (var 2) for å holde minnet nede. Landskapet skaleres med `B.landscape.areaScale`, og tregrensen er 380.
 - **Avstand mellom byer**: `minSiteSpacing` 380 → 640, `minSiteDistance` 420 → 660, `maxSiteDistance` 1050 → 1300; den første satellitten søker 660–1050 fra hovedstaden. Bosettinger er nå tydelig atskilte samfunn i kartet.

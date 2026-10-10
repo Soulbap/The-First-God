@@ -102,11 +102,17 @@ test('OPUS-03: en moden by fornyer gamle hytter med reelle ressurser, én om gan
   const s = createGame(7);
   s.urban.enabled = true; s.urban.nextAt = 0;
   s.settlements[0].stage = 'By'; s.settlements[0].population = [1, 2, 3, 4, 5, 6];
+  // OPUS-11: ombygging er en ekte prosess (materialer, folk, tid). Det eldste hjemmet bevares som minnested; det neste bygges om.
+  const heritage = startConstruction(s, 'hut'); heritage.complete = true; heritage.progress = 1;
   const hut = startConstruction(s, 'hut'); hut.complete = true; hut.progress = 1;
-  s.resources.wood = 500; s.resources.stone = 500;
-  const before = { wood: s.resources.wood, stone: s.resources.stone };
+  s.resources.wood = 500; s.resources.stone = 500; s.resources.planks = 100;
+  const before = { wood: s.resources.wood, stone: s.resources.stone, planks: s.resources.planks };
   stepUrban(s);
-  assert.equal(hut.renovated, true);
-  assert.equal(s.resources.wood, before.wood - 18);
-  assert.equal(s.resources.stone, before.stone - 10);
+  assert.equal(heritage.heritage, true, 'det eldste hjemmet er et minnested');
+  assert.ok(hut.renovation && hut.renovation.to === 2, 'ombyggingen er i gang');
+  assert.equal(hut.renovated, undefined, 'ikke ferdig før arbeidet er gjort');
+  assert.equal(s.resources.wood, before.wood - 18); assert.equal(s.resources.stone, before.stone - 10); assert.equal(s.resources.planks, before.planks - 2);
+  for (let i = 0; i < 12 && hut.renovation; i++) { s.urban.nextAt = 0; s.time += 6; stepUrban(s); }
+  assert.equal(hut.renovated, true); assert.equal(hut.tier, 2);
+  assert.equal(heritage.tier, undefined, 'minnestedet bygges aldri om');
 });

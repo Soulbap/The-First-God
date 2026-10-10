@@ -14,8 +14,11 @@ export const hasBuilt = (state, id, type) => state.buildings.some((b) => b.compl
 export const settlementById = (state, id) => state.settlements.find((s) => s.id === id);
 
 export function housingOf(b, state) {
-  const base = B.housing[b.type] || 0;
-  return b.type === 'townhouse' ? base + (state.modifiers.townhouseBonus || 0) : base;
+  if (!isHome(b)) return B.housing[b.type] || 0;
+  // Boligplassen følger trinnet (OPUS-11); tier mangler i eldre lagringer og avledes da av type og `renovated`.
+  const tier = b.tier != null ? b.tier : b.type === 'townhouse' ? 3 : b.type === 'hut' ? (b.renovated ? 2 : 1) : 0;
+  const base = b.type === 'shelter' && b.tier == null ? B.housing.shelter : B.housingByTier[Math.min(tier, B.housingByTier.length - 1)];
+  return tier >= 3 ? base + (state.modifiers.townhouseBonus || 0) : base;
 }
 
 // Samlet boligkapasitet i en bosetting.

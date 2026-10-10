@@ -91,6 +91,8 @@ export const BALANCE = {
   },
   // Boligkapasitet per bygg (tidlig sivilisasjon brukte 2 per hjem).
   housing: { shelter: 2, hut: 2, townhouse: 4 },
+  // Boligplass per trinn (OPUS-11): ly 2, halmhytte 2, tømmerstue 3, steinhus 4, bygård 6, moderne blokk 8.
+  housingByTier: [2, 2, 3, 4, 6, 8],
   // Foredling: autonome sykluser. Råvaren trekkes først når det finnes mer enn `reserve`,
   // slik at vanlige byggeprosjekter aldri sultes av sagbruket.
   production: {
@@ -128,6 +130,17 @@ export const BALANCE = {
   // Kunnskap kommer bare fra faktisk virksomhet: foredling, verksteder og kunnskapshallen.
   knowledge: { perCycle: 0.25, workshopSeconds: 14, workshopYield: 0.25, hallSeconds: 8, hallYield: 0.5, hallPerPerson: 0.08, hallPopCap: 10, cityBonus: 1.25 },
   city: { minPopulation: 12, minFoodStock: 4, minFields: 2, minDeliveries: 6, minInfrastructure: 5 },
+  // OPUS-11 · Boligtrinn (se src/sim/renovation.js): krav per trinn (bosettingens trinn og kunnskap), kostnad og tid, og plassbehov.
+  renovation: {
+    requires: { 2: { rank: 3 }, 3: { rank: 4, upgrade: 'construction_methods' }, 4: { rank: 5, upgrade: 'factory_manufacture' }, 5: { rank: 5, upgrade: 'electric_power' } },
+    tiers: {
+      2: { cost: { wood: 18, stone: 10, planks: 2 }, seconds: 30 },
+      3: { cost: { wood: 24, stone: 30, planks: 6, cutstone: 8 }, seconds: 50 },
+      4: { cost: { planks: 12, cutstone: 10, iron: 1 }, seconds: 70 },
+      5: { cost: { planks: 14, cutstone: 12, copper: 1 }, seconds: 90 },
+    },
+    radius: { 3: 34, 4: 36, 5: 38 },
+  },
   // OPUS-11: ekstra luft mellom bygg i samme bosetting etter trinn (Leir, Grend, Landsby, Voksende landsby, Tidlig by, By, Storby).
   spacing: { byStage: [20, 18, 14, 9, 4, 0, 0] },
   realm: {

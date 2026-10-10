@@ -4,6 +4,7 @@
 //   hytte = lav tømmerstue (byens utgave av den første leirens halmhytte) · helligdom = vokser fra offerstein til stavkirke.
 import { mulberry, paintSprite, dab, taper, jitter, rgba, clamp, smooth } from './paint.js';
 import { box, gableRoof, contact, groundPatch, stoneBlocks, stage, DX, DY } from './city.js';
+import { tenementWindows, modernWindows } from './housing.js';
 
 // Vinduer (i spritens ankerkoordinater, verdensenheter) som får lys i skumringen. Brukes av dagslys-laget.
 export const WINDOWS = {
@@ -11,7 +12,17 @@ export const WINDOWS = {
   cottage: [[-14.5, -10.2, 6.4, 5.6], [2, -10.2, 6.4, 5.6]],
   hall: [[-28, -25, 7, 8], [-15, -25, 7, 8], [-6, -25, 7, 8], [8, -25, 7, 8]],
   warehouse: [],
+  tenement: tenementWindows(),
+  modern: modernWindows(),
+  // Industri, kraft og forskning (OPUS-11): vinduer i spritens ankerkoordinater (se industry.js). Lyset kommer bare når bygget faktisk har strøm eller er i drift.
+  generator: [0, 1, 2, 3].map((i) => [-25 + i * 12.5, -18, 5, 8]),
+  research_institute: [0, 1].flatMap((r) => [0, 1, 2, 3, 4, 5].filter((i) => !(r === 0 && i > 1 && i < 4)).map((i) => [-35 + 5 + i * 9.4, -9 - r * 14, 5, 8])),
+  clean_works: [0, 1, 2, 3, 4].map((i) => [-30 + 4 + i * 9.6, -16, 7, 9]),
+  engine_house: [0, 1, 2].map((i) => [-27 + 6 + i * 14, -17, 7, 11]),
 };
+export const ELECTRIC_LIT = { generator: 'generator', research_institute: 'research_institute', electronics_works: 'clean_works', precision_works: 'clean_works', aircraft_works: 'clean_works' };
+// Vindusnøkkel for et bolighus etter trinn (OPUS-11).
+export const windowKey = (b, tier) => (b.type === 'hut' || b.type === 'townhouse' ? (tier >= 5 ? 'modern' : tier === 4 ? 'tenement' : tier === 3 || b.type === 'townhouse' ? 'townhouse' : tier === 2 ? 'cottage' : 'hut') : b.type);
 
 // ---------- Brønn ----------
 export function paintWell(seed, p) {

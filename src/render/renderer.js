@@ -22,7 +22,8 @@ import { BALANCE as B } from '../data/balance.js';
 import { propsFor, lantern } from './yards.js';
 import { activityOf, homeOf } from '../sim/activity.js';
 import { dayPhase, lightAt, tintAt } from '../view/daylight.js';
-import { WINDOWS } from './civic.js';
+import { WINDOWS, windowKey, ELECTRIC_LIT } from './civic.js';
+import { tierOf } from '../sim/renovation.js';
 import { nameOf } from '../sim/chronicle.js';
 
 export const wind = (x, t) => 0.6 * Math.sin(t * 0.9 + x * 0.003) + 0.4 * Math.sin(t * 2.1 + x * 0.009 + 1.3);
@@ -618,7 +619,7 @@ export function createRenderer(canvas) {
     // Dybdesorterte objekter.
     const rankOf = new Map(state.settlements.map((q) => [q.id, stageRank(q.stage)]));
     const sanctIdx = new Map(state.buildings.filter((q) => q.type === 'sanctuary').sort((a, b) => a.id - b.id).map((q, i) => [q.id, i]));
-    const variantOf = (b) => (b.type === 'hut' ? (b.renovated ? 1 : 0) : b.type === 'sanctuary' ? sanctIdx.get(b.id) : 0);
+    const variantOf = (b) => (b.type === 'hut' || b.type === 'townhouse' ? tierOf(b) : b.type === 'sanctuary' ? sanctIdx.get(b.id) : 0);
     const list = [];
     for (const n of state.nodes) {
       if (!inView(n.x, n.y)) continue;
@@ -803,6 +804,7 @@ export function createRenderer(canvas) {
     }
     // Vinduer, lykter og verksteder lyser når det blir mørkt (additivt, rimelig billig: bare synlige bygg).
     function drawNightLights(k) {
+      const litSet = new Set(state.industrial?.litSettlements || []);
       const warm = (x, y, r, a) => {
         const g = ctx.createRadialGradient(x, y, 0, x, y, r);
         g.addColorStop(0, `rgba(255,196,110,${(a * k).toFixed(3)})`); g.addColorStop(1, 'rgba(255,170,80,0)');
@@ -810,18 +812,30 @@ export function createRenderer(canvas) {
       };
       for (const b of state.buildings) {
         if (!b.complete || !inView(b.x, b.y, 80, 80)) continue;
-        const key = b.type === 'hut' && variantOf(b) ? 'cottage' : b.type;
+        const key = windowKey(b, variantOf(b));
         const wins = WINDOWS[key];
         if (wins) for (const [wx, wy, ww, wh] of wins) {
           ctx.fillStyle = `rgba(255,200,118,${(0.8 * k).toFixed(3)})`; ctx.fillRect(b.x + wx, b.y + wy, ww, wh);
           warm(b.x + wx + ww / 2, b.y + wy + wh / 2 + 2, 11, 0.32);
         }
+        // Strøm (OPUS-11): industri og institutt lyses bare i bosettinger der generator og nett faktisk leverer. Uten strøm er de mørke.
+        const powered = litSet.has(b.settlementId || 'first');
+        if (ELECTRIC_LIT[b.type] && powered && (b.active || b.type === 'generator' || b.type === 'research_institute')) for (const [wx, wy, ww, wh] of WINDOWS[ELECTRIC_LIT[b.type]]) {
+          ctx.fillStyle = `rgba(255,240,196,${(0.85 * k).toFixed(3)})`; ctx.fillRect(b.x + wx, b.y + wy, ww, wh);
+          warm(b.x + wx + ww / 2, b.y + wy + wh / 2 + 2, 14, 0.28);
+        }
+        if ((b.type === 'steam_engine' || b.type === 'combustion_engine') && b.active) for (const [wx, wy, ww, wh] of WINDOWS.engine_house) { ctx.fillStyle = `rgba(255,150,70,${(0.7 * k).toFixed(3)})`; ctx.fillRect(b.x + wx, b.y + wy, ww, wh); warm(b.x + wx + ww / 2, b.y + wy + wh / 2 + 2, 12, 0.3); }
+        if (b.type === 'refinery' && b.active) warm(b.x + 50 - 58 + 8, b.y - 52, 30, 0.45);
         if ((b.type === 'sawmill' || b.type === 'mason') && b.active) warm(b.x - 8, b.y - 6, 24, 0.28);
         if (b.type === 'market') for (const [px, py] of [[-36, -16], [30, -19], [-8, -28]]) warm(b.x + px, b.y + py, 12, 0.34);
         if (b.type === 'hall') warm(b.x, b.y - 10, 30, 0.2);
         if (b.type === 'warehouse') warm(b.x + 1, b.y - 12, 16, 0.18);
       }
-      for (const Lm of R.lamps) if (inView(Lm.x, Lm.y, 40, 60)) { warm(Lm.x, Lm.y - 26, 24, 0.42); ctx.fillStyle = `rgba(255,226,160,${(0.95 * k).toFixed(3)})`; ctx.fillRect(Lm.x - 1.2, Lm.y - 28, 2.4, 3.6); }
+      // Gatelykter: lykter med flamme i vanlige byer, elektrisk (hvitere, større lys) bare der strømnettet lyser (OPUS-11).
+      for (const Lm of R.lamps) if (inView(Lm.x, Lm.y, 40, 60)) {
+        if (litSet.has(Lm.settlementId)) { warm(Lm.x, Lm.y - 26, 34, 0.5); ctx.fillStyle = `rgba(255,248,214,${(0.98 * k).toFixed(3)})`; ctx.fillRect(Lm.x - 1.6, Lm.y - 28.6, 3.2, 4.2); }
+        else { warm(Lm.x, Lm.y - 26, 24, 0.42); ctx.fillStyle = `rgba(255,226,160,${(0.95 * k).toFixed(3)})`; ctx.fillRect(Lm.x - 1.2, Lm.y - 28, 2.4, 3.6); }
+      }
     }
     function drawWorkLitter(st) {
       const livedIn = clamp(st.humans.length * 0.16 + (st.totals.wood + st.totals.stone) / 130, 0, 1);
@@ -965,6 +979,7 @@ export function createRenderer(canvas) {
       R.tiers.set(b.id, v);
       const s = buildingSprite(b, v);
       drawSprite(ctx, s, b.x, b.y);
+      if (b.renovation) drawScaffold(b);
       if (b.type === 'sawmill' && b.complete && b.active) {
         // Sagbladet går opp og ned mens sagbruket arbeider.
         const off = Math.sin(renderTime * 8 + b.id) * 2.6;
@@ -974,6 +989,15 @@ export function createRenderer(canvas) {
         const a = renderTime * 1.8; ctx.save(); ctx.translate(b.x, b.y - 47); ctx.rotate(a);
         for (let i = 0; i < 4; i++) { ctx.rotate(Math.PI / 2); taper(ctx, 0, 0, 0, -18, 1.6, 5, 'rgba(202,184,137,.9)'); } ctx.restore();
       }
+    }
+    // Ombygging pågår (OPUS-11): stillas av staker og planker rundt huset, og et lite støvskyll nå og da.
+    function drawScaffold(b) {
+      const w = b.radius * 0.85, h = 22 + (b.renovation.to >= 4 ? 18 : 0);
+      ctx.strokeStyle = 'rgba(122,92,58,0.95)'; ctx.lineWidth = 0.9;
+      for (const sx of [-w, w]) { ctx.beginPath(); ctx.moveTo(b.x + sx, b.y + 3); ctx.lineTo(b.x + sx, b.y - h); ctx.stroke(); }
+      for (let k = 1; k <= 3; k++) { const yy = b.y - (h * k) / 3.2; ctx.beginPath(); ctx.moveTo(b.x - w, yy); ctx.lineTo(b.x + w, yy); ctx.stroke(); }
+      ctx.strokeStyle = 'rgba(150,118,76,0.7)'; ctx.beginPath(); ctx.moveTo(b.x - w, b.y + 2); ctx.lineTo(b.x + w, b.y - h * 0.62); ctx.stroke();
+      if (!snapshot && Math.sin(renderTime * 3 + b.id) > 0.92) emit(fx, 'dust', b.x + w * 0.6, b.y, 2, { spread: 10, spreadY: 4, z: 3 });
     }
     function drawMemorial(x, y, n) {
       // En reist stein med lav, mose og innhugne tegn — én for hver syklus som er levd.

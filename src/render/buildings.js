@@ -2,6 +2,8 @@
 import { mulberry, paintSprite, dab, taper, jitter, rgba, clamp, smooth, lerp } from './paint.js';
 import { paintTownhouse, paintSawmill, paintMason, paintMarket, paintHall } from './city.js';
 import { paintWell, paintWarehouse, paintCottage, paintSanctuary } from './civic.js';
+import { paintTenement, paintModern } from './housing.js';
+import { paintDerrick, paintRefinery, paintGenerator, paintGridStation, paintAirfield, paintInstitute, paintTelegraph, paintMineHead, paintEngineHouse, paintStation, paintGarage, paintCleanWorks } from './industry.js';
 
 const STEPS = 48; // kvantisering av byggefremdrift for mellomlagring
 
@@ -487,6 +489,14 @@ function paintFactory(seed, p, tall = false) {
   });
 }
 
+// Bolighus etter trinn (OPUS-11): 1 halmhytte, 2 tømmerstue, 3 steinhus, 4 bygård, 5 moderne blokk.
+function homeSprite(type, tier, seed, p) {
+  if (tier >= 5) return paintModern(seed, p);
+  if (tier === 4) return paintTenement(seed, p);
+  if (tier === 3 || type === 'townhouse') return paintTownhouse(seed, p);
+  return tier === 2 ? paintCottage(seed, p) : paintHut(seed, p);
+}
+
 const cache = new Map();
 // `variant`: hytte → 1 når byen har vokst fra halmhytter til tømmerstuer; helligdom → stykkets nummer (0–5).
 export function buildingSprite(b, variant = 0) {
@@ -496,7 +506,7 @@ export function buildingSprite(b, variant = 0) {
   const p = level / STEPS;
   const seed = b.id * 101 + 7;
   const sprite = b.type === 'shelter' ? (b.heritage ? paintCottage(seed + 701, p) : paintShelter(seed, p))
-    : b.type === 'hut' ? (variant ? paintCottage(seed, p) : paintHut(seed, p))
+    : (b.type === 'hut' || b.type === 'townhouse') ? homeSprite(b.type, variant, seed, p)
       : b.type === 'well' ? paintWell(seed, p)
       : b.type === 'warehouse' ? paintWarehouse(seed, p)
       : b.type === 'sanctuary' ? paintSanctuary(seed, p, variant)
@@ -506,19 +516,24 @@ export function buildingSprite(b, variant = 0) {
           : b.type === 'watermill' ? paintMill(seed, p)
           : b.type === 'windmill' ? paintMill(seed, p, true)
           : (b.type === 'metalworks' || b.type === 'locomotive_workshop') ? paintFactory(seed, p, b.type === 'metalworks')
-          : (b.type === 'steam_engine' || b.type === 'coal_mine' || b.type === 'rail_terminal') ? paintWorkshop(seed, p)
-          // OPUS-08: foreløpig gjenbruk av eksisterende malerier; egne sprites er PARTIAL (se docs/opus-08-10/REPORT.md).
-          : (b.type === 'generator' || b.type === 'grid_station' || b.type === 'combustion_engine' || b.type === 'oil_well') ? paintWorkshop(seed, p)
-          : (b.type === 'refinery' || b.type === 'motor_depot' || b.type === 'aircraft_works' || b.type === 'precision_works') ? paintFactory(seed, p, false)
-          : b.type === 'airfield' ? paintWorkshop(seed, p)
-          : (b.type === 'electronics_works' || b.type === 'research_institute') ? paintFactory(seed, p, false)
-          : b.type === 'telegraph' ? paintWorkshop(seed, p)
+          // OPUS-11: egne silhuetter for kraft, olje, transport, luftfart og forskning (src/render/industry.js).
+          : b.type === 'steam_engine' || b.type === 'combustion_engine' ? paintEngineHouse(seed, p)
+          : b.type === 'coal_mine' ? paintMineHead(seed, p)
+          : b.type === 'rail_terminal' ? paintStation(seed, p)
+          : b.type === 'generator' ? paintGenerator(seed, p)
+          : b.type === 'grid_station' ? paintGridStation(seed, p)
+          : b.type === 'oil_well' ? paintDerrick(seed, p)
+          : b.type === 'refinery' ? paintRefinery(seed, p)
+          : b.type === 'motor_depot' ? paintGarage(seed, p)
+          : (b.type === 'aircraft_works' || b.type === 'precision_works' || b.type === 'electronics_works') ? paintCleanWorks(seed, p)
+          : b.type === 'airfield' ? paintAirfield(seed, p)
+          : b.type === 'research_institute' ? paintInstitute(seed, p)
+          : b.type === 'telegraph' ? paintTelegraph(seed, p)
           : (b.type === 'workshop' || b.type === 'mine' || b.type === 'smelter' || b.type === 'dock' || b.type === 'boatyard') ? paintWorkshop(seed, p)
             : b.type === 'charcoal_kiln' ? paintFirePit(seed, p)
             : b.type === 'sawmill' ? paintSawmill(seed, p)
               : b.type === 'mason' ? paintMason(seed, p)
-                : b.type === 'townhouse' ? paintTownhouse(seed, p)
-                  : b.type === 'market' ? paintMarket(seed, p)
+                : b.type === 'market' ? paintMarket(seed, p)
                     : b.type === 'hall' ? paintHall(seed, p) : paintFirePit(seed, p);
   cache.set(b.id, { level, variant, sprite });
   return sprite;

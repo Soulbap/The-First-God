@@ -5,6 +5,7 @@
 import { BALANCE as B } from '../data/balance.js';
 import { startConstruction, findBuildSite } from './construction.js';
 import { stageRank } from './settlements.js';
+import { stepRenovation } from './renovation.js';
 
 // Hver post: «mål» for antall bygg av typen per bosetting ved et gitt utviklingstrinn. Postene prøves i rekkefølge.
 export const URBAN_PLAN = [
@@ -44,17 +45,9 @@ export function stepUrban(state) {
   if (capital && ['By', 'Storby'].includes(capital.stage)) {
     const shelter = state.buildings.find((b) => b.type === 'shelter' && b.complete);
     if (shelter && !shelter.heritage) { shelter.heritage = true; state.events.push({ type: 'heritage', id: shelter.id, x: shelter.x, y: shelter.y }); }
-    // Gamle hytter blir ikke magisk nye: én familie om gangen bruker faktisk trevirke og stein på en
-    // tømmerstue. Bygningen beholder identitet og plass, men får den sene arkitekturen ved neste tegning.
-    const old = state.buildings.find((b) => b.complete && b.type === 'hut' && !b.renovated);
-    const cost = { wood: 18, stone: 10 };
-    if (old && affordable(state, cost)) {
-      for (const [k, n] of Object.entries(cost)) state.resources[k] -= n;
-      old.renovated = true; old.renovatedAt = state.time;
-      state.events.push({ type: 'renovated', id: old.id, buildingType: old.type, x: old.x, y: old.y });
-      return;
-    }
   }
+  // Gamle hus blir ikke magisk nye: ombygging krever kunnskap, materialer, folk og tid (src/sim/renovation.js).
+  if (stepRenovation(state, B.urban.checkSeconds)) return; // en ny ombygging teller som kontrollens ene prosjekt
   for (const S of state.settlements) {
     if (S.state !== 'active' || S.population.length < 2) continue;
     // Ett prosjekt om gangen i hver bosetting, og aldri mens noe annet ufullført står der.
