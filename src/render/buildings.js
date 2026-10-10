@@ -475,6 +475,18 @@ function paintMill(seed, p, wind = false) {
   });
 }
 
+function paintFactory(seed, p, tall = false) {
+  return paintSprite(118, 90, 59, 72, (ctx) => {
+    const a = smooth(0, .2, p), rnd = mulberry(seed); ctx.save(); ctx.globalAlpha = a;
+    dab(ctx, 0, 7, 45, 12, 0, 'rgba(26,18,12,.42)');
+    ctx.fillStyle = 'rgb(104,88,69)'; ctx.fillRect(-38, -26, 72, 31);
+    ctx.fillStyle = 'rgb(72,60,49)'; ctx.beginPath(); ctx.moveTo(-43,-26); ctx.lineTo(-25,-41); ctx.lineTo(39,-41); ctx.lineTo(45,-26); ctx.closePath(); ctx.fill();
+    for (let x=-27;x<26;x+=13) { ctx.fillStyle='rgb(42,42,38)'; ctx.fillRect(x,-20,7,9); ctx.fillStyle='rgba(220,178,104,.28)'; ctx.fillRect(x+1,-19,5,3); }
+    const h = tall ? 46 : 34; ctx.fillStyle='rgb(82,70,58)'; ctx.fillRect(18,-26-h,12,h+4); ctx.fillStyle='rgb(56,48,42)'; ctx.fillRect(27,-26-h,3,h+4); ctx.fillStyle='rgb(142,124,98)'; ctx.fillRect(18,-26-h,12,3);
+    for(let i=0;i<5;i++) dab(ctx,-22+i*10,8-rnd()*3,4,1.7,0,'rgb(62,52,40)'); ctx.restore();
+  });
+}
+
 const cache = new Map();
 // `variant`: hytte → 1 når byen har vokst fra halmhytter til tømmerstuer; helligdom → stykkets nummer (0–5).
 export function buildingSprite(b, variant = 0) {
@@ -493,6 +505,8 @@ export function buildingSprite(b, variant = 0) {
         : b.type === 'field' ? paintField(seed, p)
           : b.type === 'watermill' ? paintMill(seed, p)
           : b.type === 'windmill' ? paintMill(seed, p, true)
+          : (b.type === 'metalworks' || b.type === 'locomotive_workshop') ? paintFactory(seed, p, b.type === 'metalworks')
+          : (b.type === 'steam_engine' || b.type === 'coal_mine' || b.type === 'rail_terminal') ? paintWorkshop(seed, p)
           : (b.type === 'workshop' || b.type === 'mine' || b.type === 'smelter' || b.type === 'dock' || b.type === 'boatyard') ? paintWorkshop(seed, p)
             : b.type === 'charcoal_kiln' ? paintFirePit(seed, p)
             : b.type === 'sawmill' ? paintSawmill(seed, p)

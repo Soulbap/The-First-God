@@ -17,7 +17,7 @@
 
 **IMPLEMENTERT:** tre, stein, mat, planker, tilhugget stein, kunnskap, PP og PrP; autonome mennesker og bygging; jordbruk, verksteder, by, flere bosettinger, roller, ruter, utposter, karttegning, deterministisk besøkbare regioner, lagringsformat v3 og kart før planet. Det første lyet bevares som minnested, og en moden by oppgraderer hytter med reelle ressurser.
 
-**PARTIAL:** Verden har kart-/planetpresentasjon og forenklet fjernregionstilstand, men ikke en full transport-, sjøfarts- eller industrisimulering. `Luftmåling` er i dagens kode en sen kart/planet-gate, ikke luftfart. **PLANLAGT:** metall-, energi-, industri-, luftfarts- og romsystemene nedenfor.
+**PARTIAL:** Verden har kart-/planetpresentasjon og forenklet fjernregionstilstand. Metall, sjøtransport, mekanisk kraft og en første kull-/damp-/fabrikk-/jernbanesløyfe er implementert, men fjernregioner har ikke egne autoritative lager ennå. `Luftmåling` er i dagens kode en sen kart/planet-gate, ikke luftfart. **PLANLAGT:** elektrisitet, motorisering, luftfart og romsystemene nedenfor.
 
 ## Utviklingsklynger
 

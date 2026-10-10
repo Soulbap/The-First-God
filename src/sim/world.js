@@ -84,9 +84,10 @@ export function createWorld(seed = 20261009) {
     // OPUS-05: transportkapasitet er sykluslokal. Fartøy og kai må bygges av ekte lager.
     navigation: { enabled: false, advanced: false, docks: 0, boats: 0, vesselsBuilt: 0, nextSurveyAt: Infinity },
     mechanical: { enabled: false, componentsMade: 0, waterSuitability: 0, windSuitability: 0, operatingPower: 0, requiredPower: 0, repairs: 0 },
+    industrial: { enabled: false, operatingPower: 0, repairs: 0, factoryCycles: 0, rails: [], locomotives: 0, shipments: [], deliveries: 0, announced: false },
     stockpile: { x: C.x + 4, y: C.y + 48 },
-    resources: { wood: 0, stone: 0, food: 0, planks: 0, cutstone: 0, copperOre: 0, tinOre: 0, ironOre: 0, charcoal: 0, copper: 0, bronze: 0, iron: 0, mechanicalComponents: 0, knowledge: 0, pp: 0 },
-    totals: { wood: 0, stone: 0, food: 0, planks: 0, cutstone: 0, copperOre: 0, tinOre: 0, ironOre: 0, charcoal: 0, copper: 0, bronze: 0, iron: 0, mechanicalComponents: 0, knowledge: 0, pp: 0, manualClicks: 0 },
+    resources: { wood: 0, stone: 0, food: 0, planks: 0, cutstone: 0, copperOre: 0, tinOre: 0, ironOre: 0, coal: 0, charcoal: 0, copper: 0, bronze: 0, iron: 0, mechanicalComponents: 0, industrialMachinery: 0, railwayComponents: 0, knowledge: 0, pp: 0 },
+    totals: { wood: 0, stone: 0, food: 0, planks: 0, cutstone: 0, copperOre: 0, tinOre: 0, ironOre: 0, coal: 0, charcoal: 0, copper: 0, bronze: 0, iron: 0, mechanicalComponents: 0, industrialMachinery: 0, railwayComponents: 0, knowledge: 0, pp: 0, manualClicks: 0 },
     upgrades: {},
     discovered: {}, // innsikt-id → spilltid da den ble synlig (se discovery.js)
     modifiers: { gatherSpeed: 1, carry: 0, buildSpeed: 1, exploration: false, craftSpeed: 1, knowledge: 1, foodBonus: 0, townhouseBonus: 0, regionalCarry: 0, rockRegen: 1, treeGrowth: 1, walkSpeed: 1, clickBonus: 0, awakenBonus: 0, prayerMult: 1, expeditionSpeed: 1 },
@@ -160,5 +161,10 @@ export function createWorld(seed = 20261009) {
     if (!inBounds(state, x, y, 80) || inPond(state, x, y, 60)) { x = C.x + (k - 1) * 440; y = C.y - 430; }
     addMineral(state, mineralKinds[k], x, y, 22 + Math.floor(rand(rng) * 12));
   }
+  // Kull er alltid mulig å finne i samme seedede verden, men aldri universelt:
+  // én begrenset åre ligger langt nok ute til at utforskning og transport betyr noe.
+  let coalX = C.x + range(rng, -1, 1) * 760, coalY = C.y - range(rng, 420, 700);
+  if (!inBounds(state, coalX, coalY, 80) || inPond(state, coalX, coalY, 60)) { coalX = C.x + 740; coalY = C.y - 420; }
+  addMineral(state, 'coal', coalX, coalY, 42 + Math.floor(rand(rng) * 18));
   return state;
 }

@@ -55,6 +55,11 @@ export const BALANCE = {
     boatyard: { radius: 34, work: 44, minRing: 145 },
     watermill: { radius: 38, work: 52, minRing: 150 },
     windmill: { radius: 36, work: 50, minRing: 170 },
+    coal_mine: { radius: 32, work: 42, minRing: 160 },
+    steam_engine: { radius: 36, work: 52, minRing: 145 },
+    metalworks: { radius: 46, work: 64, minRing: 160 },
+    locomotive_workshop: { radius: 44, work: 60, minRing: 160 },
+    rail_terminal: { radius: 28, work: 34, minRing: 140 },
     // GAMEPLAY-07/08: byinfrastruktur og sivilt bygg.
     sawmill: { radius: 38, work: 40, minRing: 120 },
     mason: { radius: 34, work: 40, minRing: 120 },
@@ -105,6 +110,16 @@ export const BALANCE = {
     windmill: { wood: 38, stone: 20, planks: 10, mechanicalComponents: 3 },
     minDemand: 2, power: 3, craftMultiplier: 1.65, foodMultiplier: 1.3,
     wearPerSecond: 0.0012, repairAt: 0.42, repair: { wood: 2, mechanicalComponents: 1 },
+  },
+  industrial: {
+    coalMine: { wood: 46, stone: 34, planks: 10, iron: 2 },
+    engine: { cost: { wood: 34, stone: 24, planks: 12, iron: 4, mechanicalComponents: 4 }, minCoal: 4, coalPerSecond: 0.025, power: 5, wearPerSecond: 0.0015, repairAt: 0.44, repair: { wood: 2, mechanicalComponents: 1 } },
+    factories: {
+      metalworks: { cost: { wood: 62, stone: 48, planks: 18, iron: 5, mechanicalComponents: 4 }, inputs: { iron: 1, coal: 1 }, outputs: { industrialMachinery: 1 }, seconds: 18, power: 1 },
+      locomotive_workshop: { cost: { wood: 54, stone: 38, planks: 16, iron: 4, mechanicalComponents: 3 }, inputs: { industrialMachinery: 1, iron: 1 }, outputs: { railwayComponents: 1 }, seconds: 20, power: 1 },
+    },
+    rail: { cost: { wood: 70, planks: 24, iron: 8, railwayComponents: 2 }, maxDistance: 1200, travelSeconds: 28, load: 3 },
+    locomotive: { wood: 20, iron: 6, industrialMachinery: 2, railwayComponents: 2 },
   },
   // OPUS-01 · Høstfest: overskuddsmat blir en samling ved ildstedet med dobbel bønn. Automatisk (idle), aldri tvunget.
   festival: { minFood: 30, base: 10, perPerson: 0.8, interval: 110, duration: 28, prayerMultiplier: 2, joinChance: 0.7 },

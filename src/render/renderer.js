@@ -599,6 +599,22 @@ export function createRenderer(canvas) {
     for (const h of state.humans) if (!h.away && inView(h.x, h.y)) drawHumanShadow(ctx, h);
     for (const c of state.globe.caravans) if (inView(c.x, c.y)) drawHumanShadow(ctx, caravanFigure(c));
 
+    // OPUS-07: regionale jernbaner er enkle korridorer, men bare når den
+    // autoritative industrimodellen faktisk har bygget forbindelsen.
+    for (const rail of state.industrial?.rails || []) {
+      const a = state.settlements.find((q) => q.id === rail.a), b = state.settlements.find((q) => q.id === rail.b);
+      if (!a || !b) continue;
+      taper(ctx, a.x, a.y + 4, b.x, b.y + 4, 2.2, 2.2, 'rgba(48,42,36,.72)');
+      taper(ctx, a.x, a.y + 8, b.x, b.y + 8, 1.1, 1.1, 'rgba(150,132,100,.72)');
+      const shipment = state.industrial.shipments.find((q) => q.rail === rail.id && q.status === 'traveling');
+      if (shipment) {
+        const t = Math.max(0, Math.min(1, (state.time - shipment.departAt) / (shipment.arriveAt - shipment.departAt)));
+        const x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t + 2;
+        dab(ctx, x, y + 3, 13, 3, 0, 'rgba(18,14,10,.38)'); ctx.fillStyle = 'rgb(48,48,43)'; ctx.fillRect(x - 8, y - 5, 13, 6); ctx.fillStyle = 'rgb(130,92,52)'; ctx.fillRect(x + 5, y - 3, 10, 5);
+        ctx.fillStyle = 'rgba(84,72,62,.55)'; ctx.beginPath(); ctx.arc(x - 2, y - 12 - Math.sin(renderTime * 3) * 2, 5, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+
     // Dybdesorterte objekter.
     const rankOf = new Map(state.settlements.map((q) => [q.id, stageRank(q.stage)]));
     const sanctIdx = new Map(state.buildings.filter((q) => q.type === 'sanctuary').sort((a, b) => a.id - b.id).map((q, i) => [q.id, i]));
@@ -931,7 +947,7 @@ export function createRenderer(canvas) {
       ctx.filter = 'none';
     }
     function drawMineral(n) {
-      const tint = n.mineral === 'copperOre' ? '#a96c46' : n.mineral === 'tinOre' ? '#a3a8a0' : '#665b50';
+      const tint = n.mineral === 'copperOre' ? '#a96c46' : n.mineral === 'tinOre' ? '#a3a8a0' : n.mineral === 'coal' ? '#292929' : '#665b50';
       dab(ctx, n.x + 2, n.y + 2, n.radius * 1.2, n.radius * 0.45, 0, 'rgba(18,14,10,0.38)');
       ctx.fillStyle = '#6d675d'; ctx.beginPath(); ctx.moveTo(n.x - 15, n.y); ctx.lineTo(n.x - 7, n.y - 13); ctx.lineTo(n.x + 12, n.y - 10); ctx.lineTo(n.x + 17, n.y); ctx.closePath(); ctx.fill();
       for (let i = 0; i < 5; i++) dab(ctx, n.x - 8 + i * 5, n.y - 5 - (i % 2) * 3, 2.3, 1.4, i, tint);

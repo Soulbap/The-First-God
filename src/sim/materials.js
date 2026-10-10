@@ -39,6 +39,7 @@ function cycle(state, building, recipe, dt) {
 
 export function harvestMineral(state, node, amount = 1) {
   if (!materialEnabled(state) || !node || node.kind !== 'mineral' || node.amount <= 0) return 0;
+  if (node.mineral === 'coal' && (!state.industrial?.enabled || !state.buildings.some((b) => b.complete && b.type === 'coal_mine'))) return 0;
   const got = Math.min(amount, node.amount); node.amount -= got; node.stone = node.amount; node.discovered = true;
   return got;
 }

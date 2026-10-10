@@ -373,6 +373,23 @@ export const UPGRADES = [
     world: 'Vannhjul og vindseil kommer bare der naturkraften finnes; sag og steinhoggeri arbeider raskere mens møllen går.',
     actions: [{ type: 'enableMechanical' }],
   },
+  // ---------- OPUS-07: Damp og industri ----------
+  {
+    id: 'steam_power', name: 'Dampkraft', category: 'kunnskap', icon: 'sawmill',
+    discover: [{ upgrade: 'mechanical_power' }], cost: { knowledge: 110, iron: 4, mechanicalComponents: 3 },
+    requires: [{ upgrade: 'mechanical_power' }, { built: 'workshop' }], requireText: 'Krever Elvens og vindens kraft, jern og et verksted',
+    effect: 'Folket oppdager kull, bygger gruve og dampmaskin når de har brensel, vann og maskindeler. Dampen er lokal og bruker ekte kull.',
+    world: 'En mørk kullåre, gruveinngang og en lav maskin med forsiktig damp oppstår der økonomien kan bære den.',
+    actions: [{ type: 'enableIndustry' }],
+  },
+  {
+    id: 'factory_manufacture', name: 'Fabrikkhåndverk', category: 'kunnskap', icon: 'sawmill',
+    discover: [{ upgrade: 'steam_power' }], cost: { knowledge: 135, iron: 5, coal: 4 },
+    requires: [{ upgrade: 'steam_power' }, { built: 'steam_engine' }], requireText: 'Krever en virkende dampmaskin',
+    effect: 'Dampdrevne metallverk og maskinverksted vokser fram autonomt. De bruker jern og kull til reelle industrimaskiner og jernbanedeler.',
+    world: 'Verkstedene blir større og får skorsteiner, kullgård og roterende maskineri.',
+    actions: [],
+  },
 
   // ---------- OPUS-02: Takkoffer — langsiktig PP-sluk ----------
   {

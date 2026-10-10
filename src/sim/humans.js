@@ -211,7 +211,7 @@ function chooseTask(state, h) {
   if (maybeExplore(state, h)) return;
   // 2) Sanking.
   const kind = chooseResourceKind(state);
-  const needsOre = materialEnabled(state) && state.nodes.some((n) => n.kind === 'mineral' && n.discovered && n.amount > 0) && (state.resources.copperOre + state.resources.tinOre + state.resources.ironOre < 12);
+  const needsOre = materialEnabled(state) && state.nodes.some((n) => n.kind === 'mineral' && n.discovered && n.amount > 0) && (state.resources.copperOre + state.resources.tinOre + state.resources.ironOre + (state.industrial?.enabled ? state.resources.coal : 99) < 18);
   const n = (needsOre && findNode(state, h, 'mineral')) || findNode(state, h, kind) || findNode(state, h, kind === 'tree' ? 'rock' : 'tree');
   if (n) {
     n.reservedBy.push(h.id);

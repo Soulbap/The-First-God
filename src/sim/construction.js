@@ -26,7 +26,7 @@ export function siteIsValid(state, type, x, y) {
 const ZONE = {
   shelter: 'home', hut: 'home', townhouse: 'home',
   fire: 'core', hearth: 'core', storage: 'core', market: 'core', hall: 'core',
-  sawmill: 'work', mason: 'work', workshop: 'work', mine: 'work', charcoal_kiln: 'work', smelter: 'work', dock: 'work', boatyard: 'work', watermill: 'work', windmill: 'work',
+  sawmill: 'work', mason: 'work', workshop: 'work', mine: 'work', coal_mine: 'work', charcoal_kiln: 'work', smelter: 'work', dock: 'work', boatyard: 'work', watermill: 'work', windmill: 'work', steam_engine: 'work', metalworks: 'work', locomotive_workshop: 'work', rail_terminal: 'work',
   field: 'field',
   well: 'core', warehouse: 'core', sanctuary: 'sanct',
 };

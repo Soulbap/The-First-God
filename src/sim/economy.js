@@ -8,6 +8,7 @@ import { establishedRoutes } from './regional.js';
 import { discoveredRegions, outpostRegions } from './worldmap.js';
 import { enableMaterials } from './materials.js';
 import { enableMechanical } from './mechanical.js';
+import { enableIndustry } from './industrial.js';
 
 export const upgradeCount = (state, id) => state.upgrades[id] || 0;
 
@@ -137,6 +138,8 @@ function applyAction(state, def, a) {
     enableMaterials(state, a);
   } else if (a.type === 'enableMechanical') {
     enableMechanical(state);
+  } else if (a.type === 'enableIndustry') {
+    enableIndustry(state);
   }
 }
 

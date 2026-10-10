@@ -1,5 +1,13 @@
 # Spilltest — Genesis-01
 
+## OPUS-07 · damp og industri
+
+- [ ] Etter **Dampkraft**: finn en mørk kullåre og se at kull ikke samles før kullgruven er ferdig.
+- [ ] Se at dampmaskinen bare går med kull; la lageret gå tomt og bekreft at fabrikkene stanser uten å lage varer.
+- [ ] Etter **Fabrikkhåndverk**: se metallverk og maskinverksted bruke jern/kull og få en lesbar skorstein/kullgård.
+- [ ] Med to bosettinger: se den ressursbetalte jernbanekorridoren, lokomotivet og kull som forsvinner ved avreise og kommer tilbake først ved ankomst.
+- [ ] Lagre mens et tog er i transit og last igjen; bekreft én levering, ingen dobling. Ragnarok skal starte uten industri eller jernbane.
+
 ## OPUS-06 · den mekaniske revolusjonen
 
 - [ ] Etter **Elvens og vindens kraft**: se at verkstedet bruker tre og metall til maskindeler; beholdningen må gå ned når delene lages.

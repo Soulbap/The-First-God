@@ -32,6 +32,18 @@ Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på ve
 ## [Unreleased]
 
 ### Added
+- **OPUS-07 · damp og industri**: En seedet, begrenset kullåre, autonom kullgruve, kullfyrt dampmaskin med vedlikehold, dampdrevne metallverk/maskinverksted og en ressursbetalt regional jernbane med lokomotiv og kull i transit. Ingen av anleggene plasseres eller styres av spilleren.
+
+### Changed
+- Save-formatet er v7. Lagringer v2–v6 får industrielle felt fra en ny verden med samme seed; Ragnarok starter fortsatt en ren syklus.
+
+### Tests
+- La til OPUS-07-tester for seedet kull, uttaksport, dampens brenselstans og reparasjon, fabrikkens innsatsvarer/kraftkrav, jernbanelast uten teleportering og v6-migrering.
+
+### Docs
+- La til OPUS-07-rapport og manuell spilltestsjekkliste for kull, damp, fabrikk, jernbane og lagring.
+
+### Added
 - **OPUS-06 · mekanisk kraft**: Vann- og vindmøller bygges autonomt når lokalt arbeid, maskindeler, materialer og egnet naturkraft møtes. Kraften er lokal for bosettingen og akselererer bare sagbruk, steinhoggeri og åkerutbytte mens møllen faktisk går.
 - Verkstedet lager den grupperte mellomvaren **maskindeler** av tre og bronse eller jern. Møller betaler reelle byggevarer, slites deterministisk og repareres automatisk med begrensede materialer.
 

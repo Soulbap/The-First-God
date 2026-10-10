@@ -283,6 +283,12 @@ En funksjon er ikke visuelt klar bare fordi den finnes i data/UI. Følgende port
 
 ## OPUS-06 · mekanisk kraft — implementert (minste vertikale skive)
 
+## OPUS-07 · damp og industri — delvis implementert vertikal skive
+
+**Bekreftet:** Kull er en seedet, begrenset forekomst; dampmaskiner er lokale omformere som forbruker kull og vedlikehold, ikke en gratis energikonto. Fabrikker og jernbane oppstår autonomt når materiell, mennesker og infrastruktur finnes. Jernbanelast trekkes ved avreise og kommer ikke fram før transit-tiden er utløpt. Spilleren plasserer ikke gruver, fabrikker, motorer eller spor.
+
+**Åpent:** Fjerne regioner bruker fremdeles prosjektets delte hjemmelager. Full lagerføring og spesialisering per fjernregion utvides først når den eksisterende regionale økonomien får egne, autoritative beholdninger.
+
 **Bekreftet:** Mekanisk kraft er lokal kapasitet, ikke et globalt nett. Etter «Elvens og vindens kraft» lager verkstedet maskindeler av tre og eksisterende bronse/jern. Når lokal etterspørsel og materialer finnes, velger folket selv en tørr tomt ved den faktiske dammen for vannmølle, eller et deterministisk vindegnet sted. Bare virkende møller løfter lokal saging, steinhogging og åkerutbytte; uten strøm går arbeidet videre manuelt. Slitasje og reparasjon er aggregert og autonom.
 
 ## 11. Prinsipp for videre utvikling

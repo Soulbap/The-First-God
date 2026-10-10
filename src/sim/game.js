@@ -22,6 +22,7 @@ import { stepUrban } from './urban.js';
 import { stepMaterials } from './materials.js';
 import { stepNavigation } from './navigation.js';
 import { stepMechanical } from './mechanical.js';
+import { stepIndustry } from './industrial.js';
 
 export const DT = B.dt;
 
@@ -48,6 +49,7 @@ export function step(state, dt = DT) {
   stepProduction(state, dt);
   stepMaterials(state, dt);
   stepMechanical(state, dt);
+  stepIndustry(state, dt);
   stepNavigation(state, dt);
   stepRealm(state, dt);
   stepUrban(state, dt);
