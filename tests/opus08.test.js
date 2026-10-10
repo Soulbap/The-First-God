@@ -120,7 +120,7 @@ test('OPUS-08: lastebil kjører ikke uten drivstoff eller over havet', () => {
 
   // Innen lastebilens rekkevidde, men midtpunktet ligger på tvers av dammen: ingen landforbindelse, altså ingen tur.
   const sea = createGame(809); enableIndustry(sea); sea.industrial.roads = true; steamEngine(sea, 5); sea.resources.coal = 100;
-  const p = sea.world.pond, C = sea.settlement.center, x = 600, y = 1150;
+  const p = sea.world.pond, C = sea.settlement.center, x = p.x - 220, y = p.y + 120;
   assert.ok(Math.hypot(x - C.x, y - C.y) <= B.combustion.road.maxDistance, 'innen rekkevidde');
   assert.ok((C.x - p.x) * (x - p.x) < 0 && Math.abs((C.y + y) / 2 - p.y) < p.ry, 'ruta krysser dammen');
   sea.settlements.push({ id: 'second', name: 'Hinsides dammen', x, y, state: 'active', population: [], kind: 'mine', projectsDone: 0, role: 'Vei', stage: 'By' });

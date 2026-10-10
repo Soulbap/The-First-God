@@ -68,7 +68,7 @@ export function localSite(state, type, S, ordinal) {
   for (let r = 72; r < maxR; r += 14) for (let k = 0; k < 16; k++) {
     const a = a0 + k / 16 * Math.PI * 2;
     const x = S.x + Math.cos(a) * r, y = S.y + Math.sin(a) * r * 0.68;
-    if (siteIsValid(state, type, x, y)) { delete misses[key]; return { x, y }; }
+    if (siteIsValid(state, type, x, y, S.id)) { delete misses[key]; return { x, y }; }
   }
   misses[key] = { sig, attempts: attempts + 1, retryAt: state.time + 4 * (attempts + 1) };
   return null;

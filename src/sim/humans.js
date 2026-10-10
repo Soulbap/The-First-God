@@ -151,11 +151,11 @@ function settlementSite(state) {
   let best = null;
   // Fast kandidatnett + enkel egnethet: avstand, tørr lysning, lokale ressurser og fri plass.
   for (let y = 180; y < state.world.height - 180; y += 90) for (let x = 180; x < state.world.width - 180; x += 90) {
-    const d = dist(x, y, C.x, C.y); if (d < 560 || d > 980 || inPond(state, x, y, 100)) continue;
+    const d = dist(x, y, C.x, C.y); if (d < 660 || d > 1050 || inPond(state, x, y, 100)) continue;
     if (state.buildings.some((b) => dist(x, y, b.x, b.y) < 120)) continue;
     const near = state.nodes.filter((n) => dist(x, y, n.x, n.y) < 240).length;
     const crowded = state.nodes.filter((n) => dist(x, y, n.x, n.y) < 72).length;
-    const score = near * 20 - crowded * 36 - Math.abs(d - 740) * 0.08 - y * 0.001;
+    const score = near * 20 - crowded * 36 - Math.abs(d - 800) * 0.08 - y * 0.001;
     if (!best || score > best.score) best = { x, y, score };
   }
   state.expansion.site = best || { x: C.x + 700, y: C.y - 260 };

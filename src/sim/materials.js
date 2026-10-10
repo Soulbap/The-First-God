@@ -66,6 +66,13 @@ export function harvestMineral(state, node, amount = 1) {
 // (relativt til målet), ikke bare det nærmeste. Et fullt lager av tinn skal ikke hindre at jern hentes.
 export function wantedMineral(state, h = null) {
   if (!materialEnabled(state)) return null;
+  const c = state.materials.wanted;
+  if (c && c.t === Math.floor(state.time)) return c.kind; // gjenbrukes i samme sekund (mange folk spør samtidig)
+  const kind = computeWantedMineral(state);
+  state.materials.wanted = { t: Math.floor(state.time), kind };
+  return kind;
+}
+function computeWantedMineral(state) {
   const T = M.stockTargets, ind = !!state.industrial?.enabled;
   let best = null, bestScore = 0;
   for (const kind of ['coal', 'ironOre', 'copperOre', 'tinOre']) {
@@ -82,12 +89,16 @@ export function wantedMineral(state, h = null) {
 
 export function stepMaterials(state, dt) {
   if (!materialEnabled(state)) return;
-  discoverMinerals(state);
-  // Infrastruktur er en konsekvens av kunnskap og ekte lokale ressurser, aldri
-  // en direkte byggordre fra spilleren.
-  if (state.nodes.some((n) => n.kind === 'mineral' && n.discovered && n.amount > 0)) buildWhenReady(state, 'mine', M.mineReserve);
-  if (has(state, 'mine')) buildWhenReady(state, 'charcoal_kiln', M.kilnReserve);
-  if (has(state, 'charcoal_kiln') && (state.resources.copperOre > 0 || state.resources.tinOre > 0 || state.resources.ironOre > 0)) buildWhenReady(state, 'smelter', M.smelterReserve);
+  // Prospektering og infrastrukturvalg trenger ikke kjøre i hvert 1/60-sekundssteg: én gang i sekundet er nok (ytelse, OPUS-11).
+  if (state.time >= (state.materials.nextCheckAt ?? 0)) {
+    state.materials.nextCheckAt = state.time + 1;
+    discoverMinerals(state);
+    // Infrastruktur er en konsekvens av kunnskap og ekte lokale ressurser, aldri
+    // en direkte byggordre fra spilleren.
+    if (state.nodes.some((n) => n.kind === 'mineral' && n.discovered && n.amount > 0)) buildWhenReady(state, 'mine', M.mineReserve);
+    if (has(state, 'mine')) buildWhenReady(state, 'charcoal_kiln', M.kilnReserve);
+    if (has(state, 'charcoal_kiln') && (state.resources.copperOre > 0 || state.resources.tinOre > 0 || state.resources.ironOre > 0)) buildWhenReady(state, 'smelter', M.smelterReserve);
+  }
   for (const b of state.buildings) {
     if (b.type === 'charcoal_kiln') cycle(state, b, { in: { wood: M.charcoal.wood }, out: 'charcoal', amount: M.charcoal.out, seconds: M.charcoal.seconds }, dt);
     if (b.type === 'smelter') {

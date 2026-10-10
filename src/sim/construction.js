@@ -5,17 +5,27 @@ import { spawnHumans } from './population.js';
 import { stampWear } from './wear.js';
 import { storyBuilt } from './story.js';
 import { clearTrees } from './nature.js';
+import { stageRank } from './settlements.js';
 
-export function siteIsValid(state, type, x, y) {
+// Luft mellom bygg etter bosettingens trinn (OPUS-11): leirer og grender har rom mellom skur, stier og felles plasser;
+// tettere by først når bosettingen er blitt en by. Gjelder bare bygg i samme bosetting; kollisjon er alltid forbudt.
+const stageGap = (state, settlementId) => {
+  const S = state.settlements.find((q) => q.id === settlementId);
+  const rank = S ? stageRank(S.stage || 'Leir') : 0;
+  return B.spacing.byStage[Math.max(0, Math.min(B.spacing.byStage.length - 1, rank))];
+};
+
+export function siteIsValid(state, type, x, y, settlementId = null) {
   const r = B.building[type].radius;
   if (!inBounds(state, x, y, 70) || inPond(state, x, y, r + 14)) return false;
   if (type !== 'field' && dist(x, y, state.stockpile.x, state.stockpile.y) < r + 34) return false;
   // Kollisjon, arbeidsrom og visuell klarering er ulike ting. Små hus kan fortsatt danne gater,
   // mens verksteder og offentlige bygg trenger plass til aktivitet og inngang.
   const space = (t) => ({ field: 18, well: 24, market: 34, hall: 32, warehouse: 30, sawmill: 28, mason: 28, sanctuary: 26 }[t] ?? 16);
-  const sp = space(type);
+  const sp = space(type), extra = settlementId ? stageGap(state, settlementId) : 0;
   for (const b of state.buildings) {
-    const need = r + b.radius + Math.max(sp, space(b.type)), dx = x - b.x, dy = y - b.y;
+    const same = settlementId && (b.settlementId || 'first') === settlementId;
+    const need = r + b.radius + Math.max(sp, space(b.type)) + (same ? extra : 0), dx = x - b.x, dy = y - b.y;
     if (dx * dx + dy * dy < need * need) return false;
   }
   for (const n of state.nodes) {
@@ -168,7 +178,7 @@ function searchBuildSite(state, type, settlementId, maxRing) {
       const a = state.settlement.angleOffset + (k / steps) * Math.PI * 2;
       const x = anchor.x + Math.cos(a) * ring;
       const y = anchor.y + Math.sin(a) * ring * 0.72;
-      if (!siteIsValid(state, type, x, y)) continue;
+      if (!siteIsValid(state, type, x, y, settlementId)) continue;
       if (firstRing == null) firstRing = ring;
       const score = siteScore(state, type, x, y, ring, anchor, ctx);
       if (!best || score > best.score + 1e-9) best = { x, y, score };

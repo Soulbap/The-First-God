@@ -70,7 +70,7 @@ test('verdenskoordinater ↔ planet: hjørner og sentrum går rundt uten feil, o
 
 test('planetkameraet: 2D-utsnitt ↔ planetutsnitt har samme bredde og sentrum (sømløs overgang)', () => {
   const { s, P } = planetFor(20261009);
-  const cam = { x: 1240, y: 800, w: 2300, screenW: 1920, screenH: 1080 };
+  const C = s.settlement.center, cam = { x: C.x + 40, y: C.y - 20, w: 2300, screenW: 1920, screenH: 1080 };
   const g = globeFromWorldCam(P, cam, s.world);
   const back = worldCamFromGlobe(P, g, s.world, 1920, 1080);
   assert.ok(Math.abs(back.x - cam.x) < 0.5 && Math.abs(back.y - cam.y) < 0.5 && Math.abs(back.w - cam.w) < 0.5);

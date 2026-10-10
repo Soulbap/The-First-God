@@ -47,7 +47,7 @@ function makeStream(state, rng, biome) {
   const side = Math.floor(rand(rng) * 4);
   const start = [{ x: range(rng, 140, W - 140), y: 90 }, { x: W - 90, y: range(rng, 140, H - 140) }, { x: range(rng, 140, W - 140), y: H - 90 }, { x: 90, y: range(rng, 140, H - 140) }][side];
   const end = biome === 'dal' ? { x: W - start.x, y: H - start.y } : { x: pond.x + range(rng, -40, 40), y: pond.y + (start.y < pond.y ? -pond.ry * 0.6 : pond.ry * 0.6) };
-  const pts = [], steps = 9;
+  const pts = [], steps = 28; // tett nok til at ingen strekning skjærer gjennom leirens hjerte
   const bend = range(rng, -1, 1) * 220;
   for (let i = 0; i <= steps; i++) {
     const t = i / steps, sway = Math.sin(t * Math.PI) * bend + Math.sin(t * 9 + side) * 26;
@@ -60,7 +60,10 @@ function makeStream(state, rng, biome) {
   }
   // Bekken ender i tjernet: avkort i første punkt som ligger inni det.
   const cut = pts.findIndex((p) => ell(p.x, p.y, pond.x, pond.y, pond.rx, pond.ry) < 1);
-  return { w: L.streamWidth, pts: cut > 0 ? pts.slice(0, cut + 1) : pts };
+  const line = cut > 0 ? pts.slice(0, cut + 1) : pts;
+  // En bekk som skjærer for nær leirens hjerte forkastes (ingen bekk i denne verdenen) i stedet for å gå gjennom landsbyen.
+  for (let i = 0; i < line.length - 1; i++) if (segDist2(C.x, (C.y) / 0.72, { x: line[i].x, y: line[i].y / 0.72 }, { x: line[i + 1].x, y: line[i + 1].y / 0.72 }) < (L.streamClear * 0.75) ** 2) return null;
+  return { w: L.streamWidth, pts: line };
 }
 
 function farFromSettlement(state, x, y, minD) {
@@ -86,7 +89,7 @@ export function generateGeography(state, rng, biome) {
   state.world.waters = [];
   state.world.streams = [];
   state.world.zones = [];
-  if (rand(rng) < prof.stream) state.world.streams.push(makeStream(state, rng, biome));
+  if (rand(rng) < prof.stream) { const st = makeStream(state, rng, biome); if (st) state.world.streams.push(st); }
   if (rand(rng) < prof.lake) {
     for (let t = 0; t < 12; t++) {
       const x = range(rng, 260, W - 260), y = range(rng, 220, H - 220), rx = range(rng, 90, 150), ry = rx * range(rng, 0.42, 0.55);
@@ -103,9 +106,10 @@ export function generateGeography(state, rng, biome) {
       state.world.zones.push({ kind, x: p.x, y: p.y, rx, ry: rx * range(rng, 0.6, 0.8) });
     }
   };
-  place('rocky', prof.outcrops, [110, 190], L.outcropClear);
-  place('meadow', prof.meadows, [170, 280], 260);
-  place('forest', Math.max(2, Math.round(prof.groves / 4)), [200, 330], 300);
+  const k = L.areaScale; // kartet er større enn før: flere soner, i samme størrelse
+  place('rocky', Math.round(prof.outcrops * k), [110, 190], L.outcropClear);
+  place('meadow', Math.round(prof.meadows * k), [170, 280], 260);
+  place('forest', Math.max(3, Math.round(prof.groves * k / 4)), [200, 330], 300);
 }
 
 export const zoneAt = (state, x, y, kind) => (state.world.zones || []).some((z) => z.kind === kind && ell(x, y, z.x, z.y, z.rx, z.ry) < 1);
@@ -118,8 +122,8 @@ export function populateLandscape(state, rng, biome, ctx) {
   // Lunder: sentre i skogsoner trekkes først, så vilkårlig. Hver lund har en hovedart; kanten blandes.
   const centers = [];
   for (const z of zones.filter((q) => q.kind === 'forest')) for (let i = 0; i < 4; i++) centers.push({ x: z.x + range(rng, -0.6, 0.6) * z.rx, y: z.y + range(rng, -0.6, 0.6) * z.ry, big: true });
-  for (let g = 0; g < prof.groves; g++) {
-    const a = rand(rng) * Math.PI * 2, d = range(rng, 300, 1020);
+  for (let g = 0; g < Math.round(prof.groves * B.landscape.areaScale); g++) {
+    const near = g % 3 === 0, a = rand(rng) * Math.PI * 2, d = near ? range(rng, 260, 620) : range(rng, 300, 1500); // hver tredje lund nær leiren
     centers.push({ x: C.x + Math.cos(a) * d, y: C.y + Math.sin(a) * d * 0.7, big: false });
   }
   for (const c of centers) {
@@ -140,8 +144,13 @@ export function populateLandscape(state, rng, biome, ctx) {
       }
     }
   }
+  // Trær i leirens utkant (190–300 enheter ut): bygda ligger ved skogen, ikke midt i en åpen slette.
+  for (let i = 0; i < 16; i++) {
+    const a = (i / 16) * Math.PI * 2 + rand(rng) * 0.4, d = range(rng, 190, 300), x = C.x + Math.cos(a) * d, y = C.y + Math.sin(a) * d * 0.72;
+    if (isFreeForTree(state, x, y) && !inAnyWater(state, x, y, 20)) addTree(state, rand(rng) < 0.5 ? 'birch' : 'spruce', x, y, range(rng, 0.5, 1));
+  }
   // Enkelttrær og trær i kanten av enger (sparsomt, så engene leses som åpne).
-  for (let i = 0; i < prof.singles; i++) {
+  for (let i = 0; i < Math.round(prof.singles * B.landscape.areaScale); i++) {
     const x = range(rng, 60, W - 60), y = range(rng, 60, H - 60);
     if (isFreeForTree(state, x, y) && Math.hypot(x - C.x, y - C.y) > 230 && !zoneAt(state, x, y, 'meadow')) addTree(state, rand(rng) < 1 - prof.spruce ? 'birch' : 'spruce', x, y, range(rng, 0.3, 1));
   }

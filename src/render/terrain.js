@@ -4,7 +4,7 @@ import { makeCanvas, makeNoise, fbm, mix, smooth, clamp, rgba, jitter, dab, mulb
 import { envAt } from './environment.js';
 import { inPond } from '../sim/world.js';
 
-export const TERRAIN_SCALE = 2; // piksler per verdensenhet i terrengbildet
+export const TERRAIN_SCALE = 1.4; // piksler per verdensenhet i terrengbildet
 export const ECOLOGY_SCALE = 0.16; // lavfrekvent og billig: bare tone, ikke detaljtegning
 
 const LUSH = [76, 92, 46], DRY = [112, 110, 66], MOSS = [54, 72, 42], DIRT = [112, 92, 66];

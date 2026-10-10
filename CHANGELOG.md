@@ -33,6 +33,15 @@ Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på ve
 
 ### OPUS-11 · integrasjon, verdensutvikling og kvalitet (pågår)
 
+#### Changed (fase C · større kart, avstand og luft)
+- **Hjemmeregionen er større**: 3600 × 2400 (var 2400 × 1600), samme 3:2-forhold slik at planetprojeksjonen er uendret (på forespørsel fra prosjektansvarlig). Terrengbildet bruker 1,4 piksler per enhet (var 2) for å holde minnet nede. Landskapet skaleres med `B.landscape.areaScale`, og tregrensen er 380.
+- **Avstand mellom byer**: `minSiteSpacing` 380 → 640, `minSiteDistance` 420 → 660, `maxSiteDistance` 1050 → 1300; den første satellitten søker 660–1050 fra hovedstaden. Bosettinger er nå tydelig atskilte samfunn i kartet.
+- **Luft mellom bygg**: ekstra klarering mellom bygg i samme bosetting etter trinn (`B.spacing.byStage`: 20, 18, 14, 9, 4, 0, 0). Leirer og grender har rom til stier og felles plasser; byen blir tettere først som by.
+- Små ytelsesforbedringer: prospektering og infrastrukturvalg kjører én gang i sekundet, ønsket mineral gjenbrukes i samme sekund.
+
+#### Tests (fase C)
+- Test av stjernebildet ble gjort uavhengig av kartstørrelse (planetkamera, lastebil over vann). Alle 188 tester består.
+
 #### Added (fase B · landskap, geografi, gjenvekst)
 - **Landskap** (`src/sim/landscape.js`): biomstyrt, deterministisk generering av vann (bekk som linje, ekstra innsjø), soner (steinrike høyder, enger, skogsområder) og natur. Fem biomprofiler (skog, fjell, slette, kyst, dal) gir ulik tetthet av skog, steinutspring og enger. `createWorld(seed, biome, {remote})`. Renderen tegner bekk, innsjøer og sonetoner (`terrain.js`, `environment.js`). Eldre lagringer beholder sitt kjente landskap (ingen nye vannlegemer).
 - **Tidlig stein**: 18 tidlige steiner (9 nær leiren) i stedet for 12, pluss steinutspring i steinrike soner. Test over 60 frø: minst 6 steiner nær leiren og ≥150 stein innen 700 enheter.
