@@ -602,7 +602,7 @@ export function createRenderer(canvas) {
     // Dybdesorterte objekter.
     const rankOf = new Map(state.settlements.map((q) => [q.id, stageRank(q.stage)]));
     const sanctIdx = new Map(state.buildings.filter((q) => q.type === 'sanctuary').sort((a, b) => a.id - b.id).map((q, i) => [q.id, i]));
-    const variantOf = (b) => (b.type === 'hut' ? ((rankOf.get(b.settlementId || 'first') ?? 0) >= 5 ? 1 : 0) : b.type === 'sanctuary' ? sanctIdx.get(b.id) : 0);
+    const variantOf = (b) => (b.type === 'hut' ? (b.renovated ? 1 : 0) : b.type === 'sanctuary' ? sanctIdx.get(b.id) : 0);
     const list = [];
     for (const n of state.nodes) {
       if (!inView(n.x, n.y)) continue;

@@ -34,12 +34,14 @@ Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på ve
 ### Added
 - **OPUS-03 · verden verd å oppdage**: Tidlig stein er mer pålitelig, bytomter rydder trær og bruker bygg-avhengig klarering, og det første lyet blir et minnested når hovedstaden når bystadiet.
 - **OPUS-03 · kart før planet**: Et verdenskart over kjente land åpnes ved sammenhengende rike; karttegning og Luftmåling er en senere, eksplisitt vei til planetkameraet.
+- **OPUS-03 · besøkbare land**: Klikk på et oppdaget land i verdenskartet for en deterministisk detaljvisning. Utposter projiseres fra regionens faktiske status og befolkning, uten en ekstra økonomi eller falske innbyggere.
 
 ### Changed
 - **OPUS-03 · arv**: PrP bruker nå avtagende uttelling for materialer, bønn og kunnskap; ekko er dyrere slik at én første syklus gir valg, ikke hele treet.
 
 ### Tests
 - **OPUS-03**: La til regressjoner for tidlig stein, urban skog, funksjonell klarering, PrP-tak, kart/planet-gating og besøkstilstand. `npm test`: 128/128 bestått.
+- **OPUS-03 · regionprojeksjon**: Testet determinisme, utpost-projeksjon, ingen ressurs-/befolkningsduplisering, v2-migrering og ressursbetalt hytterenovasjon.
 
 ### Added
 - **GAMEPLAY-06 · sivilisasjonens morgen**: Mat er en ny, synlig ressurs fra autonome åkre. Den brukes bare når en ny innbygger kan komme til et ledig hjem; tom beholdning stopper dermed vekst uten dødsfall eller økonomisk kollaps.

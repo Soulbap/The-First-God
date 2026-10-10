@@ -16,6 +16,8 @@ import { createAmbience } from './audio/ambience.js';
 import { icon } from './ui/icons.js';
 import { dayPhase } from './view/daylight.js';
 import { audioScene } from './audio/scene.js';
+import { visitRegion, regionById } from './sim/worldmap.js';
+import { projectRegionScene } from './sim/regionScene.js';
 
 const SEED = 20261009; // samme grunnverden i hver syklus
 const MAX_STEPS_PER_FRAME = 240;
@@ -28,6 +30,7 @@ let speed = 1, savedSpeed = 1, acc = 0, renderTime = 0, last = performance.now()
 let hoverId = null, hoverHumanId = null, hudTimer = 0, wearTimer = 0, pendingGlide = null;
 // Planetvisningen (OPUS-01): samme simulering, sett fra økende høyde. Reserve uten WebGL: den gamle kartoversikten.
 let overview = false, hoverRegion = null; // reserveoversikt (bare uten WebGL)
+let regionScene = null; // detaljvisning av ett oppdaget, fjernt land; autoritativ sim blir i `state`.
 let globeMode = false, gcam = null, exitAfterGlide = null, snapTimer = 0;
 let pendingReveal = null, revealStage = 0; // planetavsløringen ved milepælen som låser opp planetvisningen
 let planet = null, baked = null;
@@ -178,9 +181,33 @@ function newCycle(loaded = null) {
   acc = 0;
   pendingGlide = null;
   overview = false; hoverRegion = null;
+  regionScene = null;
   leaveGlobeNow();
   hud.reset();
   resize();
+}
+
+function leaveRegionScene() {
+  if (!regionScene) return;
+  regionScene = null;
+  renderer.reset(state);
+  const C = state.settlement.center;
+  cam.x = C.x; cam.y = C.y; cam.w = Math.min(cam.maxW, VIEW.area.w);
+  clampCamera(cam, state.world.width, state.world.height);
+}
+
+function enterRegionScene(id) {
+  if (!visitRegion(state, id)) return false;
+  const scene = projectRegionScene(state, id);
+  if (!scene) return false;
+  regionScene = scene; overview = false; leaveGlobeNow();
+  renderer.reset(scene);
+  const C = scene.settlement.center;
+  cam.x = C.x; cam.y = C.y; cam.w = VIEW.area.w; cam.tween = null;
+  clampCamera(cam, scene.world.width, scene.world.height);
+  const r = regionById(state, id);
+  hud.toast(r.name, r.state === 'oppdaget' ? 'Ekspedisjonens land — ingen bosetting ennå.' : `Utposten har ${r.pop} folk.`);
+  return true;
 }
 
 // ---------- Skala: Nær → Område → Region → Kontinent → Planet ----------
@@ -203,6 +230,7 @@ function refreshPatch() {
 }
 
 function enterGlobe({ glide = true } = {}) {
+  leaveRegionScene();
   if (!state.unlocks.worldView) return;
   if (!globeR) { setOverview(true); return; } // reserve: kartoversikten
   if (!baked) { baked = bakePlanet(SEED, state.globe.regions); globeR.setSurface(baked); } // sjelden: arbeideren er ikke ferdig ennå
@@ -263,6 +291,7 @@ function setOverview(on) {
 function goView(v, duration) {
   revealStage = 0; pendingReveal = null;
   if (v === 'world') {
+    leaveRegionScene();
     // Verdenskartet kommer før planeten; den komplette kulevisningen krever senere luftmåling.
     if (!state.unlocks.worldView) { setOverview(true); return; }
     if (!globeR) { setOverview(true); return; }
@@ -270,6 +299,7 @@ function goView(v, duration) {
     else enterGlobe();
     return;
   }
+  if (regionScene) { leaveRegionScene(); if (v === 'near') { const C = state.settlement.center; glideTo(cam, C.x, C.y, VIEW.near.w, duration || 1.2); } return; }
   if (globeMode) { exitGlobe(v); return; }
   if (overview) setOverview(false);
   const C = state.settlement.center;
@@ -329,8 +359,12 @@ function tick(realDt) {
 
   const events = drainEvents(state);
   handleEvents(events);
-  renderer.handleEvents(state, events, cam);
-  renderer.update(state, realDt, realDt * speed, renderTime);
+  // Regionbildet er en lesende projeksjon. Hjemmerenderens effekter, slitasje og økonomiske hendelser
+  // oppdateres aldri med den som aktiv visning.
+  if (!regionScene) {
+    renderer.handleEvents(state, events, cam);
+    renderer.update(state, realDt, realDt * speed, renderTime);
+  }
 
   if (pendingReveal != null) {
     pendingReveal -= realDt;
@@ -359,15 +393,17 @@ function tick(realDt) {
   updateCamera(cam, realDt);
   clampCamera(cam, state.world.width, state.world.height);
 
-  wearTimer -= realDt;
-  if (wearTimer <= 0) { wearTimer = 0.5; renderer.updateWear(state); }
-  renderer.stepWear(3); // pikselpasset fordeles over flere bilder (ingen enkeltstående pause)
+  if (!regionScene) {
+    wearTimer -= realDt;
+    if (wearTimer <= 0) { wearTimer = 0.5; renderer.updateWear(state); }
+    renderer.stepWear(3); // pikselpasset fordeles over flere bilder (ingen enkeltstående pause)
+  }
   saveTimer -= realDt;
   if (saveTimer <= 0) { saveTimer = 20; saveNow(); }
 
   if (globeMode) renderGlobe(realDt);
   else if (overview) renderer.renderOverview(state, cam, renderTime, hoverRegion);
-  else renderer.render(state, cam, renderTime, hoverId, { humanId: hoverHumanId });
+  else renderer.render(regionScene || state, cam, renderTime, regionScene ? null : hoverId, { humanId: regionScene ? null : hoverHumanId });
 
   hudTimer -= realDt;
   if (hudTimer <= 0) {
@@ -425,6 +461,11 @@ canvas.addEventListener('pointermove', (e) => {
   canvas.classList.toggle('can-gather', !!n);
 });
 canvas.addEventListener('pointerup', (e) => {
+  if (overview && e.button === 0) {
+    const r = regionAt(overviewLayout(state, cam.screenW, cam.screenH), state, e.clientX, e.clientY);
+    if (r && !r.home) enterRegionScene(r.id);
+    return;
+  }
   if (down && !down.moved && down.button === 0) {
     if (globeMode) {
       // Klikk på hjemlandet: vend hjem. Klikk på et land: se nærmere på det.
@@ -433,7 +474,7 @@ canvas.addEventListener('pointerup', (e) => {
       else if (p?.region) { const L = toLatLon(planet.sites.get(p.id).dir); globeGlide(gcam, L.lat, L.lon, Math.min(gcam.h, 0.3), reducedMotion() ? 0.01 : 1.6); exitAfterGlide = null; }
     } else {
       const n = renderer.pick(state, cam, e.clientX, e.clientY);
-      if (n) { clickNode(state, n.id); hudTimer = 0; }
+      if (n && !regionScene) { clickNode(state, n.id); hudTimer = 0; }
     }
   }
   down = null;
@@ -493,6 +534,9 @@ setTimeout(() => {
       overview: (on) => { if (on) { if (globeR) { enterGlobe({ glide: false }); gcam.h = GLOBE.continentH; } else setOverview(true); } else { if (globeMode) { gcam.h = minGlobeH(); const L = toLatLon(planet.worldToDir(cam.x, cam.y)); gcam.lat = L.lat; gcam.lon = L.lon; gcam.tween = null; exitGlobe('area'); } setOverview(false); } return globeMode || overview; },
       globeView: (lat, lon, h) => { if (!globeMode) enterGlobe({ glide: false }); gcam.lat = lat; gcam.lon = lon; gcam.h = h; gcam.tween = null; },
       enterGlobe: (glide = true) => enterGlobe({ glide }),
+      visitRegion: (id) => enterRegionScene(id),
+      leaveRegion: () => { leaveRegionScene(); return true; },
+      get regionScene() { return regionScene?.regionProjection || null; },
       planetReady: () => planetReady,
       setSpeed: (s) => { speed = s; },
       // Lagring i feilsøking: eksplisitt, under egne nøkler (rører aldri spillerens lagring).

@@ -1,3 +1,5 @@
 # Visuell kontroll
 
-Automatisk visuell capture ble ikke kjørt i denne økten. Kodeendringene er rettet mot lesbarhet: større funksjonell luft rundt offentlige bygg, ryddede tomter og et transformert minnested i moden by. Skjermbilder skal tas før OPUS-03 kan kalles visuelt ferdig.
+Ekte nettleser ble inspisert på startsiden: terreng, trær, stein, tjern, ressurser og HUD var lesbare, og konsollen hadde ingen feil. En hodeløs capture-prosess ble forsøkt, men avsluttet før den lagret skjermbilder; `screenshots/` er derfor med vilje tom.
+
+Kodegjennomgangen dekker større funksjonell luft rundt offentlige bygg, ryddede tomter, renovasjon av hytter og et transformert minnested. Skjermbilder av moden by, utpost og planet er fortsatt påkrevd før visuell godkjenning.

@@ -40,8 +40,9 @@ export function createGlobe(seed) {
       pop: 0, discoveredAt: null, outpostAt: null, nextGrowAt: Infinity, nextCaravanAt: Infinity, caravans: 0, delivered: 0,
     });
   }
+  const home = regions.find((r) => r.home);
   return {
-    regions, expeditionsEnabled: false, outpostsEnabled: false, connected: false, cartography: false, activeRegionId: 'home',
+    regions, expeditionsEnabled: false, outpostsEnabled: false, connected: false, cartography: false, activeRegionId: home.id,
     mission: null, nextMissionAt: Infinity, caravans: [],
     stats: { discovered: 0, outposts: 0, established: 0, caravanDeliveries: 0, expeditions: 0 },
   };
