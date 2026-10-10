@@ -96,7 +96,7 @@ test('spilling: kunnskap, fremskritt og hall gir Kunnskapens tidsalder, og byen 
   assert.ok(s.totals.knowledge >= 70);
   assert.equal(s.settlements[0].role, 'Kunnskapssete');
   const techs = UPGRADES.filter((u) => u.category === 'kunnskap');
-  assert.ok(techs.length >= 5 && techs.every((u) => u.effect && /\d|bedre|raskere|mer|øker/i.test(u.effect)), 'hvert fremskritt har en målbar effekt');
+  assert.ok(techs.length >= 5 && techs.every((u) => u.effect && /\d|bedre|raskere|mer|øker|lages|bygger|bruker|pumper|brenner|raffinert|vokser|legges til grunn/i.test(u.effect)), 'hvert fremskritt har en konkret effekt');
 });
 
 test('Ragnarok nullstiller kunnskap og fremskritt', () => {

@@ -8,7 +8,7 @@ import { recordAuto } from './stats.js';
 import { addWear } from './wear.js';
 import { inBounds, inPond, dist } from './world.js';
 import { startConstruction } from './construction.js';
-import { harvestMineral, materialEnabled, mineralHarvestable } from './materials.js';
+import { harvestMineral, materialEnabled, mineralHarvestable, wantedMineral } from './materials.js';
 import { beginDelivery, pickupDelivery, completeDelivery, recordTrip } from './regional.js';
 import { isHome, settlementById } from './settlements.js';
 import { partyArrive, partyTick } from './realm.js';
@@ -212,12 +212,12 @@ function chooseTask(state, h) {
   if (maybeExplore(state, h)) return;
   // 2) Sanking.
   const kind = chooseResourceKind(state);
-  const needsOre = materialEnabled(state) && state.nodes.some((n) => n.kind === 'mineral' && n.discovered && n.amount > 0) && (state.resources.copperOre + state.resources.tinOre + state.resources.ironOre + (state.industrial?.enabled ? state.resources.coal : 0) < B.materials.oreStockTarget);
   // Før industri teller kull ikke som en mangel: ellers ble malm aldri hentet og metallkjeden ble aldri startet.
   // OPUS-08: når gruven står og kull er knapt, prioriteres kullet. Ellers blir det liggende urørt,
   // fordi nærmere malm alltid vinner og damp/elektrisitet aldri får brensel.
-  const coalShort = materialEnabled(state) && state.industrial?.enabled && state.resources.coal < 20 && state.buildings.some((b) => b.complete && b.type === 'coal_mine');
-  const n = (coalShort && findNode(state, h, 'mineral', 'coal')) || (needsOre && findNode(state, h, 'mineral')) || findNode(state, h, kind) || findNode(state, h, kind === 'tree' ? 'rock' : 'tree');
+  // OPUS-11: i stedet for «nærmeste mineral» velges det mineralet som mangler mest i forhold til sitt lagermål.
+  const wanted = wantedMineral(state);
+  const n = (wanted && findNode(state, h, 'mineral', wanted)) || findNode(state, h, kind) || findNode(state, h, kind === 'tree' ? 'rock' : 'tree');
   if (n) {
     n.reservedBy.push(h.id);
     h.targetId = n.id;
@@ -373,7 +373,7 @@ export function stepHuman(state, h, dt) {
         const allThere = state.expansion.founders.every((id) => ['foundingWait', 'toFound'].includes(state.humans.find((q) => q.id === id)?.state));
         if (allThere && !state.buildings.some((b) => b.source === 'founding')) {
           const S = settlementSite(state);
-          state.settlements.push({ id: 'second', name: 'Lysningen', x: S.x, y: S.y, state: 'founding', population: [...state.expansion.founders], kind: 'farm', projectsDone: 0, role: 'Skogbygd', stage: 'Leir' });
+          state.settlements.push({ id: 'second', name: 'Lysningen', x: S.x, y: S.y, state: 'founding', population: [...state.expansion.founders], kind: 'farm', projectsDone: 0, role: 'Skogbygd', stage: 'Leir', stock: {} });
           for (const id of state.expansion.founders) { const q = state.humans.find((z) => z.id === id); q.settlementId = 'second'; q.state = 'idle'; q.timer = 0.1; }
           const first = state.settlements.find((s) => s.id === 'first');
           if (first) first.population = first.population.filter((id) => !state.expansion.founders.includes(id));

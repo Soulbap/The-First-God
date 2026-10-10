@@ -30,7 +30,8 @@ function buildAviation(s) {
 // Oppdrag: en flyvning kan bare gå mot oppdagede, ikke-kartlagte steder innen rekkevidde. Ett fly flyr om gangen.
 function flightTarget(s) {
   return s.globe.regions
-    .filter((r) => !r.home && r.state !== 'ukjent' && r.knowledge !== 'charted' && r.steps >= 1 && r.steps <= A.flight.maxSteps)
+    // OPUS-11: en luftmåling er noe annet enn sjøkartlegging. Et område som skipene har kartlagt, kan fortsatt måles fra luften (én gang).
+    .filter((r) => !r.home && r.state !== 'ukjent' && !r.aerial && r.steps >= 1 && r.steps <= A.flight.maxSteps)
     .sort((a, b) => a.steps - b.steps || a.row - b.row || a.col - b.col)[0] || null;
 }
 
@@ -62,9 +63,12 @@ function completeFlights(s) {
     const r = s.globe.regions.find((x) => x.id === f.regionId);
     V.flightsDone++;
     if (!V.announcedFlight) { V.announcedFlight = true; chronicle(s, 'aviation:first-flight', 'route', 'Et fly har gjennomført sin første vellykkede reise.', null); }
-    if (!r || r.knowledge === 'charted') continue;
-    r.knowledge = r.knowledge === 'discovered' ? 'surveyed' : 'charted';
-    s.globe.stats[r.knowledge] = (s.globe.stats[r.knowledge] || 0) + 1;
+    if (!r || r.aerial) continue;
+    r.aerial = true;
+    if (r.knowledge !== 'charted') {
+      r.knowledge = r.knowledge === 'discovered' ? 'surveyed' : 'charted';
+      s.globe.stats[r.knowledge] = (s.globe.stats[r.knowledge] || 0) + 1;
+    }
     V.surveys++;
     s.events.push({ type: 'aerialSurvey', regionId: r.id, knowledge: r.knowledge });
     if (!V.announcedSurvey) { V.announcedSurvey = true; chronicle(s, 'aviation:first-survey', 'explore', 'Flygere har målt et område fra luften. Kartet blir mer presist.', null); }

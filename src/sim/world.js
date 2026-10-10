@@ -61,6 +61,34 @@ function addMineral(state, type, x, y, amount) {
   state.nodes.push({ id: state.nextId++, kind: 'mineral', mineral: type, x, y, radius: 18, amount, maxAmount: amount, stone: amount, maxStone: amount, discovered: false, reservedBy: [] });
 }
 
+// Flere årer per mineral i ulike retninger. Rekkefølgen (nærmest først) er den samme som oppdagelsesrekkefølgen
+// (se discoverMinerals). Tilfeldighet hentes fra en egen strøm, slik at skog og stein i verden ikke endres av dette.
+const VEIN_KINDS = ['copperOre', 'tinOre', 'ironOre', 'coal'];
+function placeVeins(state, mainRng) {
+  const rng = createRng((state.seed ^ 0x2a6d365b) >>> 0), C = state.settlement.center, V = B.materials.veins;
+  const placed = [];
+  VEIN_KINDS.forEach((kind, k) => {
+    const cfg = V[kind], rich = range(rng, cfg.richness[0], cfg.richness[1]);
+    const base = rand(rng) * Math.PI * 2;
+    for (let i = 0; i < cfg.count; i++) {
+      const d0 = cfg.dist[0] + (cfg.dist[1] - cfg.dist[0]) * (cfg.count > 1 ? i / (cfg.count - 1) : 0.5);
+      let spot = null;
+      for (let tries = 0; tries < 24 && !spot; tries++) {
+        const a = base + i * 2.1 + tries * 0.55, d = d0 * (1 - 0.04 * Math.floor(tries / 8));
+        const x = C.x + Math.cos(a) * d, y = C.y + Math.sin(a) * d * 0.68;
+        if (!inBounds(state, x, y, 90) || inPond(state, x, y, 70)) continue;
+        if (placed.some((p) => dist(x, y, p.x, p.y) < 240)) continue;
+        if (state.nodes.some((n) => n.kind !== 'tree' && dist(x, y, n.x, n.y) < 70)) continue;
+        spot = { x, y };
+      }
+      if (!spot) continue;
+      placed.push(spot);
+      const amount = Math.round((cfg.reserve + Math.floor(rand(rng) * cfg.spread)) * rich * (i === 0 ? 1 : cfg.laterShare));
+      addMineral(state, kind, spot.x, spot.y, amount);
+    }
+  });
+}
+
 export function createWorld(seed = 20261009) {
   const rng = createRng(seed);
   const W = B.world.width, H = B.world.height;
@@ -71,7 +99,7 @@ export function createWorld(seed = 20261009) {
     version: 1, seed, rng, time: 0, nextId: 1,
     world: { width: W, height: H, pond: { x: C.x - 360, y: C.y + 210, rx: 130, ry: 64 } },
     settlement: { center: C, angleOffset: 0 },
-    settlements: [{ id: 'first', name: 'Den første landsbyen', x: C.x, y: C.y, state: 'active', population: [], kind: 'capital', projectsDone: 0, role: 'Skogbygd', stage: 'Leir' }],
+    settlements: [{ id: 'first', name: 'Den første landsbyen', x: C.x, y: C.y, state: 'active', population: [], kind: 'capital', projectsDone: 0, role: 'Skogbygd', stage: 'Leir', stock: {} }],
     expansion: { enabled: false, site: null, discovered: false, founding: false, founded: false, founders: [] },
     region: { enabled: false, populationUnlocked: false, deliveries: [], reserved: { wood: 0, stone: 0, food: 0, planks: 0, cutstone: 0 }, completedDeliveries: 0, completedProjects: 0, projects: {}, nextPopulationAt: Infinity },
     realm: { autoFounding: false, limit: 2, party: null, lastFoundedAt: -Infinity, nextCheckAt: Infinity, foundedCount: 0, siteCache: null },
@@ -100,7 +128,7 @@ export function createWorld(seed = 20261009) {
     discovered: {}, // innsikt-id → spilltid da den ble synlig (se discovery.js)
     modifiers: { gatherSpeed: 1, carry: 0, buildSpeed: 1, exploration: false, craftSpeed: 1, knowledge: 1, foodBonus: 0, townhouseBonus: 0, regionalCarry: 0, rockRegen: 1, treeGrowth: 1, walkSpeed: 1, clickBonus: 0, awakenBonus: 0, prayerMult: 1, expeditionSpeed: 1 },
     legacy: { cycles: 0, stones: [], bonuses: {} }, // arv fra tidligere sykluser (OPUS-01); påvirker ikke startverdenen
-    nodes: [], buildings: [], humans: [],
+    nodes: [], buildings: [], humans: [], siteMisses: {}, // OPUS-11: husker mislykkede tomtesøk (se construction.js)
     milestones: {}, unlocks: { zoomArea: false, villageView: false },
     timers: { seed: B.tree.seedIntervalSeconds, wearDecay: 0, roles: 0 },
     exploration: { nextAt: Infinity, activeId: null },
@@ -159,24 +187,9 @@ export function createWorld(seed = 20261009) {
     addRock(state, x, y, r);
     rocks++;
   }
-  // Tre synlige, begrensede forekomster. Kobber er alltid innen rekkevidde;
-  // tinn og jern ligger lenger ute slik at verden og rutene får en rolle.
-  const mineralKinds = ['copperOre', 'tinOre', 'ironOre'];
-  for (let k = 0; k < mineralKinds.length; k++) {
-    const a = rand(rng) * Math.PI * 2;
-    const d = k === 0 ? range(rng, 360, 620) : range(rng, 680, 1050);
-    let x = C.x + Math.cos(a) * d, y = C.y + Math.sin(a) * d * 0.68;
-    if (!inBounds(state, x, y, 80) || inPond(state, x, y, 60)) { x = C.x + (k - 1) * 440; y = C.y - 430; }
-    // Malmårer er dimensjonert etter metallbehovet i industrikjeden (se Kullbudsjett/Malmbudsjett i REPORT.md).
-    addMineral(state, mineralKinds[k], x, y, B.materials.oreReserve + Math.floor(rand(rng) * B.materials.oreSpread));
-  }
-  // Kull er alltid mulig å finne i samme seedede verden, men aldri universelt:
-  // én begrenset åre ligger langt nok ute til at utforskning og transport betyr noe.
-  let coalX = C.x + range(rng, -1, 1) * 760, coalY = C.y - range(rng, 420, 700);
-  if (!inBounds(state, coalX, coalY, 80) || inPond(state, coalX, coalY, 60)) { coalX = C.x + 740; coalY = C.y - 420; }
-  // Kullreserven er dimensjonert etter forbruk (docs/opus-08-10/REPORT.md, «Kullbudsjett»): ca. 6 timer
-  // industri ved ~90 kull/t for en dampmaskin og ~60 kull/t for et metallverk på 30 % utnyttelse.
-  addMineral(state, 'coal', coalX, coalY, B.industrial.coalReserve + Math.floor(rand(rng) * B.industrial.coalReserveSpread));
+  // Ressursgeografi (OPUS-11): hver malm og kullet har flere begrensede årer. Den nærmeste ligger innen rekkevidde,
+  // de neste lenger ute i hver sin retning; hvert frø har sin egen rikdom per mineral. Ingen forekomst er uendelig.
+  placeVeins(state, rng);
   // OPUS-08: oljefeltet legges IKKE til her. Det opprettes deterministisk når petroleumskunnskapen
   // aktiveres (ensureOilField i src/sim/petroleum.js). Slik er verdenen før det identisk med tidligere spill.
   return state;

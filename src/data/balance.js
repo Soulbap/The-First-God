@@ -107,8 +107,20 @@ export const BALANCE = {
     // Malmbudsjett: kobber/tinn/jern-årer ~100 enheter hver (tidligere 22–34). Iron krever 2 malm per jern,
     // så jern fra én åre er ca. 50; industrikjeden trenger flere hundre jern totalt, og handel gir resten.
     oreReserve: 100, oreSpread: 40,
+    // OPUS-11 · Ressursgeografi: antall årer, avstand fra bygdens hjerte, rikdom per frø og hvor stor del senere årer har.
+    // Industrikjeden bruker til sammen flere hundre jern; derfor flere årer enn én, og kull og olje er dimensjonert etter forbruk.
+    veins: {
+      copperOre: { count: 3, dist: [380, 1000], reserve: 100, spread: 40, richness: [0.8, 1.3], laterShare: 0.9 },
+      tinOre: { count: 2, dist: [700, 1100], reserve: 100, spread: 40, richness: [0.8, 1.3], laterShare: 0.8 },
+      ironOre: { count: 4, dist: [650, 1150], reserve: 120, spread: 50, richness: [0.75, 1.3], laterShare: 1 },
+      coal: { count: 3, dist: [520, 1100], reserve: 700, spread: 160, richness: [0.8, 1.25], laterShare: 0.9 },
+    },
+    // Neste åre av samme mineral blir kjent når alle kjente årer er under denne andelen av opprinnelig mengde.
+    prospectBelow: 0.55,
     // Folk fortsetter å hente malm til lageret når denne summen er under målet (tidligere 18: stoppet for tidlig).
     oreStockTarget: 40,
+    // Lagermål per vare (OPUS-11). Utvinning og smelting styres av relativ mangel; vekt > 1 gir kull og jern forrang.
+    stockTargets: { coal: 60, ironOre: 40, ironOreEarly: 12, copperOre: 24, tinOre: 12, copper: 30, bronze: 12, iron: 60, weight: { coal: 1.4, ironOre: 1.2 } },
   },
   // Kunnskap kommer bare fra faktisk virksomhet: foredling, verksteder og kunnskapshallen.
   knowledge: { perCycle: 0.25, workshopSeconds: 14, workshopYield: 0.25, hallSeconds: 8, hallYield: 0.5, hallPerPerson: 0.08, hallPopCap: 10, cityBonus: 1.25 },
@@ -120,7 +132,10 @@ export const BALANCE = {
   },
   // Verdens-regioner: avstand i «ruter». Reisetid er abstrakt (ingen individuell simulering utenfor kartet).
   globe: { cols: 5, rows: 3, expeditionSecondsPerStep: 55, outpostSecondsPerStep: 70, caravanSeconds: 46, caravanSpeed: 46, maxCaravans: 4,
-    expedition: { wood: 30, food: 8 }, outpost: { wood: 60, stone: 30, planks: 8, food: 8 }, outpostParty: 3, outpostGrowSeconds: 55, outpostCap: 8, establishedPop: 6 },
+    expedition: { wood: 30, food: 8 }, outpost: { wood: 60, stone: 30, planks: 8, food: 8 }, outpostParty: 3, outpostGrowSeconds: 55, outpostCap: 8, establishedPop: 6,
+    // OPUS-11 · regionale lagre: forekomstens størrelse (tung = malm/kull/olje), uttak per person per sekund, lagerplass,
+    // bolig (grunnplass + per hus), og byggematerialer for ett nytt hus fra regionens eget lager.
+    depositHeavy: 70, extractPerPop: 0.045, stockCap: 90, landCapacity: 14, baseHousing: 4, housingPerHome: 2, maxHomes: 6, homeMaterials: 26, homeSeconds: 70 },
   navigation: { dock: { wood: 34, stone: 12, planks: 8 }, boat: { wood: 18, planks: 6 }, sail: { wood: 28, planks: 12 }, surveySeconds: 72, maxVessels: 3 },
   // OPUS-06: kapasitet, ikke et globalt nett. Én mølle dekker sin egen bosettings
   // tre lokale foredlingsspor; effekt og slitasje er aggregert og deterministisk.
@@ -164,10 +179,12 @@ export const BALANCE = {
   // OPUS-08: petroleum er en begrenset åre (oljefelt) som pumpes av en brønn og raffineres.
   petroleum: {
     well: { cost: { wood: 40, stone: 20, planks: 10, iron: 4, industrialMachinery: 1 }, crudePerSecond: 0.05, reach: [70, 200] },
+    // OPUS-11: to felt (tidligere ett på 30–44). Raffinering krever 2 olje per drivstoff; motorer og lastebiler brenner drivstoff i timevis.
+    field: { reserve: 260, spread: 100, secondShare: 0.6 },
   },
   // OPUS-08: forbrenningsmotor er kraftkilde som bruker raffinert drivstoff; lastebiler frakter planker på land.
   combustion: {
-    engine: { cost: { wood: 20, iron: 6, industrialMachinery: 2, mechanicalComponents: 2 }, power: 4, fuelPerSecond: 0.02, wearPerSecond: 0.0012, repairAt: 0.44, repair: { iron: 1, planks: 2 } },
+    engine: { cost: { wood: 20, iron: 6, industrialMachinery: 2, mechanicalComponents: 2 }, power: 4, fuelPerSecond: 0.02, standbyFuelPerSecond: 0.0015, wearPerSecond: 0.0012, repairAt: 0.44, repair: { iron: 1, planks: 2 } },
     road: { maxDistance: 700, load: 4, cargo: 'planks', reserve: 40, fuelPerTrip: 1, travelSeconds: 20, tripsBeforeService: 3, service: { iron: 1, planks: 2 } },
   },
   // OPUS-09: fly er lokale oppdrag, ikke et globalt flysystem. Hver flyvning bruker drivstoff og tid,

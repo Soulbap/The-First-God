@@ -13,10 +13,14 @@ export function siteIsValid(state, type, x, y) {
   // Kollisjon, arbeidsrom og visuell klarering er ulike ting. Små hus kan fortsatt danne gater,
   // mens verksteder og offentlige bygg trenger plass til aktivitet og inngang.
   const space = (t) => ({ field: 18, well: 24, market: 34, hall: 32, warehouse: 30, sawmill: 28, mason: 28, sanctuary: 26 }[t] ?? 16);
-  for (const b of state.buildings) if (dist(x, y, b.x, b.y) < r + b.radius + Math.max(space(type), space(b.type))) return false;
+  const sp = space(type);
+  for (const b of state.buildings) {
+    const need = r + b.radius + Math.max(sp, space(b.type)), dx = x - b.x, dy = y - b.y;
+    if (dx * dx + dy * dy < need * need) return false;
+  }
   for (const n of state.nodes) {
-    const need = n.kind === 'tree' ? r + 22 : r + n.radius + 10;
-    if (dist(x, y, n.x, n.y) < need) return false;
+    const need = n.kind === 'tree' ? r + 22 : r + n.radius + 10, dx = x - n.x, dy = y - n.y;
+    if (dx * dx + dy * dy < need * need) return false;
   }
   return true;
 }
@@ -102,7 +106,26 @@ function siteScore(state, type, x, y, ring, anchor, ctx) {
 
 // Deterministisk søk i ringer rundt leirens hjerte (bålet når det finnes). Blant gyldige tomter i de nærmeste
 // ringene velges den som passer sonen best; ellers som før den første ledige.
+// Mislykkede søk huskes så lenge verdens oppsett er uendret (bygg og noder legges bare til med nye id-er). Et nytt forsøk
+// kommer enten når oppsettet endres eller etter en kort ventetid, og søker da bredere. Minnet ligger i `state.siteMisses`
+// (lagres med spillet), fordi søkeradiusen avhenger av antall mislykkede forsøk: da gir lagre/lese nøyaktig samme forløp.
+export const siteStats = { searches: 0, skipped: 0 };
+const BASE_RING = 520, RING_STEP = 120, MAX_RING = 1000;
+
 export function findBuildSite(state, type, settlementId = 'first') {
+  const misses = (state.siteMisses ??= {});
+  const key = `${settlementId}|${type}`, m = misses[key];
+  const sig = `${state.nextId}|${state.buildings.length}|${state.nodes.length}`;
+  if (m && m.sig === sig && state.time < m.retryAt) { siteStats.skipped++; return null; }
+  const attempts = m && m.sig === sig ? m.attempts : 0;
+  siteStats.searches++;
+  const site = searchBuildSite(state, type, settlementId, Math.min(MAX_RING, BASE_RING + RING_STEP * attempts));
+  if (site) delete misses[key];
+  else misses[key] = { sig, attempts: attempts + 1, retryAt: state.time + 3 * (attempts + 1) };
+  return site;
+}
+
+function searchBuildSite(state, type, settlementId, maxRing) {
   const def = B.building[type];
   const home = state.settlements.find((s) => s.id === settlementId);
   const C = settlementId === 'first' || !home ? state.settlement.center : home;
@@ -119,7 +142,7 @@ export function findBuildSite(state, type, settlementId = 'first') {
   const ctx = { settlementId, rays: zone === 'home' ? streetRays(state, settlementId) : null, dir: type === 'sawmill' ? resourceDir(state, anchor, 'tree') : type === 'mason' ? resourceDir(state, anchor, 'rock') : type === 'mine' ? resourceDir(state, anchor, 'mineral') : null };
   const reach = zone === 'field' ? 150 : zone === 'work' ? 120 : 70; // hvor langt utover første ledige ring vi vurderer
   let best = null, firstRing = null;
-  for (let ring = minRing; ring <= 520; ring += 10) {
+  for (let ring = minRing; ring <= maxRing; ring += 10) {
     if (firstRing != null && ring > firstRing + reach) break;
     const steps = Math.max(12, Math.round(ring / 8));
     for (let k = 0; k < steps; k++) {

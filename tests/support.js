@@ -5,11 +5,11 @@ import { makeBot, playTo } from '../tools/bot.js';
 const cache = new Map();
 
 // Spiller et nytt spill frem til en milepæl. Resultatet mellomlagres per (seed, milepæl) og skal bare leses.
-export function reached(milestone, seed = 20261009) {
-  const key = `${seed}:${milestone}`;
+export function reached(milestone, seed = 20261009, maxSeconds = 14400, label = String(milestone)) {
+  const key = `${seed}:${label}`;
   if (!cache.has(key)) {
     const s = createGame(seed), bot = makeBot();
-    const ok = playTo(s, bot, milestone, 14400);
+    const ok = playTo(s, bot, milestone, maxSeconds);
     cache.set(key, { s, ok, bot });
   }
   return cache.get(key);

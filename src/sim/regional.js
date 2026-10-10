@@ -1,5 +1,6 @@
-// Regional forsyningsmodell for flere bosettinger: felles beholdning, men hver levering
-// reserveres ved avreise og blir først tilgjengelig for et lokalt prosjekt ved ankomst.
+// Regional forsyningsmodell for flere bosettinger. Hovedstadens lager er `state.resources`; hver ny bosetting har sitt
+// eget lager (`settlement.stock`, OPUS-11). En levering trekkes fra hovedstaden ved avreise, er i transitt (reservert),
+// og havner først i bosettingens eget lager ved ankomst. Prosjekter bruker bare det lokale lageret.
 // Hovedstaden (første bosetting) sender; hver ny bosetting bygger etter en plan som følger
 // stedets forhold (skog, stein, jord). Handelsruter vokser ut av faktiske reiser.
 import { BALANCE as B } from '../data/balance.js';
@@ -29,13 +30,47 @@ export const planFor = (id, kind) => (KIND_PLANS[kind] || KIND_PLANS.farm).map((
 
 const planOf = (state, S) => (S.id === 'second' ? projectDefs : S.plan || []);
 
+// Bosettingens lager (OPUS-11). Hovedstaden bruker det delte hjemmelageret; satellittene har eget lager som bare fylles av leveranser.
+export const stockOf = (state, S, type) => (S?.id === 'first' ? state.resources[type] : S?.stock?.[type]) || 0;
+export function stockAdd(S, type, amount) { S.stock ??= {}; S.stock[type] = (S.stock[type] || 0) + amount; }
+// Varer underveis til en bosetting med motorvogn (ikke ennå i lageret).
+const truckTransit = (state, id, type) => (state.industrial?.shipments || []).filter((q) => q.mode === 'road' && q.to === id && q.type === type && q.status === 'traveling').reduce((n, q) => n + q.amount, 0);
+const carrierTransit = (state, id, type) => state.region.deliveries.filter((d) => d.destination === id && d.type === type && d.status !== 'done' && d.status !== 'cancelled').reduce((n, d) => n + d.amount, 0);
+// Hva prosjektene i satellittbosettingene fortsatt mangler (stedets lager + det som er underveis er trukket fra).
+export function projectNeeds(state) {
+  const needs = [];
+  for (const p of Object.values(state.region?.projects || {})) {
+    const S = settlementById(state, p.settlementId); if (!S) continue;
+    for (const [type, need] of Object.entries(p.cost)) {
+      const missing = need - stockOf(state, S, type) - carrierTransit(state, S.id, type) - truckTransit(state, S.id, type);
+      if (missing > 0) needs.push({ settlementId: S.id, type, missing });
+    }
+  }
+  return needs;
+}
+
+// Tomtesøk for en ny bosetting. Søket er deterministisk, men dyrt når ringen er full; derfor huskes en mislykket
+// søkning (gjelder bare så lenge verdens oppsett er uendret), og neste forsøk søker bredere i stedet for å gjenta det samme.
+// Hurtigbufferen er ren ytelse: nøkkelen dekker alt siteIsValid leser (bygg og noder legges bare til med nye id-er).
+export const siteSearchStats = { searches: 0, skipped: 0 };
+const layoutSig = (state) => `${state.nextId}|${state.buildings.length}|${state.nodes.length}`;
+
 export function localSite(state, type, S, ordinal) {
+  const misses = (state.siteMisses ??= {});
+  const key = `local|${S.id}|${type}|${ordinal}`;
+  const m = misses[key];
+  const sig = layoutSig(state);
+  if (m && m.sig === sig && state.time < m.retryAt) { siteSearchStats.skipped++; return null; }
+  const attempts = m && m.sig === sig ? m.attempts : 0; // endret verden: begynn på nytt
+  const maxR = 230 + 40 * Math.min(attempts, 8); // ingen fastlåsing: hvert mislykket forsøk utvider ringen
+  siteSearchStats.searches++;
   const a0 = 0.7 + ordinal * 1.9;
-  for (let r = 72; r < 230; r += 14) for (let k = 0; k < 16; k++) {
+  for (let r = 72; r < maxR; r += 14) for (let k = 0; k < 16; k++) {
     const a = a0 + k / 16 * Math.PI * 2;
     const x = S.x + Math.cos(a) * r, y = S.y + Math.sin(a) * r * 0.68;
-    if (siteIsValid(state, type, x, y)) return { x, y };
+    if (siteIsValid(state, type, x, y)) { delete misses[key]; return { x, y }; }
   }
+  misses[key] = { sig, attempts: attempts + 1, retryAt: state.time + 4 * (attempts + 1) };
   return null;
 }
 
@@ -63,15 +98,14 @@ export const establishedRoutes = (state) => Object.values(state.network.routes).
 function activateProject(state, S, def) {
   const R = state.region;
   if (R.projects[S.id] || state.buildings.some((b) => b.source === def.id)) return;
-  R.projects[S.id] = { ...def, settlementId: S.id, delivered: Object.fromEntries(Object.keys(def.cost).map((k) => [k, 0])), startedAt: state.time };
+  R.projects[S.id] = { ...def, settlementId: S.id, startedAt: state.time };
   state.events.push({ type: 'regionalProject', id: def.id, x: S.x, y: S.y });
 }
 
 function queueNeed(state, p) {
-  const amountMax = deliveryAmount(state);
+  const amountMax = deliveryAmount(state), S = settlementById(state, p.settlementId);
   for (const [type, need] of Object.entries(p.cost)) {
-    const outstanding = state.region.deliveries.filter((d) => d.project === p.id && d.type === type && d.status !== 'done' && d.status !== 'cancelled').reduce((n, d) => n + d.amount, 0);
-    const missing = need - p.delivered[type] - outstanding;
+    const missing = need - stockOf(state, S, type) - carrierTransit(state, p.settlementId, type) - truckTransit(state, p.settlementId, type);
     if (missing > 0 && state.resources[type] >= Math.min(missing, amountMax)) {
       state.region.deliveries.push({ id: state.nextId++, project: p.id, type, amount: Math.min(missing, amountMax), status: 'queued', source: 'first', destination: p.settlementId, createdAt: state.time, carrierId: null });
     }
@@ -80,11 +114,11 @@ function queueNeed(state, p) {
 
 function finishProject(state, p) {
   const S = settlementById(state, p.settlementId);
-  if (!S || Object.entries(p.cost).some(([k, n]) => p.delivered[k] < n)) return;
+  if (!S || Object.entries(p.cost).some(([k, n]) => stockOf(state, S, k) < n)) return;
   const site = localSite(state, p.type, S, S.projectsDone || 0);
   if (!site) return;
   const b = startConstruction(state, p.type, { source: p.id, site, settlementId: S.id, onComplete: p.type === 'hut' ? { regionalPopulation: 1 } : null });
-  if (b) { state.region.completedProjects++; S.projectsDone = (S.projectsDone || 0) + 1; delete state.region.projects[S.id]; }
+  if (b) { for (const [k, n] of Object.entries(p.cost)) S.stock[k] -= n; state.region.completedProjects++; S.projectsDone = (S.projectsDone || 0) + 1; delete state.region.projects[S.id]; }
 }
 
 export function beginDelivery(state, h) {
@@ -109,8 +143,8 @@ export function pickupDelivery(state, h) {
 export function completeDelivery(state, h) {
   const d = state.region.deliveries.find((q) => q.id === h.regionalDeliveryId);
   if (!d || d.status !== 'traveling') return cancelDelivery(state, h);
-  const p = state.region.projects[d.destination];
-  if (p?.id === d.project) p.delivered[d.type] += d.amount;
+  const S = settlementById(state, d.destination);
+  if (S) stockAdd(S, d.type, d.amount);
   state.region.reserved[d.type] = Math.max(0, state.region.reserved[d.type] - d.amount);
   d.status = 'done'; state.region.completedDeliveries++; h.carry = { type: null, amount: 0 }; h.regionalDeliveryId = null;
   recordTrip(state, 'first', d.destination, d.type, d.amount);

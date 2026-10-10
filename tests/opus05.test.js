@@ -32,11 +32,11 @@ test('OPUS-05: kai og båt koster vanlige varer, og kartkunnskap forbedres kun e
 test('OPUS-05: sjølast reserveres, leveres én gang og overlever lagring underveis', () => {
   const s = createGame(10), home = s.globe.regions.find((r) => r.home), r = s.globe.regions.find((q) => !q.home);
   home.water = { coast: true, river: false, openSea: true }; r.water = { coast: true, river: false, openSea: true };
-  r.state = regionState.ETABLERT; r.pop = 6; r.nextCaravanAt = 0; r.inventory = { copperOre: 8 };
+  r.state = regionState.ETABLERT; r.pop = 6; r.nextCaravanAt = 0; r.inventory = { copperOre: 0 }; r.stock = { copperOre: 8 }; // OPUS-11: karavaner henter fra regionens lager
   s.globe.vessels.push({ id: 500, capacity: 12, route: null, cargo: null, x: 0, y: 0 });
   step(s); const shipment = s.globe.caravans[0]; assert.ok(shipment && shipment.mode === 'sea');
   assert.ok(shipment.goods.reduce((n, g) => n + g.amount, 0) <= 12, 'lasten holder seg innen fartøyets kapasitet');
-  const reserved = r.inventory.copperOre, saved = deserialize(serialize(s)); assert.ok(saved);
+  const reserved = r.stock.copperOre, saved = deserialize(serialize(s)); assert.ok(saved);
   advance(saved, 180);
   assert.equal(saved.resources.copperOre, 8 - reserved);
   assert.equal(saved.globe.stats.maritimeDeliveries, 1);

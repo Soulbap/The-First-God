@@ -2,7 +2,7 @@
 // Bevisst valg (prosjektansvarlig): ingen offline-fremgang. En lastet verden fortsetter nøyaktig der den ble lagret.
 import { createWorld } from './world.js';
 
-export const SAVE_VERSION = 10;
+export const SAVE_VERSION = 11;
 
 // JSON kan ikke uttrykke Infinity/NaN eller typede arrays; de kodes som små merkeobjekter.
 function replacer(key, v) {
@@ -43,6 +43,21 @@ export function deserialize(text, { seed } = {}) {
   if (!(s.wear?.data instanceof Float32Array) || !Array.isArray(s.humans) || !Array.isArray(s.buildings)) return null;
   const fresh = createWorld(s.seed);
   fillDefaults(s, fresh);
+  // v11: satellittbosettinger får eget lager. Det som var levert til et pågående prosjekt (tidligere `delivered`) flyttes dit.
+  for (const S of s.settlements || []) if (!S.stock) S.stock = {};
+  for (const p of Object.values(s.region?.projects || {})) {
+    const S = s.settlements.find((q) => q.id === p.settlementId);
+    if (S && p.delivered) { for (const [k, n] of Object.entries(p.delivered)) if (n) S.stock[k] = (S.stock[k] || 0) + n; }
+    delete p.delivered;
+  }
+  // v11 (OPUS-11): regioner får eget lager. Eldre lagringer: tomt lager, boliger etter folketall (ingen varer oppstår).
+  for (const r of s.globe?.regions || []) {
+    if (!r.stock) r.stock = {};
+    if (r.homes == null) r.homes = r.state === 'utpost' || r.state === 'etablert' ? Math.max(1, Math.ceil((r.pop - 4) / 2)) : 0;
+    if (r.building === undefined) r.building = null;
+    if (r.extracted == null) r.extracted = 0;
+    if (r.aerial == null) r.aerial = false;
+  }
   s.events = [];
   return s;
 }

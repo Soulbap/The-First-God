@@ -29,12 +29,14 @@ test('alle krav bruker kjente kravtyper (ellers kan innhold aldri låses opp)', 
 });
 
 test('full spilling kjøper alt innhold (ingen oppgradering er utilgjengelig)', () => {
-  const { s, bot } = reached('first_world_civilization');
+  // OPUS-11: hele kjeden spilles uten snarveier til siste milepæl (luftmålingene som åpner planetkameraet).
+  const all = (st) => UPGRADES.every((u) => st.upgrades[u.id]) && MILESTONES.every((m) => st.milestones[m.id] != null);
+  const { s, bot, ok } = reached(all, 20261009, 21600, 'alt-innhold');
+  assert.ok(ok, 'alt innhold nås naturlig innen seks timer spilltid');
   const bought = new Set(bot.bought.map((b) => b.id));
-  // Luftmåling ligger bevisst etter «Verdens første sivilisasjon»; den er ikke del av den gamle sluttlinjen.
-  const never = UPGRADES.filter((u) => !bought.has(u.id) && u.id !== 'aerial_survey').map((u) => u.id);
+  const never = UPGRADES.filter((u) => !bought.has(u.id)).map((u) => u.id);
   assert.deepEqual(never, [], 'alle oppgraderinger kan nås');
-  const ms = MILESTONES.filter((m) => s.milestones[m.id] == null && m.id !== 'planetary_survey').map((m) => m.id);
+  const ms = MILESTONES.filter((m) => s.milestones[m.id] == null).map((m) => m.id);
   assert.deepEqual(ms, [], 'alle milepæler kan nås');
 });
 

@@ -16,9 +16,10 @@ const steamEngine = (s, power = 5) => addBuilding(s, 'steam_engine', 'first', 90
 test('OPUS-08: oljefeltet er seedet, begrenset og kan ikke håndplukkes', () => {
   const a = createGame(801), b = createGame(801); ensureOilField(a); ensureOilField(b);
   const oa = oilNodes(a), ob = oilNodes(b);
-  assert.equal(oa.length, 1, 'ett oljefelt per seed');
-  assert.deepEqual([oa[0].x, oa[0].y, oa[0].amount], [ob[0].x, ob[0].y, ob[0].amount]);
-  assert.ok(oa[0].amount > 0 && oa[0].amount <= 44, 'begrenset mengde');
+  assert.equal(oa.length, 2, 'et hovedfelt og et mindre felt per seed (OPUS-11)');
+  assert.deepEqual(oa.map((n) => [n.x, n.y, n.amount]), ob.map((n) => [n.x, n.y, n.amount]));
+  assert.ok(oa.every((n) => n.amount > 0 && n.amount <= B.petroleum.field.reserve + B.petroleum.field.spread), 'begrenset mengde');
+  assert.ok(oa[1].amount < oa[0].amount, 'det andre feltet er mindre');
   enableMaterials(a); oa[0].discovered = true; const before = oa[0].amount;
   assert.equal(harvestMineral(a, oa[0], 5), 0, 'olje oppstår ikke uten brønn');
   assert.equal(oa[0].amount, before, 'ingen uttak uten brønn');
@@ -93,7 +94,10 @@ test('OPUS-08: lastebil frakter planker mellom gyldige bosettinger uten teleport
   const s = createGame(808); enableIndustry(s); s.industrial.roads = true; steamEngine(s, 5); s.resources.coal = 100;
   s.settlements.push({ id: 'second', name: 'Veibygda', x: s.settlement.center.x + 420, y: s.settlement.center.y - 120, state: 'active', population: [], kind: 'mine', projectsDone: 0, role: 'Vei', stage: 'By' });
   s.resources.truck = 1; s.resources.fuel = 5; s.resources.planks = 100;
-  const total = () => s.resources.planks + s.industrial.shipments.filter((q) => q.status === 'traveling').reduce((n, q) => n + q.amount, 0);
+  // OPUS-11: lastebilen kjører bare med varer en bosetting faktisk trenger (prosjekt), og lasten havner i bosettingens eget lager.
+  s.region.projects.second = { id: 'second_test', type: 'sawmill', cost: { planks: 8 }, settlementId: 'second' };
+  const second = s.settlements.find((q) => q.id === 'second');
+  const total = () => s.resources.planks + (second.stock?.planks || 0) + s.industrial.shipments.filter((q) => q.status === 'traveling').reduce((n, q) => n + q.amount, 0);
   const start = total();
   stepIndustry(s, 0.1);
   const trip = s.industrial.shipments.find((q) => q.mode === 'road');
@@ -141,12 +145,12 @@ test('OPUS-08: oppgraderingene krever reelle forutsetninger før de låses opp',
 test('OPUS-08: v7-lagring fylles med nye felt uten å miste råvarer eller oljefeltet', () => {
   const s = createGame(811); ensureOilField(s); enableIndustry(s); s.resources.crudeOil = 3; s.resources.fuel = 2; s.resources.truck = 1;
   s.industrial.roadTrips = 0; s.industrial.shipments.push({ id: 9, mode: 'road', from: 'first', to: 'second', type: 'planks', amount: 4, status: 'traveling', departAt: 2, arriveAt: 8 });
-  const raw = JSON.parse(serialize(s)); assert.equal(raw.v, SAVE_VERSION); assert.equal(SAVE_VERSION, 10);
+  const raw = JSON.parse(serialize(s)); assert.equal(raw.v, SAVE_VERSION); assert.equal(SAVE_VERSION, 11);
   raw.v = 7; delete raw.state.industrial.electric; delete raw.state.industrial.petroleum; delete raw.state.resources.truck; delete raw.state.resources.crudeOil;
   const old = deserialize(JSON.stringify(raw));
   assert.equal(old.industrial.electric, false); assert.equal(old.resources.truck, 0);
   const restored = deserialize(serialize(s));
   assert.equal(restored.resources.crudeOil, 3); assert.equal(restored.resources.fuel, 2); assert.equal(restored.resources.truck, 1);
   assert.equal(restored.industrial.shipments.find((q) => q.mode === 'road').amount, 4);
-  assert.equal(oilNodes(restored).length, 1, 'oljefeltet lagres med verdenen');
+  assert.equal(oilNodes(restored).length, 2, 'oljefeltet lagres med verdenen');
 });

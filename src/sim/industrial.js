@@ -3,6 +3,7 @@
 import { BALANCE as B } from '../data/balance.js';
 import { startConstruction, findBuildSite } from './construction.js';
 import { settlementById } from './settlements.js';
+import { projectNeeds, stockAdd } from './regional.js';
 import { chronicle } from './chronicle.js';
 import { factoryPower, stepPower } from './power.js';
 import { stepPetroleum } from './petroleum.js';
@@ -103,29 +104,37 @@ function roadPair(s) {
   return null;
 }
 // Lastebil: en tur bruker drivstoff og ett trekk på slitasje; verksted krever ekte materialer. Lasten trekkes ved avreise.
+// OPUS-11: lastebilen kjører bare med varer en bosetting faktisk mangler til et pågående prosjekt (ellers ville drivstoffet
+// brennes på turer som ikke flytter noe nyttig), og lasten havner i bosettingens eget lager.
 function dispatchRoad(s) {
   const I = s.industrial, R = B.combustion.road;
   if (!I.roads || s.resources.truck < 1) return;
   if (I.shipments.filter((q) => q.status === 'traveling' && q.mode === 'road').length >= s.resources.truck) return;
-  if (s.resources.fuel < R.fuelPerTrip || s.resources[R.cargo] < R.load + R.reserve) return;
+  if (s.resources.fuel < R.fuelPerTrip) return;
+  const need = projectNeeds(s).find((n) => landLink(s, 'first', n.settlementId, R.maxDistance) && (s.resources[n.type] || 0) >= Math.min(n.missing, R.load));
+  if (!need) return;
   if (I.truckWear >= R.tripsBeforeService) {
     if (!afford(s, R.service)) return;
     spend(s, R.service); I.truckWear = 0; I.serviceCount++;
   }
-  const pair = roadPair(s); if (!pair) return;
-  s.resources.fuel -= R.fuelPerTrip; I.fuelBurned += R.fuelPerTrip; s.resources[R.cargo] -= R.load;
+  const amount = Math.min(R.load, Math.ceil(need.missing), Math.floor(s.resources[need.type]));
+  if (amount < 1) return;
+  s.resources.fuel -= R.fuelPerTrip; I.fuelBurned += R.fuelPerTrip; s.resources[need.type] -= amount;
   I.truckWear += 1; I.roadTrips++;
-  I.shipments.push({ id: s.nextId++, mode: 'road', from: pair.a, to: pair.b, type: R.cargo, amount: R.load, status: 'traveling', departAt: s.time, arriveAt: s.time + R.travelSeconds });
+  I.shipments.push({ id: s.nextId++, mode: 'road', from: 'first', to: need.settlementId, type: need.type, amount, status: 'traveling', departAt: s.time, arriveAt: s.time + R.travelSeconds });
 }
 function stepShipments(s) {
   for (const q of s.industrial.shipments) if (q.status === 'traveling' && s.time >= q.arriveAt) {
-    q.status = 'done'; s.resources[q.type] += q.amount;
+    q.status = 'done';
     if (q.mode === 'road') {
+      const dest = settlementById(s, q.to);
+      if (dest) stockAdd(dest, q.type, q.amount); else s.resources[q.type] += q.amount; // mål borte: lasten går tilbake til hovedlageret
       s.industrial.roadDeliveries++;
       const A = settlementById(s, q.from), C = settlementById(s, q.to);
       chronicle(s, 'motor:first-delivery', 'route', 'De første motorvognene frakter varer mellom bosetninger.', A && C ? { x: (A.x + C.x) / 2, y: (A.y + C.y) / 2 } : null);
       continue;
     }
+    s.resources[q.type] += q.amount; // jernbanelasten (kull) leveres tilbake til hjemmelageret ved ankomst
     s.industrial.deliveries++;
     const rail = s.industrial.rails.find((r) => r.id === q.rail), A = rail && settlementById(s, rail.a), C = rail && settlementById(s, rail.b);
     chronicle(s, `industrial:shipment:${q.id}`, 'route', 'Et damplokomotiv frakter kull til industribyen.', A && C ? { x: (A.x + C.x) / 2, y: (A.y + C.y) / 2 } : null);

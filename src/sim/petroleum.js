@@ -3,7 +3,7 @@
 // drivstoff mens den går. Lastebilverkstedet lager lastebiler, som reiser på land og bruker drivstoff per tur.
 import { BALANCE as B } from '../data/balance.js';
 import { startConstruction, findBuildSite, siteIsValid } from './construction.js';
-import { inBounds, inPond } from './world.js';
+import { inBounds, inPond, dist } from './world.js';
 import { chronicle } from './chronicle.js';
 import { createRng, rand, range } from '../core/rng.js';
 
@@ -22,8 +22,13 @@ export function ensureOilField(s) {
   const C = s.settlement.center, rng = createRng((s.seed ^ 0x0f1e2d3c) >>> 0);
   let x = C.x + range(rng, -1, 1) * 820, y = C.y + range(rng, 460, 640);
   if (!inBounds(s, x, y, 80) || inPond(s, x, y, 60)) { x = C.x - 760; y = C.y + 520; }
-  const amount = 30 + Math.floor(rand(rng) * 14);
-  s.nodes.push({ id: s.nextId++, kind: 'mineral', mineral: 'oil', x, y, radius: 18, amount, maxAmount: amount, stone: amount, maxStone: amount, discovered: false, reservedBy: [] });
+  const F = P.field, add = (px, py, amount) => s.nodes.push({ id: s.nextId++, kind: 'mineral', mineral: 'oil', x: px, y: py, radius: 18, amount, maxAmount: amount, stone: amount, maxStone: amount, discovered: false, reservedBy: [] });
+  add(x, y, F.reserve + Math.floor(rand(rng) * F.spread));
+  // Et mindre felt østlig eller vestlig, oppdaget først når det første er nesten tomt (se discoverMinerals).
+  const side = x < C.x ? 1 : -1;
+  let x2 = C.x + side * range(rng, 700, 960), y2 = C.y + range(rng, -140, 260);
+  if (!inBounds(s, x2, y2, 80) || inPond(s, x2, y2, 60) || dist(x2, y2, x, y) < 260) { x2 = C.x + side * 640; y2 = C.y - 40; }
+  add(x2, y2, Math.round((F.reserve + Math.floor(rand(rng) * F.spread)) * F.secondShare));
 }
 
 // Brønnen skal stå nær det oppdagede feltet, men aldri på en ugyldig tomt. Søket er deterministisk.
@@ -74,10 +79,14 @@ function pump(s, b, dt) {
 }
 
 // Forbrenningsmotoren krever drivstoff mens den går; uten drivstoff stopper den (ingen gratis kraft).
+// OPUS-11: motoren er en reserve for dampmaskinen. Full forbrenning bare når bosettingens dampkraft ikke rekker til generatoren
+// (steamPower); ellers går den på tomgang. Før gikk den på fullt hele tiden og tømte drivstoffet som fly og lastebiler trenger.
 function operateCombustion(s, b, dt) {
   const cfg = C.engine;
   b.wear ??= 0; b.reliability ??= 1;
-  const burn = cfg.fuelPerSecond * dt;
+  const steam = s.buildings.filter((q) => q.complete && q.type === 'steam_engine' && (q.settlementId || 'first') === (b.settlementId || 'first')).reduce((n, q) => n + (q.availablePower || 0), 0);
+  const needed = steam < B.electric.generator.steamPower;
+  const burn = (needed ? cfg.fuelPerSecond : cfg.standbyFuelPerSecond) * dt;
   if (s.resources.fuel < burn) { b.availablePower = 0; b.active = false; b.idle = 'drivstoff'; return; }
   s.resources.fuel -= burn; s.industrial.fuelBurned += burn;
   b.availablePower = cfg.power * b.reliability; b.active = true; b.idle = null;

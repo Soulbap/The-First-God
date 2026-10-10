@@ -31,6 +31,25 @@ Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på ve
 ```md
 ## [Unreleased]
 
+### OPUS-11 · integrasjon, verdensutvikling og kvalitet (pågår)
+
+#### Fixed
+- **Tomtesøk (`localSite`/`findBuildSite`)**: Et mislykket tomtesøk ble gjentatt i hvert simuleringssteg (full romlig skanning) og tok 259 s for 4 timer spilltid på frø 20261009 (33–36 s på 701/4242). Mislykkede søk huskes nå i `state.siteMisses` så lenge verdens oppsett er uendret, gjentas etter en kort ventetid med stadig større søkeradius (ingen permanent oppgivelse), og lagres med spillet så lagre/lese gir samme forløp. Målt etter: 31 s for samme frø (4 timer), hele testpakken 173 s → ca. 30 s.
+- **Utvinning og smelting sultet kjeden**: Folk hentet «nærmeste mineral» når summen av malm og kull var under 40, så et fullt lager av tinn hindret at jern ble hentet; smelteren lagde alltid kobber først og kom aldri til jern. Nå har hvert mineral eget lagermål og relativ mangel avgjør både utvinning (`wantedMineral`) og smelting.
+- **Forbrenningsmotoren** brant drivstoff på fullt hele tiden og tømte oljen som fly og lastebiler trenger; den går nå på tomgang med mindre dampkraften ikke rekker til generatoren.
+- **Lastebiler** kjørte planker frem og tilbake uten formål og brant drivstoff. De kjører nå bare med varer et pågående regionalt prosjekt mangler, og lasten havner i bosettingens eget lager.
+- **Luftmåling** hadde ingen mål fordi skip allerede hadde kartlagt alle land; fly måler nå hvert land innen rekkevidde én gang (`region.aerial`) uavhengig av sjøkartleggingen.
+
+#### Changed
+- **Ressursgeografi**: Hver av kobber, tinn, jern og kull har flere begrensede årer i ulike retninger (3/2/4/3), med rikdom per frø; neste åre prospekteres først når de kjente er under 55 % (`B.materials.veins`). To oljefelt (260–360 og et mindre) i stedet for ett på 30–44.
+- **Regionale lagre (utposter)**: Hver region har eget lager (`region.stock`) adskilt fra forekomsten (`inventory`). Folk utvinner fra forekomsten til lageret, boliger bygges av regionens eget lager (plass til flere folk), og karavaner bærer det hjemmelageret trenger mest (`demandOf`) – bare det lageret faktisk har. Utposter velges etter hva riket mangler (jern, kull, kobber, olje).
+- **Bosettingslager**: Satellittbosettinger har eget lager (`settlement.stock`); leveranser (bærere og lastebiler) havner der, og prosjekter bruker bare det lokale lageret.
+- Save-format v11 (migrering fyller regionlager, bosettingslager og flytter tidligere prosjektleveranser).
+
+#### Tests
+- Fullt-innhold-testen spiller nå hele kjeden til siste milepæl uten snarveier (tidligere stoppet den ved «Verdens første sivilisasjon»). Testene for oljefelt, sjølast, lastebil og save-versjon er oppdatert til de nye reglene (to felt, regionlager, behovsstyrt lastebil, v11).
+- 178/178 tester består (baseline var 175/178).
+
 ### Added
 - **OPUS-08 · elektrisitet og motorisering (delvis)**: Generator som drives av damp i sin egen bosetting, nettstasjon som dekker kun den bosettingen, og elektriske fabrikker som arbeider raskere. Oljefelt (begrenset, seedet, kan ikke håndplukkes), brønn, raffineri (2 råolje → 1 drivstoff), forbrenningsmotor som bruker drivstoff, og lastebilverksted. Lastebiler frakter planker over land med drivstoff og vedlikehold, og kan ikke krysse dammen.
 - **OPUS-09 · luftfart og observasjon (delvis)**: Presisjonsverk (presisjonskomponenter), flyverk (fly med tak), autonom flyplass på gyldig tomt, og flyvninger med drivstoff, rekkevidde, tid og vedlikehold. Luftmålinger øker kartkunnskap ett trinn for kjente steder. Planetkameraet åpnes først etter tre fullførte målinger.

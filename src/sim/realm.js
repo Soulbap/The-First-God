@@ -141,7 +141,7 @@ function foundSettlement(state, party, members) {
   const id = ORDINAL[state.settlements.length - 1] || `s${state.settlements.length + 1}`;
   const sameKind = state.settlements.filter((s) => s.kind === site.kind).length;
   const name = NAMES[site.kind] + (sameKind ? ' ' + 'I'.repeat(sameKind + 1) : '');
-  const S = { id, name, x: site.x, y: site.y, state: 'founding', population: members.map((m) => m.id), kind: site.kind, plan: planFor(id, site.kind), projectsDone: 0, foundedAt: state.time, role: 'Skogbygd', stage: 'Leir' };
+  const S = { id, name, x: site.x, y: site.y, state: 'founding', population: members.map((m) => m.id), kind: site.kind, plan: planFor(id, site.kind), projectsDone: 0, foundedAt: state.time, role: 'Skogbygd', stage: 'Leir', stock: {} };
   state.settlements.push(S);
   const first = settlementById(state, 'first');
   first.population = first.population.filter((hid) => !S.population.includes(hid));
