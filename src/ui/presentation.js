@@ -19,6 +19,11 @@ export function classifyPresentation(event) {
       kind: significant ? 'significant' : 'minor', icon: def.icon, kicker: 'Ny innsikt', title: def.name,
       text: significant ? def.world : '' };
   }
+  if (event.type === 'chronicle') {
+    // Bare de stille, minnerike hendelsene blir en liten melding; resten leses i Kronikk-panelet.
+    if (!['found', 'outpost', 'explore', 'route', 'stage', 'sacred', 'festival'].includes(event.kind)) return null;
+    return { key: `chronicle:${event.text}`, priority: 1, kind: 'minor', icon: 'book', kicker: 'Kronikk', title: event.text, text: '' };
+  }
   if (event.type === 'selected') {
     const def = upgradeById(event.id);
     return def ? { key: `selected:${event.id}:${event.at || 0}`, priority: 0, kind: 'minor', icon: def.icon,

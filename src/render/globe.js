@@ -7,7 +7,7 @@ import { fromLatLon, angle, dot, norm, offsetDir, PLANET, revealOf } from '../si
 import { BIOMES } from '../sim/worldmap.js';
 import { civilizationStage } from '../sim/civstage.js';
 
-const MAX_REGIONS = 16, MAX_LIGHTS = 24;
+const MAX_REGIONS = 16, MAX_LIGHTS = 24, MAX_ROUTES = 8;
 
 const VERT = `attribute vec2 aPos; varying vec2 vUv; void main(){ vUv = aPos; gl_Position = vec4(aPos, 0.0, 1.0); }`;
 
@@ -20,6 +20,7 @@ uniform vec2 uPatchHalf; uniform vec3 uPatchAvg, uLandAvg;
 uniform vec3 uHU, uHE, uHN, uSun;
 uniform vec4 uRegions[${MAX_REGIONS}]; uniform int uRegionCount; uniform float uRegionRadius;
 uniform vec4 uLights[${MAX_LIGHTS}]; uniform int uLightCount;
+uniform vec4 uRouteA[${MAX_ROUTES}], uRouteB[${MAX_ROUTES}]; uniform int uRouteCount;
 const float PI = 3.14159265;
 
 float hash(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
@@ -28,7 +29,7 @@ float vnoise(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * 
              mix(mix(hash(i + vec3(0,0,1)), hash(i + vec3(1,0,1)), f.x), mix(hash(i + vec3(0,1,1)), hash(i + vec3(1,1,1)), f.x), f.y), f.z); }
 float fbm(vec3 p){ float s = 0.0, a = 0.5; for (int i = 0; i < 5; i++){ s += a * vnoise(p); p = p * 2.03 + 11.7; a *= 0.5; } return s; }
 
-vec3 surfaceColor(vec3 p, out float water){
+vec3 surfaceColor(vec3 p, out float water, out float forest){
   float lat = asin(clamp(p.z, -1.0, 1.0)), lon = atan(p.y, p.x);
   vec4 tc = texture2D(uGlobal, vec2(lon / (2.0 * PI) + 0.5, 0.5 - lat / PI));
   float c = dot(p, uHU);
@@ -39,7 +40,9 @@ vec3 surfaceColor(vec3 p, out float water){
     float inside = 1.0 - smoothstep(0.82, 0.98, max(abs(q.x), abs(q.y)));
     if (inside > 0.0) tc = mix(tc, texture2D(uLocal, vec2(q.x * 0.5 + 0.5, 0.5 - q.y * 0.5)), inside);
   }
-  water = 1.0 - smoothstep(0.55, 0.85, tc.a);
+  // Alfa: vann ≈ 0,25; land = 0,63 + skogtetthet × 0,37 (se render/planetTexture.js).
+  water = 1.0 - smoothstep(0.36, 0.52, tc.a);
+  forest = clamp((tc.a - 0.63) / 0.37, 0.0, 1.0) * (1.0 - water);
   return tc.rgb;
 }
 
@@ -58,15 +61,16 @@ void main(){
     return;
   }
   vec3 p = normalize(o + dir * (-b - sqrt(disc)));
-  float water;
-  vec3 col = surfaceColor(p, water);
+  float water, forestD;
+  vec3 col = surfaceColor(p, water, forestD);
   // Fin detalj: bryter opp teksturen når kameraet er nært (tones bort på avstand).
   float near = 1.0 - smoothstep(0.05, 1.1, uH);
   // Skogtak: mørke, ujevne prikker der landet er grønt (malerisk tekstur, ikke enkelttrær).
   float green = smoothstep(0.0, 0.06, col.g - max(col.r, col.b)) * (1.0 - water);
   // Lunder og enger som i den detaljerte verdenen: mørke skogflekker med kronetak i lysere eng.
-  float density = smoothstep(0.3, 0.7, fbm(p * 38.0 - 7.0));
-  float grove = smoothstep(0.62 - density * 0.22, 0.7 - density * 0.18, fbm(p * 230.0 + 3.0));
+  // Skogtettheten kommer fra selve landskapet (fuktighet, høyde, elvebredder), ikke fra jevn støy: belter og enger.
+  float density = smoothstep(0.12, 0.8, forestD);
+  float grove = density < 0.02 ? 0.0 : smoothstep(0.72 - density * 0.5, 0.8 - density * 0.42, fbm(p * 230.0 + 3.0) + density * 0.18);
   float crowns = vnoise(p * 5200.0) * 0.6 + vnoise(p * 1900.0) * 0.4;
   vec3 forestC = col * vec3(0.66, 0.72, 0.64) * (0.8 + crowns * 0.4);
   col = mix(col, mix(col * vec3(1.06, 1.04, 0.98), forestC, grove), green * near);
@@ -110,6 +114,33 @@ void main(){
     }
   }
 
+  // Land som sivilisasjonen har formet (OPUS-02): bosettinger gir bart, tråkket land; veier mellom etablerte steder er svake, bølgende stier.
+  // Størrelsen følger folketallet (lights.w), så små steder forblir små. Veiene tegnes i selve overflaten og er nesten borte på stor avstand.
+  {
+    float dev = 0.0;
+    for (int i = 0; i < 24; i++) {
+      if (i >= uLightCount) break;
+      vec4 L = uLights[i];
+      float d = acos(clamp(dot(p, L.xyz), -1.0, 1.0));
+      float r = 0.006 + 0.012 * L.w;
+      dev = max(dev, exp(-(d * d) / (r * r)) * (0.35 + 0.5 * L.w));
+    }
+    float roadK = 0.0;
+    for (int i = 0; i < 8; i++) {
+      if (i >= uRouteCount) break;
+      vec3 a = uRouteA[i].xyz, b = uRouteB[i].xyz; float sK = uRouteA[i].w;
+      vec3 n = normalize(cross(a, b));
+      if (dot(cross(a, p), n) > 0.0 && dot(cross(p, b), n) > 0.0) {
+        float wob = (fbm(p * 70.0) - 0.5) * 0.006 + (fbm(p * 240.0) - 0.5) * 0.0016;
+        float d = abs(dot(p, n) + wob);
+        roadK = max(roadK, sK * (1.0 - smoothstep(0.0004, 0.0013 + 0.00055 * uH, d)));
+      }
+    }
+    float landOnly = 1.0 - water;
+    col = mix(col, mix(col, vec3(0.6, 0.53, 0.38), 0.7), clamp(dev, 0.0, 0.8) * landOnly * (1.0 - smoothstep(0.02, 0.9, uH) * 0.5));
+    col = mix(col, vec3(0.66, 0.58, 0.42) * (0.9 + 0.2 * fbm(p * 900.0)), roadK * 0.7 * landOnly * (1.0 - smoothstep(1.2, 3.0, uH) * 0.85));
+  }
+
   // Lys: sol + myk himmel; nær overflaten blir lyset flatt (dag), så overgangen fra den detaljerte verdenen stemmer.
   float ndl = dot(p, uSun);
   float day = smoothstep(-0.12, 0.35, ndl);
@@ -125,8 +156,8 @@ void main(){
       if (i >= uLightCount) break;
       vec4 L = uLights[i];
       float d = acos(clamp(dot(p, L.xyz), -1.0, 1.0));
-      float rr = 0.0025 + 0.004 * L.w;
-      lit += vec3(1.0, 0.72, 0.38) * exp(-(d * d) / (rr * rr)) * L.w * night * 1.4;
+      float rr = 0.0016 + 0.0028 * L.w;
+      lit += vec3(1.0, 0.72, 0.38) * exp(-(d * d) / (rr * rr)) * (0.15 + L.w) * night * 1.3;
     }
   }
 
@@ -230,6 +261,9 @@ export function createGlobeRenderer(canvas) {
       const lf = new Float32Array(MAX_LIGHTS * 4);
       lights.slice(0, MAX_LIGHTS).forEach((l, i) => lf.set([...l.dir, l.w], i * 4));
       gl.uniform4fv(loc('uLights'), lf); gl.uniform1i(loc('uLightCount'), Math.min(MAX_LIGHTS, lights.length));
+      const ra = new Float32Array(MAX_ROUTES * 4), rb = new Float32Array(MAX_ROUTES * 4), routes = view.routes || [];
+      routes.slice(0, MAX_ROUTES).forEach((r, i) => { ra.set([...r.a, r.w], i * 4); rb.set([...r.b, 0], i * 4); });
+      gl.uniform4fv(loc('uRouteA'), ra); gl.uniform4fv(loc('uRouteB'), rb); gl.uniform1i(loc('uRouteCount'), Math.min(MAX_ROUTES, routes.length));
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     },
   };
@@ -249,13 +283,20 @@ export function planetView(state, planet) {
   }
   for (const s of state.settlements) {
     if (s.state === 'founding' && s.id !== 'first') continue;
-    lights.push({ dir: planet.worldToDir(s.x, s.y), w: Math.min(1.2, 0.25 + s.population.length / 18) });
+    // Lysstyrken følger folketallet (kvadratrot): en liten grend er et lite lys, en storby et tydelig, men aldri gigantisk.
+    lights.push({ dir: planet.worldToDir(s.x, s.y), w: Math.min(0.8, 0.1 + 0.55 * Math.sqrt(s.population.length / 60)) });
   }
   for (const r of G.regions) {
     if (r.state !== 'utpost' && r.state !== 'etablert') continue;
-    lights.push({ dir: planet.sites.get(r.id).dir, w: Math.min(1, 0.2 + r.pop / 12) });
+    lights.push({ dir: planet.sites.get(r.id).dir, w: Math.min(0.6, 0.08 + 0.5 * Math.sqrt(r.pop / 60)) });
   }
-  return { regions, lights };
+  // Etablerte forbindelser: svake veier i landskapet (utposter svakere enn etablerte land).
+  const routes = [];
+  for (const r of G.regions) {
+    if (r.state !== 'utpost' && r.state !== 'etablert') continue;
+    routes.push({ a: planet.sites.get(r.id).dir, b: planet.home.dir, w: r.state === 'etablert' ? 1 : 0.5 });
+  }
+  return { regions, lights, routes };
 }
 
 // Storsirkelbue mellom to retninger (n punkter).
@@ -270,6 +311,19 @@ export function arc(a, b, n = 28, lift = 0) {
   }
   return out;
 }
+
+// Som arc(), men med en liten sidebue (så stiene ikke er rette hjelpelinjer): forskyvningen er deterministisk per rute.
+export function bowArc(a, b, n = 36, bow = 0.012) {
+  const pts = arc(a, b, n);
+  return pts.map((p, i) => {
+    const t = i / n, q = pts[Math.min(n, i + 1)], r = pts[Math.max(0, i - 1)];
+    const tan = [q[0] - r[0], q[1] - r[1], q[2] - r[2]];
+    const side = [p[1] * tan[2] - p[2] * tan[1], p[2] * tan[0] - p[0] * tan[2], p[0] * tan[1] - p[1] * tan[0]];
+    const l = Math.hypot(...side) || 1, k = bow * Math.sin(t * Math.PI) * (0.6 + 0.4 * Math.sin(t * 9));
+    return norm([p[0] + side[0] / l * k, p[1] + side[1] / l * k, p[2] + side[2] / l * k]);
+  });
+}
+const sstepG = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 
 const FONT_SERIF = 'Georgia, "Palatino Linotype", serif';
 const FONT_UI = '"Segoe UI", system-ui, sans-serif';
@@ -293,20 +347,25 @@ export function drawGlobeOverlay(ctx, state, planet, g, { sw, sh, dpr, time, hov
   const far = Math.min(1, Math.max(0, (g.h - 0.05) / 0.12)); // overlegg tones inn når hjemmeregionen er liten
 
   const pathOf = (pts) => { ctx.beginPath(); let on = false; for (const p of pts) { const s = P(p); if (!s || !s.front) { on = false; continue; } if (!on) { ctx.moveTo(s.x, s.y); on = true; } else ctx.lineTo(s.x, s.y); } };
-  // Ruter til utposter: malte, varme linjer; karavaner som lysprikker på vei hjem.
+  // Ruter til utposter (OPUS-02): selve veien ligger i planetens overflate (se shaderen). Her ligger bare en svak, buet sti som
+  // tones ut i bane og fremheves når pekeren er over landet. Karavaner vises bare der en karavane faktisk går i hjemregionen.
+  const near = 1 - sstepG(0.6, 2.4, g.h);
   for (const r of G.regions) {
     if (r.state !== 'utpost' && r.state !== 'etablert') continue;
-    const site = planet.sites.get(r.id).dir, pts = arc(site, home);
-    ctx.globalAlpha = far * 0.85;
-    ctx.strokeStyle = 'rgba(30,20,10,0.55)'; ctx.lineWidth = r.state === 'etablert' ? 4 : 3; pathOf(pts); ctx.stroke();
-    ctx.strokeStyle = 'rgba(232,200,130,0.9)'; ctx.lineWidth = r.state === 'etablert' ? 2 : 1.4; ctx.setLineDash(r.state === 'etablert' ? [] : [7, 5]); pathOf(pts); ctx.stroke(); ctx.setLineDash([]);
-    const n = Math.max(1, Math.min(3, r.caravans + 1));
-    for (let i = 0; i < n; i++) {
-      const t = ((time * 0.06 + i / n + r.col * 0.13) % 1);
-      const s = P(pts[Math.floor(t * (pts.length - 1))]);
-      if (s?.front) { ctx.fillStyle = '#ffe2a0'; ctx.beginPath(); ctx.arc(s.x, s.y, 2.2, 0, Math.PI * 2); ctx.fill(); }
-    }
+    const site = planet.sites.get(r.id).dir, pts = bowArc(site, home, 40, 0.01 + (r.col * 3 + r.row) % 4 * 0.003);
+    const hot = hoverId === r.id;
+    ctx.globalAlpha = far * (hot ? 0.95 : 0.05 + 0.3 * near);
+    ctx.strokeStyle = 'rgba(24,18,10,0.5)'; ctx.lineWidth = hot ? 3.6 : 2.4; pathOf(pts); ctx.stroke();
+    ctx.strokeStyle = 'rgba(238,218,170,0.95)'; ctx.lineWidth = hot ? 1.8 : 1; ctx.setLineDash(r.state === 'etablert' ? (hot ? [] : [9, 3]) : [2, 6]); pathOf(pts); ctx.stroke(); ctx.setLineDash([]);
     ctx.globalAlpha = 1;
+  }
+  if (g.h < 0.9) {
+    for (const c of G.caravans) {
+      const s = P(planet.worldToDir(c.x, c.y));
+      if (!s?.front) continue;
+      ctx.globalAlpha = far; ctx.fillStyle = '#ffe2a0'; ctx.strokeStyle = 'rgba(20,14,8,0.8)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(s.x, s.y, 2.4, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.globalAlpha = 1;
+    }
   }
   // Ekspedisjon eller nybyggerfølge underveis.
   if (G.mission) {
@@ -421,8 +480,9 @@ export function pickGlobe(state, planet, g, sw, sh, sx, sy) {
 }
 
 // Sola: står over ettermiddagssiden av hjemmet og vandrer sakte rundt kloden (ett døgn ≈ 6 minutter sanntid).
-export function sunDir(planet, time) {
-  const b = planet.home.basis, a = 0.9 + time * (2 * Math.PI / 360);
+export function sunDir(planet, phase) {
+  // Samme døgnklokke som nærbildet (view/daylight.js): fase 0,5 = middag over hjemmet, 0,25/0,75 = soloppgang/-nedgang.
+  const b = planet.home.basis, a = 2 * Math.PI * (phase - 0.5);
   return norm([0, 1, 2].map((i) => b.up[i] * Math.cos(a) * 0.9 + b.east[i] * Math.sin(a) * 0.9 + b.north[i] * 0.35 + [0, 0, 0.1][i]));
 }
 

@@ -149,3 +149,43 @@ test('Simuleringen er uendret av presentasjonen: samme seed og tid gir samme byg
   for (let i = 0; i < 600; i++) { step(a); step(b); }
   assert.deepEqual(a.buildings.map((q) => [q.type, q.x, q.y]), b.buildings.map((q) => [q.type, q.x, q.y]));
 });
+
+// ---------- Elver og geografi ----------
+import { createPlanet } from '../src/sim/planet.js';
+import { buildRivers, HYDRO_SPAN } from '../src/sim/hydrology.js';
+import { offsetDir } from '../src/sim/planet.js';
+
+const planetOf = (seed) => createPlanet(seed, createGame(seed).globe.regions);
+
+test('Elver: deterministiske, følger terrenget nedover til hav eller kant og krysser aldri hjemmeflekken', () => {
+  for (const seed of [20261009, 7, 31337]) {
+    const P = planetOf(seed), a = buildRivers(P), b = buildRivers(P);
+    assert.deepEqual(a.paths.map((p) => p.pts.length), b.paths.map((p) => p.pts.length), 'samme frø → samme elver');
+    assert.ok(a.paths.length >= 15 && a.paths.length <= 400, `${seed}: ${a.paths.length} elver`);
+    let down = 0, steps = 0;
+    for (const p of a.paths) {
+      for (const q of p.pts) assert.ok(Math.hypot(q.x, q.y) > 0.09, 'ikke gjennom hjemmeflekken');
+      // Hovedretningen er nedover: høyden ved munningen er lavere enn ved kilden.
+      const e = (q) => P.surface(offsetDir(P.home.basis, q.x, q.y)).e;
+      const first = e(p.pts[0]), last = e(p.pts[p.pts.length - 1]);
+      // Elver som ender ved hjemmeflekken (tjernet) renner mot et basseng og regnes som riktige.
+      const lq = p.pts[p.pts.length - 1];
+      steps++; if (last <= first + 0.02 || Math.hypot(lq.x, lq.y) < 0.11) down++;
+      for (const q of p.pts) assert.ok(Math.abs(q.x) <= HYDRO_SPAN + 0.02 && Math.abs(q.y) <= HYDRO_SPAN + 0.02);
+    }
+    assert.ok(down / steps > 0.9, `${seed}: ${down}/${steps} renner nedover`);
+  }
+});
+
+test('Dagklokka: døgnet går rundt, natten er aldri svartere enn at verden kan leses, og skyggene er lengst ved horisonten', async () => {
+  const { dayPhase, lightAt, tintAt, sunElevation } = await import('../src/view/daylight.js');
+  assert.ok(dayPhase(0) >= 0 && dayPhase(0) < 1);
+  assert.ok(Math.abs(dayPhase(B.day.seconds) - dayPhase(0)) < 1e-9, 'ett døgn er nøyaktig én runde');
+  assert.ok(sunElevation(0.5) > 0.99 && sunElevation(0) < -0.99);
+  const noon = lightAt(0.5), dusk = lightAt(0.75), night = lightAt(0);
+  assert.equal(noon.night, 0); assert.ok(night.night > 0.95);
+  assert.ok(dusk.twilight > 0.9, 'varmt lys ved solnedgang');
+  assert.ok(dusk.shadowLen > noon.shadowLen, 'lange skygger ved solnedgang');
+  assert.ok(night.shadowAlpha < 0.2);
+  for (let i = 0; i < 200; i++) { const t = tintAt(lightAt(i / 200)); for (const c of t) assert.ok(c >= 100 && c <= 255, `lesbar: ${t}`); }
+});

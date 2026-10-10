@@ -7,9 +7,9 @@ import { box, gableRoof, contact, groundPatch, stoneBlocks, stage, DX, DY } from
 
 // Vinduer (i spritens ankerkoordinater, verdensenheter) som får lys i skumringen. Brukes av dagslys-laget.
 export const WINDOWS = {
-  townhouse: [[-19, -33, 8, 9], [7, -33, 8, 9]],
-  cottage: [[-9, -14, 6, 6], [5, -14, 6, 6]],
-  hall: [[-23, -25, 7, 8], [-1, -25, 7, 8], [10, -25, 7, 8], [26, -25, 7, 8]],
+  townhouse: [[-19, -27, 8, 9], [3, -27, 8, 9]],
+  cottage: [[-14.5, -10.2, 6.4, 5.6], [2, -10.2, 6.4, 5.6]],
+  hall: [[-28, -25, 7, 8], [-15, -25, 7, 8], [-6, -25, 7, 8], [8, -25, 7, 8]],
   warehouse: [],
 };
 

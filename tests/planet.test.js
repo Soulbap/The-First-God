@@ -132,7 +132,10 @@ test('planettekstur: deterministisk, 2:1 og vann merket i alfa', () => {
   assert.equal(t1.w, 64); assert.equal(t1.h, 32);
   assert.deepEqual(t1.data, t2.data);
   const alphas = new Set(); for (let i = 3; i < t1.data.length; i += 4) alphas.add(t1.data[i]);
-  assert.deepEqual([...alphas].sort((x, y) => x - y), [128, 255], 'både hav og land finnes');
+  const list = [...alphas].sort((x, y) => x - y);
+  assert.equal(list[0], 64, 'vann er merket med lav alfa');
+  assert.ok(list.some((a) => a >= 160), 'land har høy alfa (160 + skogtetthet)');
+  assert.ok(list.every((a) => a === 64 || (a >= 160 && a <= 255)), 'ingen mellomverdier');
 });
 
 test('lagring: rundtur gir identisk videre forløp (ingen offline-fremgang, ingen avvik)', () => {

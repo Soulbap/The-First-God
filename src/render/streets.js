@@ -25,6 +25,22 @@ function crosses(buildings, a, b, skip) {
   return false;
 }
 
+// Lykter langs gatene: jevnt fordelt langs hver gate i byer (trinn «By» og oppover), minst 56 enheter fra hverandre.
+export function lampPosts(nets) {
+  const out = [];
+  for (const net of nets) {
+    if (net.rank < 5) continue;
+    for (const e of net.edges) {
+      if (e.len < 40) continue;
+      const mid = e.pts[Math.floor(e.pts.length / 2)], nxt = e.pts[Math.min(e.pts.length - 1, Math.floor(e.pts.length / 2) + 1)];
+      const dx = nxt.x - mid.x, dy = nxt.y - mid.y, l = Math.hypot(dx, dy) || 1;
+      const p = { x: mid.x - dy / l * 9, y: mid.y + dx / l * 9 + 2, settlementId: net.settlementId };
+      if (!out.some((o) => Math.hypot(o.x - p.x, o.y - p.y) < 56)) out.push(p);
+    }
+  }
+  return out;
+}
+
 // Gir {settlementId, rank, edges:[{a,b,core,len,pts}]} per bosetting med minst «Tidlig by».
 export function buildStreets(state) {
   const out = [];

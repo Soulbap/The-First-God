@@ -16,7 +16,12 @@ import { routeKey } from '../sim/regional.js';
 import { plankPileSprite, blockPileSprite } from './city.js';
 import { drawOverview } from './overview.js';
 import { stageRank } from '../sim/settlements.js';
-import { buildStreets } from './streets.js';
+import { buildStreets, lampPosts } from './streets.js';
+import { propsFor, lantern } from './yards.js';
+import { activityOf, homeOf } from '../sim/activity.js';
+import { dayPhase, lightAt, tintAt } from '../view/daylight.js';
+import { WINDOWS } from './civic.js';
+import { nameOf } from '../sim/chronicle.js';
 
 export const wind = (x, t) => 0.6 * Math.sin(t * 0.9 + x * 0.003) + 0.4 * Math.sin(t * 2.1 + x * 0.009 + 1.3);
 
@@ -52,6 +57,7 @@ export function createRenderer(canvas) {
 
   R.reset = (state) => {
     R.tiers.clear();
+    if (R.yards) R.yards.clear();
     R.env = buildEnvironment(state);
     R.terrain = buildTerrain(state, R.env);
     R.ecologyOverlay = buildEcologyOverlay(state, R.env);
@@ -75,7 +81,7 @@ export function createRenderer(canvas) {
     R.exposure = new Float32Array(cols * rows);
     R.pave = new Float32Array(cols * rows); // brolagt torg i byen (presentasjon)
     R.lane = new Float32Array(cols * rows); // grusgater i tidlige byer (presentasjon)
-    R.streetSig = ''; R.streets = [];
+    R.streetSig = ''; R.streets = []; R.lamps = []; R.yards = new Map();
     R.wearBox = null;
     // Fast kornmønster som gir slitt jord en ujevn kant (deterministisk fra seed).
     const nz = makeNoise(state.seed + 313), rnd = mulberry(state.seed + 317);
@@ -292,7 +298,7 @@ export function createRenderer(canvas) {
     }
     // Gatenett (OPUS-02): grus i tidlige byer, stein i kjernen av byer og overalt i storbyer. Beregnes bare på nytt når bygg eller trinn endres.
     const sig = state.settlements.map((S) => S.stage).join(',') + '|' + state.buildings.reduce((n, b) => n + (b.complete ? 1 : 0), 0);
-    if (sig !== R.streetSig) { R.streetSig = sig; R.streets = buildStreets(state); }
+    if (sig !== R.streetSig) { R.streetSig = sig; R.streets = buildStreets(state); R.lamps = lampPosts(R.streets); }
     R.lane.fill(0);
     const lay = (arr, x, y, r, v) => {
       const i0 = Math.max(0, Math.floor((x - r) / cell)), i1 = Math.min(cols - 1, Math.ceil((x + r) / cell));
@@ -396,6 +402,17 @@ export function createRenderer(canvas) {
     return best;
   };
 
+  // Mennesker kan pekes på: navn og hva de gjør akkurat nå (OPUS-02).
+  R.pickHuman = (state, cam, sx, sy) => {
+    const p = screenToWorld(cam, sx, sy), pad = 5 / zoomOf(cam);
+    let best = null;
+    for (const h of state.humans) {
+      if (h.away) continue;
+      if (Math.abs(p.x - h.x) < 6 + pad && p.y > h.y - 24 - pad && p.y < h.y + 4 + pad && (!best || h.y > best.y)) best = h;
+    }
+    return best ? best.id : null;
+  };
+
   // Arbeidsspor: kvister, flis og barkbiter som samler seg der det hugges, lagres og bygges.
   // Antall følger spillets totaler; plasseringen er deterministisk per kilde.
   const litterFor = (key, count, rx, ry, seed) => {
@@ -434,6 +451,7 @@ export function createRenderer(canvas) {
     const vx0 = cam.x - cam.w / 2, vx1 = cam.x + cam.w / 2, vy0 = cam.y - vh / 2, vy1 = cam.y + vh / 2;
     const inView = (x, y, mx = 70, up = 150) => x > vx0 - mx && x < vx1 + mx && y > vy0 - 20 && y < vy1 + up;
     const detailed = cam.w < VIEW.semanticAreaW;
+    const L = lightAt(R.dayOverride ?? dayPhase(state.time));
     const C = state.settlement.center;
     if (!snapshot) R.view = { x0: vx0, x1: vx1, y0: vy0, y1: vy1 };
     const festival = state.time < (state.civilization?.festivalUntil ?? -Infinity);
@@ -541,6 +559,9 @@ export function createRenderer(canvas) {
     for (const c of state.globe.caravans) if (inView(c.x, c.y)) drawHumanShadow(ctx, caravanFigure(c));
 
     // Dybdesorterte objekter.
+    const rankOf = new Map(state.settlements.map((q) => [q.id, stageRank(q.stage)]));
+    const sanctIdx = new Map(state.buildings.filter((q) => q.type === 'sanctuary').sort((a, b) => a.id - b.id).map((q, i) => [q.id, i]));
+    const variantOf = (b) => (b.type === 'hut' ? ((rankOf.get(b.settlementId || 'first') ?? 0) >= 4 ? 1 : 0) : b.type === 'sanctuary' ? sanctIdx.get(b.id) : 0);
     const list = [];
     for (const n of state.nodes) {
       if (!inView(n.x, n.y)) continue;
@@ -558,18 +579,23 @@ export function createRenderer(canvas) {
       }
     }
     for (const b of state.buildings) {
+      if (b.complete && inView(b.x, b.y, 110, 110)) {
+        const info = { rank: rankOf.get(b.settlementId || 'first') ?? 0, foodHarvests: state.civilization?.foodHarvests || 0 };
+        const sig = `${info.rank}|${(b.made || 0) >> 1}|${info.foodHarvests >> 3}`;
+        let ent = R.yards.get(b.id);
+        if (!ent || ent.sig !== sig) { ent = { sig, props: propsFor(b, info) }; R.yards.set(b.id, ent); }
+        for (const pr of ent.props) list.push({ y: pr.ground ? b.y - 60 : b.y + pr.y, draw: () => drawSprite(ctx, pr.s, b.x + pr.x, b.y + pr.y) });
+      }
       list.push({ y: b.y, draw: () => drawBuilding(b) });
       if (!b.complete) {
         const n = Math.ceil((1 - b.progress) * 5);
         list.push({ y: b.y + 8, draw: () => drawSprite(ctx, materialSprite(n), b.x + b.radius + 4, b.y + 8) });
       }
     }
+    for (const L of R.lamps) if (inView(L.x, L.y, 40, 60)) list.push({ y: L.y, draw: () => drawSprite(ctx, lantern(), L.x, L.y) });
     list.push({ y: sp.y + WOOD_PILE_OFFSET.y, draw: () => drawSprite(ctx, woodPileSprite(pileCount(state.resources.wood)), sp.x + WOOD_PILE_OFFSET.x, sp.y + WOOD_PILE_OFFSET.y) });
     list.push({ y: sp.y + STONE_PILE_OFFSET.y, draw: () => drawSprite(ctx, stonePileSprite(pileCount(state.resources.stone)), sp.x + STONE_PILE_OFFSET.x, sp.y + STONE_PILE_OFFSET.y) });
     const hInfo = { time: state.time, gatherInterval: gatherInterval(state), renderTime };
-    const rankOf = new Map(state.settlements.map((q) => [q.id, stageRank(q.stage)]));
-    const sanctIdx = new Map(state.buildings.filter((q) => q.type === 'sanctuary').sort((a, b) => a.id - b.id).map((q, i) => [q.id, i]));
-    const variantOf = (b) => (b.type === 'hut' ? ((rankOf.get(b.settlementId || 'first') ?? 0) >= 4 ? 1 : 0) : b.type === 'sanctuary' ? sanctIdx.get(b.id) : 0);
     for (const h of state.humans) if (!h.away && inView(h.x, h.y)) list.push({ y: h.y, draw: () => drawHuman(ctx, h, hInfo) });
     // Karavaner fra fjerne land: ekte figurer som går inn over kartkanten med varer.
     for (const c of state.globe.caravans) if (inView(c.x, c.y)) list.push({ y: c.y, draw: () => drawHuman(ctx, caravanFigure(c), hInfo) });
@@ -589,11 +615,20 @@ export function createRenderer(canvas) {
 
     // Partikler og lys.
     drawParticles(ctx, fx, false);
+    // Døgnets lys: en myk fargetone over hele verden (multiplisert), aldri mørkere enn at alt kan leses.
+    if (!snapshot && (L.night > 0.01 || L.twilight > 0.02)) {
+      const t = tintAt(L);
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.fillStyle = `rgb(${t[0] | 0},${t[1] | 0},${t[2] | 0})`;
+      ctx.fillRect(sx0, sy0, sx1 - sx0, sy1 - sy0);
+    }
     ctx.globalCompositeOperation = 'lighter';
+    const glowK = snapshot ? 0 : clamp(L.night + L.twilight * 0.55);
+    if (glowK > 0.04) drawNightLights(glowK);
     for (const b of state.buildings) {
       if (b.type === 'sanctuary' && b.complete && sanctIdx.get(b.id) === 3) { drawFireGlow(ctx, b.x, b.y - 38, renderTime); drawFlames(ctx, b.x, b.y - 38, renderTime); continue; }
       if ((b.type !== 'fire' && b.type !== 'hearth') || !b.complete) continue;
-      drawFireGlow(ctx, b.x, b.y, renderTime);
+      drawFireGlow(ctx, b.x, b.y, renderTime, 1 + glowK * 0.9);
       if (festival && b.type === 'hearth') drawFireGlow(ctx, b.x, b.y - 2, renderTime * 1.3); // høstfest: større, varmere ild
       drawEmbers(ctx, b.x, b.y, renderTime);
       drawFlames(ctx, b.x, b.y - 1, renderTime);
@@ -623,7 +658,7 @@ export function createRenderer(canvas) {
     // Skjermrom: fargetone, lett vignett, små gevinsttall og områdeetikett.
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const sw = cam.screenW, sh = cam.screenH;
-    ctx.fillStyle = 'rgba(255,214,160,0.04)';
+    ctx.fillStyle = `rgba(255,214,160,${(0.04 * (1 - L.night)).toFixed(3)})`;
     ctx.fillRect(0, 0, sw, sh);
     const vg = ctx.createRadialGradient(sw / 2, sh / 2, Math.min(sw, sh) * 0.4, sw / 2, sh / 2, Math.max(sw, sh) * 0.78);
     vg.addColorStop(0, 'rgba(10,8,4,0)');
@@ -651,6 +686,23 @@ export function createRenderer(canvas) {
       ctx.fillText(p.text, s.x + 1, s.y - p.age * 22 + 1);
       ctx.fillStyle = p.res === 'wood' ? `rgba(240,214,170,${a.toFixed(3)})` : `rgba(222,222,214,${a.toFixed(3)})`;
       ctx.fillText(p.text, s.x, s.y - p.age * 22);
+    }
+
+    if (opts.humanId != null) {
+      const h = state.humans.find((q) => q.id === opts.humanId);
+      if (h && !h.away) {
+        const s = worldToScreen(cam, h.x, h.y - 27 * (h.look?.height || 1));
+        const l1 = nameOf(state, h), l2 = activityOf(state, h) + ' · ' + homeOf(state, h);
+        ctx.font = '600 13px "Segoe UI", system-ui, sans-serif';
+        const w1 = ctx.measureText(l1).width;
+        ctx.font = '12px "Segoe UI", system-ui, sans-serif';
+        const w = Math.max(w1, ctx.measureText(l2).width) + 18, x0 = Math.max(6, Math.min(sw - w - 6, s.x - w / 2)), y0 = Math.max(6, s.y - 46);
+        ctx.fillStyle = 'rgba(23,27,25,0.84)'; ctx.strokeStyle = 'rgba(212,180,119,0.5)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.roundRect(x0, y0, w, 38, 6); ctx.fill(); ctx.stroke();
+        ctx.textAlign = 'left'; ctx.fillStyle = '#e8d9b4'; ctx.font = '600 13px "Segoe UI", system-ui, sans-serif'; ctx.fillText(l1, x0 + 9, y0 + 16);
+        ctx.fillStyle = 'rgba(236,226,204,0.9)'; ctx.font = '12px "Segoe UI", system-ui, sans-serif'; ctx.fillText(l2, x0 + 9, y0 + 31);
+        ctx.textAlign = 'center';
+      }
     }
 
     const areaK = smooth(VIEW.semanticAreaW * 0.9, VIEW.semanticAreaW * 1.25, cam.w);
@@ -685,12 +737,34 @@ export function createRenderer(canvas) {
     // --- lokale tegnefunksjoner ---
     function shadow(x, y, rx, ry, a) {
       ctx.save();
-      ctx.translate(x, y);
+      ctx.translate(x + rx * (L.shadowLen - 1) * 0.55, y);
       ctx.rotate(SHADOW_ROT);
-      ctx.globalAlpha = a;
-      ctx.drawImage(SOFT, -rx, -ry, rx * 2, ry * 2);
+      ctx.globalAlpha = a * L.shadowAlpha;
+      ctx.drawImage(SOFT, -rx * L.shadowLen, -ry, rx * 2 * L.shadowLen, ry * 2);
       ctx.restore();
       ctx.globalAlpha = 1;
+    }
+    // Vinduer, lykter og verksteder lyser når det blir mørkt (additivt, rimelig billig: bare synlige bygg).
+    function drawNightLights(k) {
+      const warm = (x, y, r, a) => {
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, `rgba(255,196,110,${(a * k).toFixed(3)})`); g.addColorStop(1, 'rgba(255,170,80,0)');
+        ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+      };
+      for (const b of state.buildings) {
+        if (!b.complete || !inView(b.x, b.y, 80, 80)) continue;
+        const key = b.type === 'hut' && variantOf(b) ? 'cottage' : b.type;
+        const wins = WINDOWS[key];
+        if (wins) for (const [wx, wy, ww, wh] of wins) {
+          ctx.fillStyle = `rgba(255,200,118,${(0.8 * k).toFixed(3)})`; ctx.fillRect(b.x + wx, b.y + wy, ww, wh);
+          warm(b.x + wx + ww / 2, b.y + wy + wh / 2 + 2, 11, 0.32);
+        }
+        if ((b.type === 'sawmill' || b.type === 'mason') && b.active) warm(b.x - 8, b.y - 6, 24, 0.28);
+        if (b.type === 'market') for (const [px, py] of [[-36, -16], [30, -19], [-8, -28]]) warm(b.x + px, b.y + py, 12, 0.34);
+        if (b.type === 'hall') warm(b.x, b.y - 10, 30, 0.2);
+        if (b.type === 'warehouse') warm(b.x + 1, b.y - 12, 16, 0.18);
+      }
+      for (const Lm of R.lamps) if (inView(Lm.x, Lm.y, 40, 60)) { warm(Lm.x, Lm.y - 26, 24, 0.42); ctx.fillStyle = `rgba(255,226,160,${(0.95 * k).toFixed(3)})`; ctx.fillRect(Lm.x - 1.2, Lm.y - 28, 2.4, 3.6); }
     }
     function drawWorkLitter(st) {
       const livedIn = clamp(st.humans.length * 0.16 + (st.totals.wood + st.totals.stone) / 130, 0, 1);

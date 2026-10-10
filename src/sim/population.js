@@ -1,5 +1,6 @@
 // Nye mennesker: våkner i lyet eller vandrer inn fra skogkanten.
 import { rand, range } from '../core/rng.js';
+import { nameOf } from './chronicle.js';
 
 const TUNICS = 5, SKINS = 4, HAIRS = 4;
 
@@ -33,6 +34,7 @@ export function spawnHumans(state, count, { at = 'shelter', building = null, set
       h.y = home.y + home.radius * 0.45 + 4;
     }
     state.humans.push(h);
+    nameOf(state, h); // navn gis ved fødsel, i rekkefølge (deterministisk; hover/visning påvirker ikke rekkefølgen)
     state.settlements?.find((s) => s.id === h.settlementId)?.population.push(h.id);
     out.push(h);
   }

@@ -82,8 +82,8 @@ const homeCell = () => ({ col: Math.floor(B.globe.cols / 2), row: Math.floor(B.g
 // Lokale landskapstrekk som gjør at et kjent land faktisk har sitt landskap (fjell, kyst, slette …).
 // Hvert land trekker høyden og fuktigheten mot mål for sitt landskap (vekt = gauss rundt sentrum).
 const FEATURE = {
-  fjell: { target: 0.56, r: 0.07, moist: 0.45, rugged: true },
-  skog: { target: 0.2, r: 0.08, moist: 0.78 },
+  fjell: { target: 0.5, r: 0.085, moist: 0.45, rugged: true, stretch: 2.3 },
+  skog: { target: 0.2, r: 0.08, moist: 0.66 },
   slette: { target: 0.12, r: 0.09, moist: 0.3 },
   kyst: { target: 0.1, r: 0.055, moist: 0.6, bay: true },
   dal: { target: 0.14, r: 0.075, moist: 0.65, valley: true },
@@ -92,7 +92,7 @@ const FEATURE = {
 // Planeten for et frø. `regions` er globe.regions (bare col/row/biome/id brukes; tilstanden leses aldri).
 export function createPlanet(seed, regions) {
   const rng = createRng((seed ^ 0x2c1b3c6d) >>> 0);
-  const nE = makeNoise3(seed ^ 0x51ed27), nM = makeNoise3(seed ^ 0x7f4a7c15), nD = makeNoise3(seed ^ 0x1b873593);
+  const nE = makeNoise3(seed ^ 0x51ed27), nM = makeNoise3(seed ^ 0x7f4a7c15), nD = makeNoise3(seed ^ 0x1b873593), nR = makeNoise3(seed ^ 0x3c6ef372);
   const homeLat = (46 + rand(rng) * 8) * Math.PI / 180, homeLon = (-20 + rand(rng) * 40) * Math.PI / 180;
   const homeDir = fromLatLon(homeLat, homeLon);
   const home = { lat: homeLat, lon: homeLon, dir: homeDir, basis: basisAt(homeDir) };
@@ -114,22 +114,43 @@ export function createPlanet(seed, regions) {
     // Kystland: en bukt litt utenfor landets sentrum, vendt bort fra hjemmet.
     const out = Math.hypot(s.x, s.y) || 1;
     const bay = F.bay ? offsetDir(home.basis, s.x + (s.x / out) * 0.085, s.y + (s.y / out) * 0.085) : null;
-    return { ...s, F, bay };
+    return { ...s, F, bay, ang: rand(rng) * Math.PI };
   });
   const knownRadius = 0.55; // det kjente kontinentet rundt hjemmet
 
   // Rå overflate i et punkt: høyde (havnivå 0), fuktighet og temperatur (0..1).
   function surface(p) {
-    const base = fbm(nE, p, 1.7, 6) * 0.9 + fbm(nE, p, 5.5, 3) * 0.15;
+    // OPUS-02: domene-forvrengning gir sammenhengende, mindre blobbete kystlinjer; ryggkjeder (tektoniske belter) gir
+    // lange fjellkjeder med lavere fotland, i stedet for spredte hauger.
+    const wp = 0.3;
+    const q = [p[0] + wp * fbm(nD, p, 1.3, 3), p[1] + wp * fbm(nD, [p[1] + 3.1, p[2], p[0]], 1.3, 3), p[2] + wp * fbm(nD, [p[2], p[0] + 5.7, p[1]], 1.3, 3)];
+    const base = fbm(nE, q, 1.55, 6) * 0.9 + fbm(nE, p, 5.5, 3) * 0.12 + fbm(nE, p, 15, 3) * 0.035;
     const dh = angle(p, homeDir);
     let e = base - 0.08 + 0.3 * gauss(dh, knownRadius);
+    {
+      const tcoord = fbm(nR, q, 2.2, 2);
+      const t = Math.abs(tcoord);
+      const chain = Math.pow(Math.max(0, 1 - t / 0.2), 1.6), foot = Math.max(0, 1 - t / 0.5);
+      const ridged = 1 - Math.abs(fbm(nD, p, 16, 3));
+      const inland = Math.max(0, Math.min(1, (base + 0.18) * 2.4));
+      const damp = 1 - 0.85 * gauss(dh, 0.2); // ikke rett utenfor hjemmeflekken
+      e += (0.3 * chain * (0.6 + 0.4 * ridged) + 0.09 * foot * foot) * inland * damp;
+    }
     // Kontinentet rundt hjemmet er for det meste lavland; fjellkjeder kommer fra egne rygger og fjell-land.
     if (e > 0.18) e = 0.18 + (e - 0.18) * (1 - 0.55 * gauss(dh, knownRadius));
-    let moist = 0.5 + fbm(nM, p, 2.3, 4) * 0.9;
+    // Fuktighetsbelter: bredere, mer sammenhengende enn før; fuktigere ved kyst og i fotland, tørrere inne i det høye.
+    let moist = 0.5 + fbm(nM, p, 1.4, 3) * 0.75 + fbm(nM, p, 6, 2) * 0.18 + 0.12 * Math.cos((Math.asin(p[2]) - 1.0) * 3.2);
+    moist += 0.18 * (1 - Math.min(1, Math.abs(e - 0.06) / 0.2)) - 0.12 * Math.max(0, e - 0.32);
     if (dh < 0.85) {
       for (const f of feats) {
-        const d = angle(p, f.dir);
-        if (d > 0.26) continue;
+        const d0 = angle(p, f.dir);
+        if (d0 > 0.3 * (f.F.stretch || 1)) continue;
+        // Uregelmessig kant (støy på avstanden) i stedet for en ren sirkel.
+        let d = d0 * (0.72 + 0.7 * (0.5 + 0.5 * fbm(nD, p, 11, 2)));
+        if (f.F.stretch) { // fjellrike: en avlang rygg i en fast retning per land
+          const l = localOffset(home.basis, p), dx = l.x - f.x, dy = l.y - f.y, ca = Math.cos(f.ang), sa = Math.sin(f.ang);
+          d = Math.hypot((dx * ca + dy * sa) / f.F.stretch, -dx * sa + dy * ca) * (0.8 + 0.5 * (0.5 + 0.5 * fbm(nD, p, 11, 2)));
+        }
         const g = 0.88 * gauss(d, f.F.r);
         let target = f.F.target;
         if (f.F.rugged) target += 0.4 * Math.abs(fbm(nD, p, 24, 3));
@@ -139,7 +160,7 @@ export function createPlanet(seed, regions) {
         if (f.bay) e -= 0.6 * gauss(angle(p, f.bay), 0.045);
       }
       // Hjemmeregionen: mild, skogkledd lavlandsflekk som stemmer med den detaljerte verdenen.
-      const hp = gauss(dh, 0.07);
+      const hp = gauss(dh * (0.8 + 0.5 * (0.5 + 0.5 * fbm(nD, p, 13, 2))), 0.07);
       e = e * (1 - hp) + 0.12 * hp;
       moist = moist * (1 - hp) + 0.72 * hp;
     }

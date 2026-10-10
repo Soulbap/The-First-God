@@ -114,7 +114,7 @@ function completedHomes(state) {
 function goMaintenance(state, h) {
   const homes = completedHomes(state).filter((b) => (b.settlementId || 'first') === h.settlementId);
   // Torget og hallen blir møteplasser: folk handler, prater og lærer der mellom arbeidsøktene.
-  const civic = state.buildings.filter((b) => b.complete && (b.type === 'market' || b.type === 'hall') && (b.settlementId || 'first') === h.settlementId);
+  const civic = state.buildings.filter((b) => b.complete && (b.type === 'market' || b.type === 'hall' || b.type === 'well' || b.type === 'sanctuary') && (b.settlementId || 'first') === h.settlementId);
   const choices = [deliveryPoint(state), ...homes, hearthOf(state) || fireOf(state), ...civic, ...civic].filter(Boolean);
   if (!choices.length) return false;
   const target = choices[(h.id + h.deliveries) % choices.length];

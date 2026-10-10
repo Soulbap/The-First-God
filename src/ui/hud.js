@@ -5,13 +5,15 @@ import { RESOURCES } from '../data/gui.js';
 import { PresentationCoordinator } from './presentation.js';
 import { selectInsights, selectResources, selectDivine, currentEpoch, reachedMilestones, fmtAmount, fmtRate, selectRealm, realmVisible } from './insights.js';
 
-const TITLES = { insights: 'Innsikter', milestones: 'Milepæler', realm: 'Rike' };
+const TITLES = { insights: 'Innsikter', milestones: 'Milepæler', realm: 'Rike', chronicle: 'Kronikk' };
+const CHRON_ICON = { milestone: 'flag', home: 'hut', work: 'sawmill', civic: 'market', fire: 'fire', land: 'sprout', found: 'hut', route: 'road', stage: 'realm', festival: 'fire', explore: 'explore', outpost: 'globe', sacred: 'pp' };
 const EMPTY_TEXT = 'Ingen innsikter ennå. Rør ved treet eller steinen — verden svarer.';
 
-export function createHud({ onBuy, onSpeed, onView, onZoom, onRagnarok }) {
+export function createHud({ onBuy, onSpeed, onView, onZoom, onRagnarok, onFocus = () => {} }) {
   const $ = (id) => document.getElementById(id);
   const els = {
     hud: $('hud'), res: $('resources'), divine: $('divine'), drawer: $('drawer'), title: $('drawer-title'), sub: $('drawer-sub'),
+    chron: $('chronicle-list'), chronEmpty: $('chronicle-empty'),
     tabs: $('drawer-tabs'), list: $('insight-list'), empty: $('insight-empty'), ms: $('milestone-list'), realm: $('realm-panel'),
     nav: $('nav'), hint: $('hint'), toasts: $('toasts'), controls: $('controls'), dialog: $('dialog'), summary: $('ragnarok-summary'),
   };
@@ -46,7 +48,7 @@ export function createHud({ onBuy, onSpeed, onView, onZoom, onRagnarok }) {
     els.drawer.classList.toggle('open', open);
     els.drawer.inert = !open;
     els.hud.classList.toggle('drawer-open', open);
-    for (const id of ['insights', 'milestones', 'realm']) navBtn(id).setAttribute('aria-expanded', String(mode === id));
+    for (const id of ['insights', 'milestones', 'realm', 'chronicle']) navBtn(id).setAttribute('aria-expanded', String(mode === id));
     if (open) {
       els.title.textContent = TITLES[mode];
       els.list.hidden = mode !== 'insights';
@@ -54,6 +56,8 @@ export function createHud({ onBuy, onSpeed, onView, onZoom, onRagnarok }) {
       els.empty.hidden = true;
       els.ms.hidden = mode !== 'milestones';
       els.realm.hidden = mode !== 'realm';
+      els.chron.hidden = mode !== 'chronicle';
+      els.chronEmpty.hidden = true;
       if (lastState) render(lastState);
       if (focus) els.title.focus({ preventScroll: true });
     } else if (focus && prev) {
@@ -189,6 +193,22 @@ export function createHud({ onBuy, onSpeed, onView, onZoom, onRagnarok }) {
       `<li>${icon('flag')}<div><h3>${m.title}</h3><p>${m.text}</p>${m.opens ? `<p class="opens">${m.opens}</p>` : ''}</div></li>`).join('');
   }
 
+  // ---------- Kronikk (OPUS-02) ----------
+  let chronSig = '';
+  function renderChronicle(state) {
+    const list = state.chronicle?.entries || [];
+    const sig = String(list.length) + ':' + (list[list.length - 1]?.t || 0);
+    els.chronEmpty.hidden = list.length > 0;
+    if (sig === chronSig) return;
+    chronSig = sig;
+    const when = (t) => { const m = Math.floor(t / 60); return m < 1 ? 'første minutt' : m + ' min'; };
+    els.chron.innerHTML = [...list].reverse().map((e) => {
+      const go = e.x != null ? ` data-x="${Math.round(e.x)}" data-y="${Math.round(e.y)}"` : '';
+      return `<li class="chron-item${go ? ' goto' : ''}"${go}>${icon(CHRON_ICON[e.kind] || 'book')}<div><p class="chron-text">${esc(e.text)}</p><p class="chron-time">${when(e.t)}${go ? ' · se stedet' : ''}</p></div></li>`;
+    }).join('');
+  }
+  els.chron.addEventListener('click', (e) => { const li = e.target.closest('li.goto'); if (li) onFocus(Number(li.dataset.x), Number(li.dataset.y)); });
+
   // ---------- Rike ----------
   const esc = (t) => String(t).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
   const checklist = (items) => `<ul class="checks">${items.map((c) => `<li class="${c.ok ? 'ok' : 'miss'}"><span class="dot"></span><span>${esc(c.label)}</span>${c.need != null ? `<span class="num">${Math.min(c.have, 9999)}/${c.need}</span>` : ''}</li>`).join('')}</ul>`;
@@ -311,6 +331,10 @@ export function createHud({ onBuy, onSpeed, onView, onZoom, onRagnarok }) {
     }
     if (mode === 'insights') renderInsights(model);
     if (mode === 'milestones') renderMilestones(state);
+    const chBtn = navBtn('chronicle'), hasChron = (state.chronicle?.entries.length || 0) > 0;
+    if (chBtn.hidden && hasChron) chBtn.classList.add('enter');
+    chBtn.hidden = !hasChron;
+    if (mode === 'chronicle') renderChronicle(state);
     const realmBtn = navBtn('realm'), showRealm = realmVisible(state);
     if (realmBtn.hidden && showRealm) realmBtn.classList.add('enter');
     realmBtn.hidden = !showRealm;
@@ -382,7 +406,7 @@ export function createHud({ onBuy, onSpeed, onView, onZoom, onRagnarok }) {
       els.divine.innerHTML = '';
       delete els.res.dataset.ready;
       delete els.divine.dataset.ready;
-      tab = 'all'; tabSig = ''; msSig = ''; realmSig = ''; autoOpened = false; lastState = null;
+      tab = 'all'; tabSig = ''; msSig = ''; realmSig = ''; chronSig = ''; autoOpened = false; lastState = null;
       setMode(null, { focus: false });
     },
   };

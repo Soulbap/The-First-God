@@ -14,6 +14,7 @@ import { ragnarokAward, cycleMemory, buyPrestige, emptyMeta } from './sim/legacy
 import { PRESTIGE, prestigeCost } from './data/prestige.js';
 import { createAmbience } from './audio/ambience.js';
 import { icon } from './ui/icons.js';
+import { dayPhase } from './view/daylight.js';
 
 const SEED = 20261009; // samme grunnverden i hver syklus
 const MAX_STEPS_PER_FRAME = 240;
@@ -23,7 +24,7 @@ const globeCanvas = document.getElementById('globe');
 const renderer = createRenderer(canvas);
 let state, cam;
 let speed = 1, savedSpeed = 1, acc = 0, renderTime = 0, last = performance.now();
-let hoverId = null, hudTimer = 0, wearTimer = 0, pendingGlide = null;
+let hoverId = null, hoverHumanId = null, hudTimer = 0, wearTimer = 0, pendingGlide = null;
 // Planetvisningen (OPUS-01): samme simulering, sett fra økende høyde. Reserve uten WebGL: den gamle kartoversikten.
 let overview = false, hoverRegion = null; // reserveoversikt (bare uten WebGL)
 let globeMode = false, gcam = null, exitAfterGlide = null, snapTimer = 0;
@@ -83,6 +84,12 @@ const hud = createHud({
   },
   onSpeed(s) { speed = s; if (s > 0) savedSpeed = s; },
   onView(v) { goView(v); },
+  // Kronikken: gå til stedet der noe skjedde (nærbilde).
+  onFocus(x, y) {
+    if (globeMode) exitGlobe('near');
+    if (overview) setOverview(false);
+    glideTo(cam, x, y, Math.min(cam.maxW, 700), reducedMotion() ? 0.01 : 1.8);
+  },
   onZoom(f) {
     if (globeMode) { globeZoom(f); return; }
     if (f > 1 && state.unlocks.worldView && cam.w >= maxWorldW() * 0.97) { enterGlobe(); return; }
@@ -274,7 +281,7 @@ function updateHint() {
 }
 
 function handleEvents(events) {
-  hud.present(events.filter((e) => e.type === 'discovered' || e.type === 'milestone'));
+  hud.present(events.filter((e) => e.type === 'discovered' || e.type === 'milestone' || e.type === 'chronicle'));
   for (const e of events) {
     if (e.type !== 'milestone') continue;
     if (e.unlock === 'zoomArea') {
@@ -345,7 +352,7 @@ function tick(realDt) {
 
   if (globeMode) renderGlobe(realDt);
   else if (overview) renderer.renderOverview(state, cam, renderTime, hoverRegion);
-  else renderer.render(state, cam, renderTime, hoverId);
+  else renderer.render(state, cam, renderTime, hoverId, { humanId: hoverHumanId });
 
   hudTimer -= realDt;
   if (hudTimer <= 0) {
@@ -371,7 +378,7 @@ function renderGlobe(realDt) {
   if (snapTimer <= 0 && gcam.h < 0.9) refreshPatch();
   const t0 = performance.now();
   const view = planetView(state, planet);
-  const sun = sunDir(planet, renderTime);
+  const sun = sunDir(planet, renderer.dayOverride ?? dayPhase(state.time));
   const dayBlend = 1 - Math.min(1, Math.max(0, (gcam.h - hMin * 1.4) / (0.32 - hMin * 1.4)));
   globeR.draw({
     frame: globeFrame(gcam, cam.screenW, cam.screenH), planet, regions: view.regions, lights: view.lights, sun, dayBlend, time: renderTime, h: gcam.h,
@@ -404,6 +411,7 @@ canvas.addEventListener('pointermove', (e) => {
   if (globeMode) { const p = pickGlobe(state, planet, gcam, cam.screenW, cam.screenH, e.clientX, e.clientY); hoverRegion = p && p.id !== 'home' ? p.id : null; canvas.classList.toggle('can-gather', !!p); return; }
   const n = renderer.pick(state, cam, e.clientX, e.clientY);
   hoverId = n ? n.id : null;
+  hoverHumanId = n ? null : renderer.pickHuman(state, cam, e.clientX, e.clientY);
   canvas.classList.toggle('can-gather', !!n);
 });
 canvas.addEventListener('pointerup', (e) => {
@@ -421,7 +429,7 @@ canvas.addEventListener('pointerup', (e) => {
   down = null;
   canvas.classList.remove('dragging');
 });
-canvas.addEventListener('pointerleave', () => { hoverId = null; });
+canvas.addEventListener('pointerleave', () => { hoverId = null; hoverHumanId = null; });
 canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
   revealStage = 0; pendingReveal = null; // spilleren tar over kameraet
@@ -478,6 +486,8 @@ setTimeout(() => {
       planetReady: () => planetReady,
       setSpeed: (s) => { speed = s; },
       // Lagring i feilsøking: eksplisitt, under egne nøkler (rører aldri spillerens lagring).
+      // Fast døgnfase (0–1) for skjermbilder: 0,5 middag · 0,25 soloppgang · 0,75 solnedgang · 0 midnatt. null = følg klokka.
+      setDay: (p) => { renderer.dayOverride = p; },
       saveAs: (key) => { localStorage.setItem('tfg.dev.' + key, serialize(state)); return true; },
       loadFrom: (key) => { const st = deserialize(localStorage.getItem('tfg.dev.' + key) || '', { seed: SEED }); if (!st) return false; newCycle(st); return true; },
       cancelGlide: () => { pendingGlide = null; pendingReveal = null; revealStage = 0; },

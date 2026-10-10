@@ -124,6 +124,12 @@ button { font: inherit; color: inherit; }
 .milestones .ico { width: 26px; height: 26px; margin: 2px auto 0; color: var(--gui-accent); }
 .milestones h3 { margin: 0; font-family: var(--font-display); font-weight: normal; font-size: var(--fs-card-title); }
 .milestones p { margin: var(--space-1) 0 0; color: var(--gui-text-secondary); line-height: var(--lh-body); }
+.chronicle li { cursor: default; grid-template-columns: 30px 1fr; }
+.chronicle li.goto { cursor: pointer; }
+.chronicle li.goto:hover { border-color: var(--gui-border); }
+.chronicle .ico { width: 20px; height: 20px; margin: 2px auto 0; }
+.chronicle .chron-text { margin: 0; color: var(--gui-text-primary); line-height: var(--lh-body); }
+.chronicle .chron-time { margin: 2px 0 0; font-size: var(--fs-meta); color: var(--gui-text-secondary); }
 .milestones .opens { color: var(--gui-positive); font-size: var(--fs-meta); }
 
 /* ---------- Bunnlinje ---------- */
@@ -133,7 +139,7 @@ button { font: inherit; color: inherit; }
 .nav-btn:hover { background: var(--gui-bg-hover); color: var(--gui-text-primary); }
 .nav-btn[aria-expanded="true"] { color: var(--gui-accent); border-color: rgba(212, 180, 119, 0.55); background: var(--gui-accent-wash); }
 .nav-btn .ico { width: 26px; height: 26px; }
-.nav-btn[data-nav="insights"] .ico, .nav-btn[data-nav="milestones"] .ico { color: var(--gui-accent); }
+.nav-btn[data-nav="insights"] .ico, .nav-btn[data-nav="milestones"] .ico, .nav-btn[data-nav="chronicle"] .ico { color: var(--gui-accent); }
 .nav-btn[data-nav="ragnarok"] .ico { color: var(--gui-text-secondary); }
 .nav-btn.enter { animation: rise var(--t-notice) var(--ease); }
 .badge { position: absolute; top: 2px; right: 22px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--gui-accent); color: var(--gui-accent-ink); font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; font-variant-numeric: tabular-nums; }
