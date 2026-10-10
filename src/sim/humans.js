@@ -8,6 +8,7 @@ import { recordAuto } from './stats.js';
 import { addWear } from './wear.js';
 import { inBounds, inPond, dist } from './world.js';
 import { startConstruction } from './construction.js';
+import { harvestMineral, materialEnabled } from './materials.js';
 import { beginDelivery, pickupDelivery, completeDelivery, recordTrip } from './regional.js';
 import { isHome, settlementById } from './settlements.js';
 import { partyArrive, partyTick } from './realm.js';
@@ -38,6 +39,7 @@ const deliveryPoint = (state) => storeOf(state) || state.stockpile;
 
 export function nodeUsable(n) {
   if (n.kind === 'tree') return n.state === 'alive' && n.growth >= B.tree.harvestMinGrowthHuman && treeAvailable(n) > 0;
+  if (n.kind === 'mineral') return n.amount > 0 && n.discovered;
   return n.stone > 0;
 }
 
@@ -209,11 +211,12 @@ function chooseTask(state, h) {
   if (maybeExplore(state, h)) return;
   // 2) Sanking.
   const kind = chooseResourceKind(state);
-  const n = findNode(state, h, kind) || findNode(state, h, kind === 'tree' ? 'rock' : 'tree');
+  const needsOre = materialEnabled(state) && state.nodes.some((n) => n.kind === 'mineral' && n.discovered && n.amount > 0) && (state.resources.copperOre + state.resources.tinOre + state.resources.ironOre < 12);
+  const n = (needsOre && findNode(state, h, 'mineral')) || findNode(state, h, kind) || findNode(state, h, kind === 'tree' ? 'rock' : 'tree');
   if (n) {
     n.reservedBy.push(h.id);
     h.targetId = n.id;
-    h.gatherKind = n.kind === 'tree' ? 'wood' : 'stone';
+    h.gatherKind = n.kind === 'tree' ? 'wood' : n.kind === 'mineral' ? n.mineral : 'stone';
     const side = h.x < n.x ? -1 : 1;
     h.tx = n.x + side * (n.kind === 'tree' ? 9 : n.radius * 0.8 + 6);
     h.ty = n.y + 3;
@@ -283,7 +286,8 @@ export function stepHuman(state, h, dt) {
       const interval = gatherInterval(state, h, h.gatherKind);
       if (h.timer >= interval) {
         h.timer -= interval;
-        const got = n.kind === 'tree' ? harvestTree(state, n, 1) : harvestRock(state, n, 1);
+        const tool = state.materials?.gatherBonus || 1;
+        const got = n.kind === 'tree' ? harvestTree(state, n, tool) : n.kind === 'mineral' ? harvestMineral(state, n, 1) : harvestRock(state, n, tool);
         if (got > 0) {
           h.carry.type = h.gatherKind;
           h.carry.amount += got;

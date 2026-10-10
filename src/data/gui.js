@@ -8,6 +8,13 @@ export const RESOURCES = {
   people: { name: 'Folk', unit: 'folk', icon: 'people' },
   planks: { name: 'Planker', unit: 'planker', icon: 'planks' },
   cutstone: { name: 'Tilhugget stein', unit: 'tilhugget stein', icon: 'cutstone' },
+  copperOre: { name: 'Kobbermalm', unit: 'malm', icon: 'stone' },
+  tinOre: { name: 'Tinnmalm', unit: 'malm', icon: 'stone' },
+  ironOre: { name: 'Jernmalm', unit: 'malm', icon: 'stone' },
+  charcoal: { name: 'Trekkull', unit: 'trekkull', icon: 'wood' },
+  copper: { name: 'Kobber', unit: 'kobber', icon: 'stone' },
+  bronze: { name: 'Bronse', unit: 'bronse', icon: 'stone' },
+  iron: { name: 'Jern', unit: 'jern', icon: 'stone' },
   knowledge: { name: 'Kunnskap', unit: 'kunnskap', icon: 'book' },
   pp: { name: 'Bønn (PP)', unit: 'PP', icon: 'pp' },
 };

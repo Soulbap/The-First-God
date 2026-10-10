@@ -19,7 +19,7 @@ export function projectRegionScene(state, id) {
   scene.time = state.time;
   scene.settlement = { center: C, angleOffset: scene.settlement.angleOffset };
   scene.settlements = [{ id: 'outpost', name: region.name, x: C.x, y: C.y, state: 'active', population: [], kind: 'outpost', projectsDone: 0, role: region.biome, stage: region.state === regionState.ETABLERT ? 'Landsby' : 'Leir' }];
-  scene.resources = { wood: 0, stone: 0, food: 0, planks: 0, cutstone: 0, knowledge: 0, pp: 0 };
+  scene.resources = { wood: 0, stone: 0, food: 0, planks: 0, cutstone: 0, copperOre: 0, tinOre: 0, ironOre: 0, charcoal: 0, copper: 0, bronze: 0, iron: 0, knowledge: 0, pp: 0 };
   scene.totals = { ...scene.resources, manualClicks: 0 };
   scene.globe = { ...state.globe, caravans: [], mission: null }; // ingen hjemme-karavaner i et fjernt lands bilde.
   scene.regionProjection = { id: region.id, name: region.name, biome: region.biome, state: region.state, population: region.pop };
@@ -27,6 +27,12 @@ export function projectRegionScene(state, id) {
   if (region.biome === 'fjell') scene.nodes = scene.nodes.filter((n) => n.kind === 'rock' || n.x % 3 === 0);
   if (region.biome === 'slette') scene.nodes = scene.nodes.filter((n) => n.kind !== 'tree' || n.x % 4 === 0);
   if (region.biome === 'kyst') scene.world.pond = { x: C.x - 310, y: C.y + 80, rx: 300, ry: 130 };
+  // Besøket er bare en projeksjon: forekomsten leses fra regionens samme
+  // beholdning og skriver aldri tilbake en ny, lokal økonomi.
+  for (const mineral of ['copperOre', 'tinOre', 'ironOre']) if ((region.inventory?.[mineral] || 0) > 0) {
+    const i = scene.nodes.length;
+    scene.nodes.push({ id: scene.nextId++, kind: 'mineral', mineral, x: C.x + (i % 2 ? 180 : -190), y: C.y - 150 + (i % 3) * 72, radius: 18, amount: region.inventory[mineral], maxAmount: region.inventory[mineral], stone: region.inventory[mineral], maxStone: region.inventory[mineral], discovered: true, reservedBy: [] });
+  }
   if (region.state === regionState.UTPOST || region.state === regionState.ETABLERT) {
     const n = Math.max(1, region.pop);
     scene.buildings.push(building(scene, 'hut', C.x - 18, C.y + 8, 900001));

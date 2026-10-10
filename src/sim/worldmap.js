@@ -11,11 +11,11 @@ import { settlementById } from './settlements.js';
 import { storyWorld } from './story.js';
 
 export const BIOMES = {
-  skog: { name: 'Skogland', goods: [['wood', 8], ['planks', 1]], color: [72, 92, 58] },
-  fjell: { name: 'Fjellrike', goods: [['stone', 8], ['cutstone', 1]], color: [112, 108, 98] },
-  slette: { name: 'Sletteland', goods: [['food', 5], ['wood', 2]], color: [128, 124, 70] },
-  kyst: { name: 'Kystland', goods: [['food', 3], ['knowledge', 3]], color: [84, 112, 118] },
-  dal: { name: 'Dalføre', goods: [['wood', 4], ['stone', 4], ['knowledge', 1]], color: [96, 110, 70] },
+  skog: { name: 'Skogland', goods: [['wood', 8], ['planks', 1], ['charcoal', 2]], color: [72, 92, 58] },
+  fjell: { name: 'Fjellrike', goods: [['stone', 8], ['cutstone', 1], ['ironOre', 4]], color: [112, 108, 98] },
+  slette: { name: 'Sletteland', goods: [['food', 5], ['wood', 2], ['tinOre', 3]], color: [128, 124, 70] },
+  kyst: { name: 'Kystland', goods: [['food', 3], ['knowledge', 3], ['copperOre', 3]], color: [84, 112, 118] },
+  dal: { name: 'Dalføre', goods: [['wood', 4], ['stone', 4], ['knowledge', 1], ['copperOre', 2]], color: [96, 110, 70] },
 };
 const BIOME_ORDER = ['skog', 'fjell', 'slette', 'kyst', 'dal'];
 const NAME_STEM = { skog: ['Nordmark', 'Granland', 'Bjørkelund', 'Mørkeskog'], fjell: ['Høyfjell', 'Steinrike', 'Jernåsen', 'Tindlandet'], slette: ['Bredmark', 'Gullsletta', 'Kornvang', 'Vidda'], kyst: ['Vestkysten', 'Fjordvika', 'Skjærgård', 'Havbukta'], dal: ['Langdal', 'Elvedal', 'Solgrenda', 'Fossedalen'] };
@@ -31,6 +31,7 @@ export function createGlobe(seed) {
     const home = col === H.col && row === H.row;
     const biome = home ? 'skog' : BIOME_ORDER[Math.floor(rand(rng) * BIOME_ORDER.length)];
     const idx = (used[biome] = (used[biome] ?? -1) + 1);
+    const inventory = Object.fromEntries(BIOMES[biome].goods.map(([res, n]) => [res, Math.round(n * (home ? 8 : 16) * (0.8 + rand(rng) * 0.4))]));
     regions.push({
       id: `r${col}${row}`, col, row, biome, home,
       name: home ? 'Hjemlandet' : NAME_STEM[biome][idx % NAME_STEM[biome].length] + (idx >= NAME_STEM[biome].length ? ' II' : ''),
@@ -38,6 +39,7 @@ export function createGlobe(seed) {
       steps: Math.max(Math.abs(col - H.col), Math.abs(row - H.row)),
       state: home ? regionState.HJEM : regionState.UKJENT,
       pop: 0, discoveredAt: null, outpostAt: null, nextGrowAt: Infinity, nextCaravanAt: Infinity, caravans: 0, delivered: 0,
+      inventory,
     });
   }
   const home = regions.find((r) => r.home);
@@ -174,7 +176,11 @@ function stepOutposts(state) {
       r.nextCaravanAt = state.time + interval;
       if (G.caravans.length >= W.maxCaravans) continue;
       const scale = (r.pop / 3) * r.richness * (G.connected ? 1.5 : 1);
-      const goods = BIOMES[r.biome].goods.map(([res, n]) => ({ res, amount: Math.max(1, Math.round(n * scale)) }));
+      const wantsMetal = state.materials?.enabled;
+      const sources = BIOMES[r.biome].goods.filter(([res]) => !wantsMetal || ['copperOre', 'tinOre', 'ironOre', 'charcoal'].includes(res) || state.resources[res] < 8);
+      const goods = sources.map(([res, n]) => ({ res, amount: Math.min(r.inventory?.[res] || 0, Math.max(1, Math.round(n * scale))) })).filter((g) => g.amount > 0);
+      if (!goods.length) continue;
+      for (const g of goods) r.inventory[g.res] -= g.amount;
       const e = edgePoint(state, r);
       G.caravans.push({ id: state.nextId++, regionId: r.id, x: e.x, y: e.y, goods, dir: 1, walk: 0, look: { tunic: 2 + (r.col % 3), skin: r.row % 4, hair: (r.col + r.row) % 4, height: 1, pace: 1 } });
       r.caravans++;

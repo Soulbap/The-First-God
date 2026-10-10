@@ -606,7 +606,7 @@ export function createRenderer(canvas) {
     const list = [];
     for (const n of state.nodes) {
       if (!inView(n.x, n.y)) continue;
-      list.push({ y: n.y, draw: () => (n.kind === 'tree' ? drawTree(n) : drawRock(n)) });
+      list.push({ y: n.y, draw: () => (n.kind === 'tree' ? drawTree(n) : n.kind === 'mineral' ? drawMineral(n) : drawRock(n)) });
     }
     if (mid > 0.02) {
       const up = R.decor.upright;
@@ -929,6 +929,13 @@ export function createRenderer(canvas) {
       if (hoverId === n.id) ctx.filter = 'brightness(1.18)';
       drawSprite(ctx, s, n.x + sa, n.y);
       ctx.filter = 'none';
+    }
+    function drawMineral(n) {
+      const tint = n.mineral === 'copperOre' ? '#a96c46' : n.mineral === 'tinOre' ? '#a3a8a0' : '#665b50';
+      dab(ctx, n.x + 2, n.y + 2, n.radius * 1.2, n.radius * 0.45, 0, 'rgba(18,14,10,0.38)');
+      ctx.fillStyle = '#6d675d'; ctx.beginPath(); ctx.moveTo(n.x - 15, n.y); ctx.lineTo(n.x - 7, n.y - 13); ctx.lineTo(n.x + 12, n.y - 10); ctx.lineTo(n.x + 17, n.y); ctx.closePath(); ctx.fill();
+      for (let i = 0; i < 5; i++) dab(ctx, n.x - 8 + i * 5, n.y - 5 - (i % 2) * 3, 2.3, 1.4, i, tint);
+      if (n.discovered) { ctx.strokeStyle = 'rgba(238,218,166,0.55)'; ctx.lineWidth = 0.7; ctx.stroke(); }
     }
     function caravanFigure(c) {
       const res = c.goods[0].res;

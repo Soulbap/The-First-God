@@ -48,6 +48,9 @@ export const BALANCE = {
     hearth: { radius: 25, work: 24, minRing: 52 },
     field: { radius: 38, work: 22, minRing: 130 },
     workshop: { radius: 34, work: 30, minRing: 125 },
+    mine: { radius: 28, work: 34, minRing: 150 },
+    charcoal_kiln: { radius: 24, work: 28, minRing: 145 },
+    smelter: { radius: 32, work: 42, minRing: 145 },
     // GAMEPLAY-07/08: byinfrastruktur og sivilt bygg.
     sawmill: { radius: 38, work: 40, minRing: 120 },
     mason: { radius: 34, work: 40, minRing: 120 },
@@ -69,6 +72,14 @@ export const BALANCE = {
     minPopulation: 2,
     marketCapMultiplier: 2, // torget gir større lagerplass for foredlede varer
     warehouseCapMultiplier: 1.5, // varehuset gir enda mer (OPUS-02)
+  },
+  // OPUS-04: få, lesbare materialer. Tallene er bevisst små nok til at kjeden
+  // blir synlig før den fyller hele byen med industri.
+  materials: {
+    discoverKnowledge: 18, mineReserve: { wood: 34, stone: 18 }, kilnReserve: { wood: 26, stone: 12 }, smelterReserve: { wood: 38, stone: 26, planks: 4 },
+    carry: 2, gatherSeconds: 2.1, charcoal: { wood: 3, out: 1, seconds: 9 },
+    copper: { ore: 2, fuel: 1, out: 1, seconds: 12 }, bronze: { copper: 2, tin: 1, fuel: 1, out: 1, seconds: 15 }, iron: { ore: 2, fuel: 2, out: 1, seconds: 17 },
+    storageCap: 40, tradeSecondsPerStep: 38, maxTrade: 3,
   },
   // Kunnskap kommer bare fra faktisk virksomhet: foredling, verksteder og kunnskapshallen.
   knowledge: { perCycle: 0.25, workshopSeconds: 14, workshopYield: 0.25, hallSeconds: 8, hallYield: 0.5, hallPerPerson: 0.08, hallPopCap: 10, cityBonus: 1.25 },

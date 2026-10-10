@@ -2,7 +2,7 @@
 // Bevisst valg (prosjektansvarlig): ingen offline-fremgang. En lastet verden fortsetter nøyaktig der den ble lagret.
 import { createWorld } from './world.js';
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 // JSON kan ikke uttrykke Infinity/NaN eller typede arrays; de kodes som små merkeobjekter.
 function replacer(key, v) {
@@ -37,7 +37,7 @@ export function deserialize(text, { seed } = {}) {
   let data;
   try { data = JSON.parse(text, reviver); } catch { return null; }
   if (!data || typeof data !== 'object' || !data.state) return null;
-  if (data.v > SAVE_VERSION || data.v < 2) return null; // fremtidig eller ukjent format: ikke gjett
+  if (data.v > SAVE_VERSION || data.v < 2) return null; // v3 fylles nedenfor med materialfelt
   const s = data.state;
   if (seed != null && s.seed !== seed) return null;
   if (!(s.wear?.data instanceof Float32Array) || !Array.isArray(s.humans) || !Array.isArray(s.buildings)) return null;

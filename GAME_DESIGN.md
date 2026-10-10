@@ -273,6 +273,10 @@ En funksjon er ikke visuelt klar bare fordi den finnes i data/UI. Følgende port
 
 Åpne spørsmål skal ikke løses ved å legge til systemer på forhånd. Beslutning tas når en prototype eller test viser behovet.
 
+## OPUS-04 · materialer — implementert
+
+**Bekreftet:** Metall er en kontinuerlig kapasitet, ikke en alder. Malmforekomster er seedede og begrensede; menneskene oppdager dem, etablerer en enkel utvinning og bygger selv kullmile og smelteplass når kunnskapen og lageret tillater det. Kobber, tinn, trekkull og arbeid gir bronse; jern følger en egen kunnskapsgren med jernmalm og reduksjonsbrensel. Regionenes varelagre er autoritative, og karavaner flytter reelle varer med tid i transit.
+
 ## 11. Prinsipp for videre utvikling
 
 Hver ny endring må kunne besvare: «Hva kan spilleren se i verden som følge av dette?» Hvis svaret bare er et større tall, må endringen få en synlig følge, kombineres med en annen effekt eller avvises. Den minste helhetlige iterasjonen er alltid foretrukket.

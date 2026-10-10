@@ -1,5 +1,12 @@
 # Spilltest — Genesis-01
 
+## OPUS-04 · Materialer
+
+- [ ] Når **Malmens tegn** er valgt: se etter en farget malmåre, gruvearbeid, kullmile og en røykende smelteplass.
+- [ ] Bekreft at kobbermalm og trekkull går ned når kobber lages; bronse krever både kobber, tinn og kull; jern krever egen kunnskap, malm og kull.
+- [ ] Besøk et oppdaget land med malm, gå tilbake og besøk det igjen: forekomsten og varebeholdningen skal være den samme, uten ekstra ressurser.
+- [ ] Se en karavane forlate/ankomme og kontroller at regionalt lager minker ved avreise, ikke dupliseres ved ankomst.
+
 Spill fra start til etter den første utzoomingen (ca. 5–10 minutter), og la spillet gå et par minutter uten å klikke. Svar kort: **ja / delvis / nei** + en setning. Ta gjerne et skjermbilde når noe føles feil eller spesielt bra.
 
 ## Verden

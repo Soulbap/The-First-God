@@ -332,6 +332,24 @@ export const UPGRADES = [
     actions: [{ type: 'enablePlanetCamera' }],
   },
 
+  // ---------- OPUS-04: Materialenes vei ----------
+  {
+    id: 'orecraft', name: 'Malmens tegn', category: 'kunnskap', icon: 'stone',
+    discover: [{ milestone: 'city_rises' }], cost: { knowledge: 28, wood: 48, stone: 30 },
+    requires: [{ milestone: 'city_rises' }], requireText: 'Krever En by reiser seg',
+    effect: 'Bedre malmkunnskap lar folket oppdage forekomster og reise selv en liten gruve, kullmile og smelteplass når lagrene bærer det.',
+    world: 'Fargede steinårer, grunne brudd, kullmiler og røyk fra en lav ovn vokser fram ved bosetningen.',
+    actions: [{ type: 'enableMaterials' }],
+  },
+  {
+    id: 'iron_craft', name: 'Jernets ild', category: 'kunnskap', icon: 'stone',
+    discover: [{ upgrade: 'orecraft' }], cost: { knowledge: 54, charcoal: 3, ironOre: 2 },
+    requires: [{ upgrade: 'orecraft' }], requireText: 'Krever Malmens tegn',
+    effect: 'Reduksjonskunsten gjør jern mulig når folket har jernmalm og trekkull. Jernredskaper øker innhøstingen med 35 % ytterligere.',
+    world: 'Smelteovnen brenner varmere, og mørke jernemner ligger ved smia.',
+    actions: [{ type: 'enableMaterials', ironworking: true }],
+  },
+
   // ---------- OPUS-02: Takkoffer — langsiktig PP-sluk ----------
   {
     id: 'thanksgiving', name: 'Takkoffer', category: 'tro', icon: 'pp', blessing: 'offering',

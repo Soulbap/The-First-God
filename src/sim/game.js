@@ -19,6 +19,7 @@ import { refreshRoles } from './settlements.js';
 import { applyLegacy } from './legacy.js';
 import { storyMilestone } from './story.js';
 import { stepUrban } from './urban.js';
+import { stepMaterials } from './materials.js';
 
 export const DT = B.dt;
 
@@ -43,6 +44,7 @@ export function step(state, dt = DT) {
   stepRegional(state, dt);
   stepCivilization(state, dt);
   stepProduction(state, dt);
+  stepMaterials(state, dt);
   stepRealm(state, dt);
   stepUrban(state, dt);
   stepWorld(state, dt);

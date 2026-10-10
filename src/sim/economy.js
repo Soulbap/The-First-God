@@ -6,6 +6,7 @@ import { settlementStage, stageRank } from './settlements.js';
 import { activeSettlements, distinctRoles, civilizationStage } from './civstage.js';
 import { establishedRoutes } from './regional.js';
 import { discoveredRegions, outpostRegions } from './worldmap.js';
+import { enableMaterials } from './materials.js';
 
 export const upgradeCount = (state, id) => state.upgrades[id] || 0;
 
@@ -127,6 +128,8 @@ function applyAction(state, def, a) {
     state.globe.cartography = true;
   } else if (a.type === 'enablePlanetCamera') {
     state.unlocks.worldView = true;
+  } else if (a.type === 'enableMaterials') {
+    enableMaterials(state, a);
   }
 }
 

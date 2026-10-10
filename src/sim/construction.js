@@ -26,7 +26,7 @@ export function siteIsValid(state, type, x, y) {
 const ZONE = {
   shelter: 'home', hut: 'home', townhouse: 'home',
   fire: 'core', hearth: 'core', storage: 'core', market: 'core', hall: 'core',
-  sawmill: 'work', mason: 'work', workshop: 'work',
+  sawmill: 'work', mason: 'work', workshop: 'work', mine: 'work', charcoal_kiln: 'work', smelter: 'work',
   field: 'field',
   well: 'core', warehouse: 'core', sanctuary: 'sanct',
 };
@@ -114,7 +114,7 @@ export function findBuildSite(state, type, settlementId = 'first') {
     else { const a = state.settlement.angleOffset + 2.4; anchor = { x: C.x + Math.cos(a) * 250, y: C.y + Math.sin(a) * 180 }; minRing = 0; }
   }
   const zone = zoneOf(type);
-  const ctx = { settlementId, rays: zone === 'home' ? streetRays(state, settlementId) : null, dir: type === 'sawmill' ? resourceDir(state, anchor, 'tree') : type === 'mason' ? resourceDir(state, anchor, 'rock') : null };
+  const ctx = { settlementId, rays: zone === 'home' ? streetRays(state, settlementId) : null, dir: type === 'sawmill' ? resourceDir(state, anchor, 'tree') : type === 'mason' ? resourceDir(state, anchor, 'rock') : type === 'mine' ? resourceDir(state, anchor, 'mineral') : null };
   const reach = zone === 'field' ? 150 : zone === 'work' ? 120 : 70; // hvor langt utover første ledige ring vi vurderer
   let best = null, firstRing = null;
   for (let ring = minRing; ring <= 520; ring += 10) {

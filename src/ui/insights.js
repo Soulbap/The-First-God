@@ -77,6 +77,9 @@ export function selectResources(state) {
   if (refined) out.push({ id: 'planks', value: state.resources.planks, rate: auto ? rate.planks : null });
   if (state.totals.cutstone > 0 || state.buildings.some((b) => b.type === 'mason')) out.push({ id: 'cutstone', value: state.resources.cutstone, rate: auto ? rate.cutstone : null });
   if (state.totals.knowledge > 0) out.push({ id: 'knowledge', value: state.resources.knowledge, rate: auto ? rate.knowledge : null });
+  if (state.materials?.enabled) for (const id of ['copperOre', 'tinOre', 'ironOre', 'charcoal', 'copper', 'bronze', 'iron']) {
+    if (state.resources[id] > 0 || state.totals[id] > 0) out.push({ id, value: state.resources[id], rate: null });
+  }
   return out;
 }
 

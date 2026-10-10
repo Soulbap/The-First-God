@@ -134,6 +134,8 @@ Når en utgivelse opprettes, flyttes `Unreleased`-punkter til en datert versjons
 ## [Unreleased]
 
 ### Added
+- **OPUS-04 · Materialenes vei:** Deterministiske, begrensede forekomster av kobber-, tinn- og jernmalm; autonome arbeidere oppdager, henter og tømmer dem. Kunnskapen **Malmens tegn** lar folket bygge gruve, kullmile og smelteplass med reelle lagerressurser. Kobber, bronse og jern bruker malm og trekkull; bronse- og jernredskaper gir synlig høyere innhøsting.
+- Regioner har nå autoritative, endelige varelagre. Karavaner trekker varene ved avreise og leverer dem ved ankomst; besøkte regioner projiserer samme mineralforekomster uten å lage en ny økonomi. `tests/materials.test.js` dekker forekomst-determinisme/uttømming, smelting uten gratis varer og v3-lagringsutfylling.
 - **OPUS-02 · Byplan** (`src/sim/urban.js`, `src/data/upgrades.js`): ny innsikt etter «Sivilisasjonens morgen». Folket bygger selv brønner, flere bolighus og varehus når en bosetting har overskudd (reservegrense for innsiktene); bygdene får flere hytter. Spilleren velger aldri tomt. Varehus gir større lager for foredlede varer.
 - **OPUS-02 · Takkoffer** (PP-sluk): seks avtagende nivåer reiser en helligdom (offerstein, varde, bautastein, ildskål, tretempel, stavkirke). Gir bare PrP ved Ragnarok (kvadratrot) — ingen spillbonus.
 - **OPUS-02 · Navn og kronikk** (`src/sim/chronicle.js`, `story.js`, `activity.js`): norske navn til alle innbyggere (egen generator, ingen rng), en Kronikk-fane med ekte hendelser (grunnleggelser, ruter, utposter, høstfester, trinn), hover viser navn og hva noen gjør.
