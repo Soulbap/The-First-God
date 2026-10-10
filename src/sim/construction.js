@@ -112,6 +112,22 @@ function siteScore(state, type, x, y, ring, anchor, ctx) {
 export const siteStats = { searches: 0, skipped: 0 };
 const BASE_RING = 520, RING_STEP = 120, MAX_RING = 1000;
 
+// Felles hukommelse for egne tomtesøk (mølle, brønn, kai …): `fn(attempts)` kalles med antall tidligere mislykkede forsøk
+// (0 for et nytt oppsett), slik at søket kan utvide seg. Samme regler som findBuildSite: ren ytelse, ingen permanent oppgivelse.
+export function memoSearch(state, key, fn, retry = 5) {
+  const misses = (state.siteMisses ??= {}), m = misses[key];
+  const sig = `${state.nextId}|${state.buildings.length}|${state.nodes.length}`;
+  if (m && m.sig === sig && state.time < m.retryAt) { siteStats.skipped++; return null; }
+  const attempts = m && m.sig === sig ? m.attempts : 0;
+  siteStats.searches++;
+  const r = fn(attempts);
+  // Et vellykket søk etter utvidelse beholder radiusen så lenge oppsettet er uendret: da gir to kall etter hverandre (sjekk, så bygg)
+  // samme tomt. Uten dette ville det andre kallet søke smalere og ikke finne tomten det første fant.
+  if (r) { if (attempts) misses[key] = { sig, attempts, retryAt: 0 }; else delete misses[key]; }
+  else misses[key] = { sig, attempts: attempts + 1, retryAt: state.time + retry * (attempts + 1) };
+  return r;
+}
+
 export function findBuildSite(state, type, settlementId = 'first') {
   const misses = (state.siteMisses ??= {});
   const key = `${settlementId}|${type}`, m = misses[key];
@@ -120,7 +136,8 @@ export function findBuildSite(state, type, settlementId = 'first') {
   const attempts = m && m.sig === sig ? m.attempts : 0;
   siteStats.searches++;
   const site = searchBuildSite(state, type, settlementId, Math.min(MAX_RING, BASE_RING + RING_STEP * attempts));
-  if (site) delete misses[key];
+  // Samme idempotens som i memoSearch: et funn etter utvidelse beholder radiusen til oppsettet endres.
+  if (site) { if (attempts) misses[key] = { sig, attempts, retryAt: 0 }; else delete misses[key]; }
   else misses[key] = { sig, attempts: attempts + 1, retryAt: state.time + 3 * (attempts + 1) };
   return site;
 }
@@ -140,7 +157,9 @@ function searchBuildSite(state, type, settlementId, maxRing) {
   }
   const zone = zoneOf(type);
   const ctx = { settlementId, rays: zone === 'home' ? streetRays(state, settlementId) : null, dir: type === 'sawmill' ? resourceDir(state, anchor, 'tree') : type === 'mason' ? resourceDir(state, anchor, 'rock') : type === 'mine' ? resourceDir(state, anchor, 'mineral') : null };
-  const reach = zone === 'field' ? 150 : zone === 'work' ? 120 : 70; // hvor langt utover første ledige ring vi vurderer
+  // Hvor langt utover første ledige ring vi vurderer. Verksteder med en råvareretning (sagbruk mot skog, steinhoggeri mot stein, gruve mot malm)
+  // ser lenger, slik at de når kanten av en tett skog i stedet for å stoppe ved første ledige plass på feil side (OPUS-11).
+  const reach = ctx.dir ? 280 : zone === 'field' ? 150 : zone === 'work' ? 120 : 70;
   let best = null, firstRing = null;
   for (let ring = minRing; ring <= maxRing; ring += 10) {
     if (firstRing != null && ring > firstRing + reach) break;

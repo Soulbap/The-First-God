@@ -2,7 +2,7 @@
 // drivstoff i raffineriet (en fabrikk i industrial.js). Forbrenningsmotoren er en kraftkilde som brenner
 // drivstoff mens den går. Lastebilverkstedet lager lastebiler, som reiser på land og bruker drivstoff per tur.
 import { BALANCE as B } from '../data/balance.js';
-import { startConstruction, findBuildSite, siteIsValid } from './construction.js';
+import { startConstruction, findBuildSite, siteIsValid, memoSearch } from './construction.js';
 import { inBounds, inPond, dist } from './world.js';
 import { chronicle } from './chronicle.js';
 import { createRng, rand, range } from '../core/rng.js';
@@ -32,15 +32,15 @@ export function ensureOilField(s) {
 }
 
 // Brønnen skal stå nær det oppdagede feltet, men aldri på en ugyldig tomt. Søket er deterministisk.
-function wellSite(s, node) {
+const wellSite = (s, node) => memoSearch(s, `well|${node.id}`, (attempts) => {
   const [r0, r1] = P.well.reach;
-  for (let r = r0; r <= r1; r += 12) for (let i = 0; i < 24; i++) {
+  for (let r = r0; r <= r1 + 40 * Math.min(attempts, 5); r += 12) for (let i = 0; i < 24; i++) {
     const a = s.settlement.angleOffset + (i / 24) * Math.PI * 2;
     const x = node.x + Math.cos(a) * r, y = node.y + Math.sin(a) * r * 0.72;
     if (inBounds(s, x, y, 70) && siteIsValid(s, 'oil_well', x, y)) return { x, y };
   }
   return null;
-}
+});
 
 function buildPetroleum(s) {
   const I = s.industrial;

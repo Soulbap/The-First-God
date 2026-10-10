@@ -1,7 +1,7 @@
 // OPUS-05: liten, autoritativ navigasjonskapasitet. Dette er ikke en egen økonomi:
 // båter bygges av det vanlige lageret og brukes bare av worldmap sine reserverte varer.
 import { BALANCE as B } from '../data/balance.js';
-import { startConstruction, siteIsValid } from './construction.js';
+import { startConstruction, siteIsValid, memoSearch } from './construction.js';
 import { chronicle } from './chronicle.js';
 
 const affordable = (s, cost) => Object.entries(cost).every(([k, n]) => (s.resources[k] || 0) >= n);
@@ -11,15 +11,15 @@ const pending = (s, type) => s.buildings.some((b) => b.type === type && !b.compl
 
 // Dammen er den konkrete elvetilgangen i hjemmeregionen. Dokkens tomt står på land
 // umiddelbart ved vannet, slik at den ikke kan oppstå i en landlåst bykjerne.
-function dockSite(state) {
+const dockSite = (state) => memoSearch(state, 'dock', (attempts) => {
   const p = state.world.pond;
-  for (const extra of [52, 78, 108, 142]) for (let i = 0; i < 32; i++) {
+  for (const extra of [52, 78, 108, 142, ...(attempts ? [180, 230, 290] : [])]) for (let i = 0; i < 32; i++) {
     const a = state.settlement.angleOffset + i / 32 * Math.PI * 2;
     const x = p.x + Math.cos(a) * (p.rx + extra), y = p.y + Math.sin(a) * (p.ry + extra * 0.72);
     if (siteIsValid(state, 'dock', x, y)) return { x, y };
   }
   return null;
-}
+});
 
 function buildDock(state) {
   if (complete(state, 'dock') || pending(state, 'dock') || !affordable(state, B.navigation.dock)) return;

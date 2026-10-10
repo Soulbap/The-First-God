@@ -1,7 +1,7 @@
 // OPUS-06: lokal, deterministisk mekanisk kraft. Møller er kraftkilder med
 // begrenset kapasitet for sin bosetting – aldri et magisk globalt energinett.
 import { BALANCE as B } from '../data/balance.js';
-import { startConstruction, siteIsValid } from './construction.js';
+import { startConstruction, siteIsValid, memoSearch } from './construction.js';
 import { inPond, dist } from './world.js';
 import { settlementById } from './settlements.js';
 import { chronicle } from './chronicle.js';
@@ -25,7 +25,7 @@ export function windSuitability(state, x, y) {
   return 0.35 + (n - Math.floor(n)) * 0.65;
 }
 
-function waterSite(state, S) {
+const waterSite = (state, S) => memoSearch(state, `mill|water|${S.id}`, () => {
   const p = state.world.pond;
   for (let i = 0; i < 40; i++) {
     const a = state.settlement.angleOffset + i / 40 * Math.PI * 2;
@@ -33,20 +33,22 @@ function waterSite(state, S) {
     if (waterSuitability(state, x, y) >= .55 && siteIsValid(state, 'watermill', x, y)) return { x, y };
   }
   return null;
-}
-function windSite(state, S) {
-  for (let r = 190; r < 460; r += 26) for (let i = 0; i < 28; i++) {
+});
+// Vindmøllen søker stadig lenger ut for hvert mislykket forsøk (OPUS-11), så en trang bygd ikke blir stående uten mølle.
+const windSite = (state, S) => memoSearch(state, `mill|wind|${S.id}`, (attempts) => {
+  for (let r = 190; r < 460 + 60 * Math.min(attempts, 6); r += 26) for (let i = 0; i < 28; i++) {
     const a = state.settlement.angleOffset + i / 28 * Math.PI * 2;
     const x = S.x + Math.cos(a) * r, y = S.y + Math.sin(a) * r * .72;
     if (windSuitability(state, x, y) >= .66 && siteIsValid(state, 'windmill', x, y)) return { x, y };
   }
   return null;
-}
+});
 
 function makeComponents(state, dt) {
   const M = state.mechanical, workshop = state.buildings.find((b) => b.complete && b.type === 'workshop');
   if (!workshop || state.resources.mechanicalComponents >= 12) return;
-  const metal = state.resources.iron > 0 ? 'iron' : state.resources.bronze > 0 ? 'bronze' : null;
+  // Vedlikeholdet bruker bronse når jernet er knapt (OPUS-11): jern trengs til bygg og maskiner i industrikjeden.
+  const R = state.resources, metal = R.iron > 0 && (R.iron >= B.mechanical.ironReserve || R.bronze <= 0) ? 'iron' : R.bronze > 0 ? 'bronze' : null;
   if (!metal || state.resources.wood < B.mechanical.components.wood) return;
   workshop.mechanicalCycle = (workshop.mechanicalCycle || 0) + dt;
   if (workshop.mechanicalCycle < B.mechanical.components.seconds) return;
@@ -65,6 +67,8 @@ function demandFor(state, id) {
 function buildMill(state, S) {
   const demand = demandFor(state, S.id);
   if (demand < B.mechanical.minDemand || done(state, 'watermill', S.id) || done(state, 'windmill', S.id) || pending(state, 'watermill', S.id) || pending(state, 'windmill', S.id)) return;
+  // Sjekk først om en mølle i det hele tatt kan betales, så tomtesøket ikke kjøres i hvert steg uten å kunne bygge.
+  if (!afford(state, B.mechanical.watermill) && !afford(state, B.mechanical.windmill)) return;
   const water = waterSite(state, S);
   const type = water ? 'watermill' : 'windmill', site = water || windSite(state, S), cost = B.mechanical[type];
   if (!site || !afford(state, cost)) return;

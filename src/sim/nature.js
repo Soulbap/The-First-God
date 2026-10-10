@@ -1,7 +1,7 @@
 // Vegetasjon og stein: vekst, hogst, felling, gjenvekst, frøspredning og steinfornyelse.
 import { BALANCE as B } from '../data/balance.js';
 import { rand, range } from '../core/rng.js';
-import { isFreeForTree, makeTree } from './world.js';
+import { isFreeForTree, makeTree, inBuiltArea } from './world.js';
 
 const T = B.tree;
 
@@ -23,10 +23,10 @@ export function fellTree(state, t) {
 export function clearTrees(state, x, y, r) {
   let n = 0;
   for (const t of state.nodes) {
-    if (t.kind !== 'tree' || t.state !== 'alive' || Math.hypot(t.x - x, (t.y - y) * 1.2) > r) continue;
-    fellTree(state, t);
+    if (t.kind !== 'tree' || Math.hypot(t.x - x, (t.y - y) * 1.2) > r) continue;
+    if (t.state === 'alive') { fellTree(state, t); n++; }
+    // Også stubber i tomta må bort: ellers skyter de nye trær inne i bygda (OPUS-11).
     t.cleared = true; t.timer = 3 + (t.id % 7); // blir liggende et øyeblikk, så fjernes stubben
-    n++;
   }
   return n;
 }
@@ -56,6 +56,8 @@ export function stepNature(state, dt) {
       } else {
         n.timer -= dt;
         if (n.timer <= 0 && n.cleared) { n.removed = true; continue; }
+        // En stubbe i et vedlikeholdt område (bygd, sti, trasé) skyter ikke på nytt; den blir fjernet. Utenfor vokser skogen tilbake.
+        if (n.timer <= 0 && inBuiltArea(state, n.x, n.y)) { n.removed = true; continue; }
         if (n.timer <= 0) {
           n.state = 'alive';
           n.growth = T.saplingStartGrowth;

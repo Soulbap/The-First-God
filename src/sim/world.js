@@ -3,14 +3,13 @@ import { BALANCE as B } from '../data/balance.js';
 import { createRng, rand, range } from '../core/rng.js';
 import { createGlobe } from './worldmap.js';
 import { createChronicle } from './chronicle.js';
+import { generateGeography, populateLandscape, inAnyWater } from './landscape.js';
 
 export const dist = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
 
+// Vann er hovedtjernet pluss innsjøer og bekk (se landscape.js). Alle regler om «våt grunn» går hit.
 export function inPond(state, x, y, margin = 0) {
-  const p = state.world.pond;
-  const dx = (x - p.x) / (p.rx + margin);
-  const dy = (y - p.y) / (p.ry + margin);
-  return dx * dx + dy * dy < 1;
+  return inAnyWater(state, x, y, margin);
 }
 
 export function inBounds(state, x, y, margin) {
@@ -29,10 +28,48 @@ export function isFreeForTree(state, x, y) {
   }
   // OPUS-02: folk holder bygdene åpne — skogen vokser ikke tilbake over hjem og åkre. Bygdens kjerne holdes åpen, og rundt hvert hus
   // i en bygd er det litt mer luft enn ellers.
-  for (const s of state.settlements || []) if (dist(x, y, s.x, s.y) < 118) return false;
-  // Funksjonell klarering, ikke en enorm, abstrakt sirkel: dører, gårdsrom og gater holdes åpne.
-  for (const b of state.buildings) if (dist(x, y, b.x, b.y) < b.radius + 42) return false;
-  return true;
+  return !inMaintainedArea(state, x, y);
+}
+
+// Bygdens vedlikeholdte område (OPUS-11): kjernen rundt hjertet, fotavtrykk med klarering rundt hvert bygg (også ufullførte),
+// stier og jernbanetraseer. Frøspredning og stubbegjenvekst respekterer dette; naturen vokser fritt utenfor.
+export function inMaintainedArea(state, x, y) {
+  for (const s of state.settlements || []) if (dist(x, y, s.x, s.y) < 118) return true;
+  return inBuiltArea(state, x, y);
+}
+
+// Bare det som faktisk er bygget: bygg med klarering (dører, gårdsrom) og stier/traseer. Ingen abstrakt sirkel.
+export function inBuiltArea(state, x, y) {
+  for (const b of state.buildings) if (dist(x, y, b.x, b.y) < b.radius + 42) return true;
+  return onMaintainedLine(state, x, y);
+}
+
+const segDist = (x, y, ax, ay, bx, by) => {
+  const vx = bx - ax, vy = by - ay, l2 = vx * vx + vy * vy;
+  const t = l2 ? Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / l2)) : 0;
+  return Math.hypot(ax + vx * t - x, ay + vy * t - y);
+};
+
+// OPUS-11 · Vedlikeholdte linjer: stier fra hvert ferdige bygg inn mot bosettingens hjerte, og jernbanetraseer mellom bosettinger.
+// Skog og stein vokser ikke tilbake over dem (verken i by, industriområde eller på flyplass; flyplassens bygg har eget fotavtrykk ovenfor).
+// Bare faktiske, brukte linjer teller; ingen enorm eksklusjonssirkel.
+export function onMaintainedLine(state, x, y) {
+  for (const S of state.settlements) {
+    const id = S.id;
+    const heart = state.buildings.find((b) => b.complete && (b.type === 'hearth' || b.type === 'fire') && (b.settlementId || 'first') === id) || S;
+    if (Math.hypot(x - heart.x, y - heart.y) > 420) continue;
+    for (const b of state.buildings) {
+      if (!b.complete || (b.settlementId || 'first') !== id || b === heart) continue;
+      const d = Math.hypot(b.x - heart.x, b.y - heart.y);
+      if (d < 40 || d > 320) continue;
+      if (segDist(x, y, b.x, b.y, heart.x, heart.y) < 14) return true;
+    }
+  }
+  for (const r of state.industrial?.rails || []) {
+    const A = state.settlements.find((q) => q.id === r.a), Cc = state.settlements.find((q) => q.id === r.b);
+    if (A && Cc && segDist(x, y, A.x, A.y, Cc.x, Cc.y) < 26) return true;
+  }
+  return false;
 }
 
 export function makeTree(state, species, x, y, growth) {
@@ -89,7 +126,8 @@ function placeVeins(state, mainRng) {
   });
 }
 
-export function createWorld(seed = 20261009) {
+// `biome` gir landets landskap (skog, fjell, slette, kyst, dal); `remote` utelater hjemmeregionens malmårer.
+export function createWorld(seed = 20261009, biome = 'skog', { remote = false } = {}) {
   const rng = createRng(seed);
   const W = B.world.width, H = B.world.height;
   const C = { x: W / 2, y: H / 2 + 20 };
@@ -148,48 +186,12 @@ export function createWorld(seed = 20261009) {
   addTree(state, 'birch', C.x + 45, C.y - 120, 0.12);
   addTree(state, 'spruce', C.x + 205, C.y - 70, 0.7);
 
-  // Lunder rundt leirplassen. Hver lund har en tydelig hovedart; blanding skjer
-  // bare langs kanten, slik at skogen leses som bestander framfor jevn støy.
-  for (let g = 0; g < 12; g++) {
-    const a = rand(rng) * Math.PI * 2;
-    const d = range(rng, 300, 1020);
-    const gx = C.x + Math.cos(a) * d, gy = C.y + Math.sin(a) * d * 0.7;
-    if (!inBounds(state, gx, gy, 60) || inPond(state, gx, gy, 60)) continue;
-    const species = rand(rng) < 0.55 ? 'spruce' : 'birch';
-    const count = 6 + Math.floor(rand(rng) * 7);
-    for (let i = 0; i < count; i++) {
-      for (let tries = 0; tries < 8; tries++) {
-        // To summerte trekk samler trærne nær sentrum uten å lage harde sirkler.
-        const x = gx + (rand(rng) + rand(rng) - 1) * 138;
-        const y = gy + (rand(rng) + rand(rng) - 1) * 102;
-        if (!isFreeForTree(state, x, y)) continue;
-        const edge = Math.hypot(x - gx, (y - gy) * 1.15) / 150;
-        const growth = edge > 0.62 && rand(rng) < 0.48 ? range(rng, 0.12, 0.48) : range(rng, 0.55, 1);
-        const sp = rand(rng) < (edge > 0.55 ? 0.68 : 0.9) ? species : (species === 'birch' ? 'spruce' : 'birch');
-        addTree(state, sp, x, y, growth);
-        break;
-      }
-    }
-  }
-  // Enkelttrær.
-  for (let i = 0; i < 16; i++) {
-    const x = range(rng, 60, W - 60), y = range(rng, 60, H - 60);
-    if (isFreeForTree(state, x, y) && dist(x, y, C.x, C.y) > 230) addTree(state, rand(rng) < 0.6 ? 'birch' : 'spruce', x, y, range(rng, 0.3, 1));
-  }
-  // Løse steiner nær leiren gjør at tilfeldige frø ikke gir en frustrerende første flaskehals.
-  let rocks = 0;
-  for (let tries = 0; tries < 300 && rocks < B.rock.earlyDeposits; tries++) {
-    const a = rand(rng) * Math.PI * 2, d = range(rng, 150, rocks < 6 ? B.rock.earlyRadius : 820);
-    const x = C.x + Math.cos(a) * d, y = C.y + Math.sin(a) * d * 0.7;
-    const r = range(rng, 14, 28);
-    if (!inBounds(state, x, y, 60) || inPond(state, x, y, 40)) continue;
-    if (state.nodes.some((n) => dist(x, y, n.x, n.y) < (n.kind === 'rock' ? n.radius + r + 40 : r + 24))) continue;
-    addRock(state, x, y, r);
-    rocks++;
-  }
+  // Landskapet (OPUS-11): vann, soner og natur genereres biomstyrt og deterministisk (src/sim/landscape.js).
+  generateGeography(state, rng, biome);
+  populateLandscape(state, rng, biome, { addTree, addRock, isFreeForTree });
   // Ressursgeografi (OPUS-11): hver malm og kullet har flere begrensede årer. Den nærmeste ligger innen rekkevidde,
   // de neste lenger ute i hver sin retning; hvert frø har sin egen rikdom per mineral. Ingen forekomst er uendelig.
-  placeVeins(state, rng);
+  if (!remote) placeVeins(state, rng); // fjerne land får sine forekomster fra regionens lager (regionScene.js)
   // OPUS-08: oljefeltet legges IKKE til her. Det opprettes deterministisk når petroleumskunnskapen
   // aktiveres (ensureOilField i src/sim/petroleum.js). Slik er verdenen før det identisk med tidligere spill.
   return state;

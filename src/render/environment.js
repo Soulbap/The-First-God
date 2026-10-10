@@ -2,6 +2,7 @@
 // fra verdens-seed og startobjektene. Terreng og dekor leser det slik at bakken henger sammen med
 // skogen, tjernet og leiren. Ingen økologisk simulering — kun visuell sammenheng.
 import { makeNoise, fbm, smooth, clamp } from './paint.js';
+import { inPond } from '../sim/world.js';
 
 export const ENV_CELL = 16;
 
@@ -12,6 +13,7 @@ export function buildEnvironment(state) {
   const canopy = new Float32Array(n), conifer = new Float32Array(n), moisture = new Float32Array(n), soil = new Float32Array(n), settlement = new Float32Array(n);
   const nM = makeNoise(state.seed + 701), nS = makeNoise(state.seed + 733);
   const C = state.settlement.center;
+  const hasMoreWater = !!((state.world.waters && state.world.waters.length) || (state.world.streams && state.world.streams.length));
 
   // Kronedekke: hvert modent tre avgir skygge og strø innenfor en radius som vokser med alderen.
   const conSum = new Float32Array(n), allSum = new Float32Array(n), rockInfl = new Float32Array(n);
@@ -44,7 +46,9 @@ export function buildEnvironment(state) {
       canopy[k] = c;
       conifer[k] = allSum[k] > 0.02 ? clamp(conSum[k] / allSum[k]) : 0.5;
       const pd = Math.hypot((x - pond.x) / pond.rx, (y - pond.y) / pond.ry);
-      const m = fbm(nM, x / 230, y / 230, 3) * 0.75 + smooth(2.8, 1.05, pd) * 0.6 + c * 0.12;
+      let wet = smooth(2.8, 1.05, pd) * 0.6;
+      if (hasMoreWater) wet = Math.max(wet, inPond(state, x, y, 20) ? 0.6 : inPond(state, x, y, 70) ? 0.3 : 0);
+      const m = fbm(nM, x / 230, y / 230, 3) * 0.75 + wet + c * 0.12;
       moisture[k] = clamp((m - 0.2) / 0.7);
       const dc = Math.hypot(x - C.x, (y - C.y) * 1.2);
       let settled = 0;

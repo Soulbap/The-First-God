@@ -30,8 +30,10 @@ export function discoverMinerals(state) {
 }
 
 function buildWhenReady(state, type, cost) {
-  if (has(state, type) || pending(state, type) || !affordable(state, cost) || !findBuildSite(state, type)) return false;
-  spend(state, cost); startConstruction(state, type, { source: `materials:${type}` });
+  if (has(state, type) || pending(state, type) || !affordable(state, cost)) return false;
+  const site = findBuildSite(state, type);
+  if (!site || !startConstruction(state, type, { source: `materials:${type}`, site })) return false;
+  spend(state, cost);
   return true;
 }
 

@@ -33,6 +33,22 @@ Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på ve
 
 ### OPUS-11 · integrasjon, verdensutvikling og kvalitet (pågår)
 
+#### Added (fase B · landskap, geografi, gjenvekst)
+- **Landskap** (`src/sim/landscape.js`): biomstyrt, deterministisk generering av vann (bekk som linje, ekstra innsjø), soner (steinrike høyder, enger, skogsområder) og natur. Fem biomprofiler (skog, fjell, slette, kyst, dal) gir ulik tetthet av skog, steinutspring og enger. `createWorld(seed, biome, {remote})`. Renderen tegner bekk, innsjøer og sonetoner (`terrain.js`, `environment.js`). Eldre lagringer beholder sitt kjente landskap (ingen nye vannlegemer).
+- **Tidlig stein**: 18 tidlige steiner (9 nær leiren) i stedet for 12, pluss steinutspring i steinrike soner. Test over 60 frø: minst 6 steiner nær leiren og ≥150 stein innen 700 enheter.
+- **Vedlikeholdte linjer** (`inMaintainedArea`/`inBuiltArea`): skog vokser ikke tilbake på stier fra hvert hus mot bygdens hjerte eller på jernbanetraseer, og stubber i ny tomt blir fjernet i stedet for å skyte på nytt. Utenfor bygda vokser skogen fritt.
+
+#### Fixed (fase B)
+- **Planetgeografi**: «Vestkysten er kyst uten hav» var en ekte regresjon (11 brudd på 150 frø: kyst uten hav, fjell som slette, land i havet). Landets kjerne og bukta festes nå lokalt (σ ≈ 0,025 rad) til sitt landskap. 0 brudd på 150 frø; invarianten er en test.
+- **Byvekst brant varer**: `stepUrban` trakk kostnaden (planker, tre, stein) og lot så `startConstruction` mislykkes uten tomt, 115 «prosjekter» for 16 bygg (frø 909). Kostnaden betales nå bare når byggingen faktisk starter. Mangelen på planker var det som stoppet flyplassen.
+- **Tomtesøk som gjentas**: mølle-, brønn- og kaisøk skannet hele området i hvert steg (`memoSearch`); mølleprosjektet sjekker nå først om det kan betales. Utvidet søk er idempotent (sjekk og bygg gir samme tomt).
+- **Sagbruk, steinhoggeri og gruve** vurderer tomter lenger mot råvaresiden, så de når kanten av en tett skog.
+- Vedlikehold av maskiner bruker bronse når jernet er knapt; jernårer 5 (rikdom 0,9–1,35).
+
+#### Tests (fase B)
+- `tests/opus11-world.test.js`: geografi-invarianter (150 frø), landskapets determinisme og biomidentitet, ingen natur i vann, lagring/migrering av landskap, tidlig stein (60 frø), ressursårer, gjenvekst (frøspredning, stubber, trasé og stier).
+- Alle 178 gamle tester består, pluss 10 nye. Hele kjeden til forskningsinstituttet nås nå av alle seks testede frø innen ca. 4,6 timer spilltid (tidligere to av seks i seks timer).
+
 #### Fixed
 - **Tomtesøk (`localSite`/`findBuildSite`)**: Et mislykket tomtesøk ble gjentatt i hvert simuleringssteg (full romlig skanning) og tok 259 s for 4 timer spilltid på frø 20261009 (33–36 s på 701/4242). Mislykkede søk huskes nå i `state.siteMisses` så lenge verdens oppsett er uendret, gjentas etter en kort ventetid med stadig større søkeradius (ingen permanent oppgivelse), og lagres med spillet så lagre/lese gir samme forløp. Målt etter: 31 s for samme frø (4 timer), hele testpakken 173 s → ca. 30 s.
 - **Utvinning og smelting sultet kjeden**: Folk hentet «nærmeste mineral» når summen av malm og kull var under 40, så et fullt lager av tinn hindret at jern ble hentet; smelteren lagde alltid kobber først og kom aldri til jern. Nå har hvert mineral eget lagermål og relativ mangel avgjør både utvinning (`wantedMineral`) og smelting.

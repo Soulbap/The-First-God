@@ -41,6 +41,8 @@ export function deserialize(text, { seed } = {}) {
   const s = data.state;
   if (seed != null && s.seed !== seed) return null;
   if (!(s.wear?.data instanceof Float32Array) || !Array.isArray(s.humans) || !Array.isArray(s.buildings)) return null;
+  // v11: nytt landskap (bekk, innsjøer, soner) finnes bare i nye verdener. En eldre verden beholder sitt kjente landskap.
+  if (data.v < 11 && s.world) { s.world.waters = []; s.world.streams = []; s.world.zones = []; }
   const fresh = createWorld(s.seed);
   fillDefaults(s, fresh);
   // v11: satellittbosettinger får eget lager. Det som var levert til et pågående prosjekt (tidligere `delivered`) flyttes dit.

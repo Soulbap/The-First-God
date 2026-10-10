@@ -60,10 +60,13 @@ function moveTo(state, h, dt) {
   // En liten lokal styring: gå rundt tjernet og ikke gjennom et bygg. Dette er
   // bevisst ikke et eget pathfinding-system; den brukes bare når direkte kurs er blokkert.
   if (!h.waypoints?.length) {
-    const p = state.world.pond, sig = `${Math.round(h.tx)},${Math.round(h.ty)}`;
-    const crossesPond = (h.x - p.x) * (h.tx - p.x) < 0 && Math.abs((h.y + h.ty) / 2 - p.y) < p.ry + 36;
-    // Omveien legges bare én gang per mål; ellers kunne en som står ved omveiens punkt legge en ny i det uendelige.
-    if (crossesPond && h.pondSig !== sig) { h.waypoints = [{ x: p.x + (h.x < p.x ? -p.rx - 55 : p.rx + 55), y: p.y - p.ry - 45 }]; h.pondSig = sig; }
+    const sig = `${Math.round(h.tx)},${Math.round(h.ty)}`;
+    // Tjernet og eventuelle innsjøer (OPUS-11) går en omvei rundt; bekker krysses ved vadesteder.
+    for (const p of [state.world.pond, ...(state.world.waters || [])]) {
+      const crossesPond = (h.x - p.x) * (h.tx - p.x) < 0 && Math.abs((h.y + h.ty) / 2 - p.y) < p.ry + 36;
+      // Omveien legges bare én gang per mål; ellers kunne en som står ved omveiens punkt legge en ny i det uendelige.
+      if (crossesPond && h.pondSig !== sig) { h.waypoints = [{ x: p.x + (h.x < p.x ? -p.rx - 55 : p.rx + 55), y: p.y - p.ry - 45 }]; h.pondSig = sig; break; }
+    }
   }
   const goal = h.waypoints?.[0] || { x: h.tx, y: h.ty };
   const dx = goal.x - h.x, dy = goal.y - h.y;

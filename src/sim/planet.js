@@ -82,12 +82,14 @@ const homeCell = () => ({ col: Math.floor(B.globe.cols / 2), row: Math.floor(B.g
 // Lokale landskapstrekk som gjør at et kjent land faktisk har sitt landskap (fjell, kyst, slette …).
 // Hvert land trekker høyden og fuktigheten mot mål for sitt landskap (vekt = gauss rundt sentrum).
 const FEATURE = {
-  fjell: { target: 0.5, r: 0.085, moist: 0.45, rugged: true, stretch: 2.3 },
-  skog: { target: 0.2, r: 0.08, moist: 0.66 },
-  slette: { target: 0.12, r: 0.09, moist: 0.3 },
-  kyst: { target: 0.1, r: 0.055, moist: 0.6, bay: true },
-  dal: { target: 0.14, r: 0.075, moist: 0.65, valley: true },
+  fjell: { target: 0.5, r: 0.085, moist: 0.45, rugged: true, stretch: 2.3, pin: { e: 0.62, moist: 0.45 } },
+  skog: { target: 0.2, r: 0.08, moist: 0.66, pin: { e: 0.2, moist: 0.68 } },
+  slette: { target: 0.12, r: 0.09, moist: 0.3, pin: { e: 0.12, moist: 0.3 } },
+  kyst: { target: 0.1, r: 0.055, moist: 0.6, bay: true, pin: { e: 0.1, moist: 0.6 } },
+  dal: { target: 0.14, r: 0.075, moist: 0.65, valley: true, pin: { e: 0.14, moist: 0.65 } },
 };
+// Festet (OPUS-11): kjerneradius for landets landskap, bukta ved kystland, og havdybden der.
+const PIN = { core: 0.025, bay: 0.03, sea: -0.5 };
 
 // Planeten for et frø. `regions` er globe.regions (bare col/row/biome/id brukes; tilstanden leses aldri).
 export function createPlanet(seed, regions) {
@@ -158,6 +160,13 @@ export function createPlanet(seed, regions) {
         e = e * (1 - g) + target * g;
         moist = moist * (1 - g) + f.F.moist * g;
         if (f.bay) e -= 0.6 * gauss(angle(p, f.bay), 0.045);
+      }
+      // OPUS-11: landets kjerne er festet til sitt landskap. Støy og nabolands trekk kunne før gi fjell som slette, kyst uten hav og
+      // land i havet (11 brudd på 150 frø). Festet er lokalt (σ ≈ 0,025 rad) og gir en garanti uten å gjøre kartet ensartet.
+      for (const f of feats) {
+        const w = gauss(angle(p, f.dir), PIN.core);
+        if (w > 1e-4) { e = e * (1 - w) + f.F.pin.e * w; moist = moist * (1 - w) + f.F.pin.moist * w; }
+        if (f.bay) { const wb = gauss(angle(p, f.bay), PIN.bay); if (wb > 1e-4) e = e * (1 - wb) + PIN.sea * wb; }
       }
       // Hjemmeregionen: mild, skogkledd lavlandsflekk som stemmer med den detaljerte verdenen.
       const hp = gauss(dh * (0.8 + 0.5 * (0.5 + 0.5 * fbm(nD, p, 13, 2))), 0.07);

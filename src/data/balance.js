@@ -13,11 +13,14 @@ export const BALANCE = {
     saplingStartGrowth: 0.04,
     seedIntervalSeconds: 12,
     seedChance: 0.75,
-    maxTrees: 130,
+    maxTrees: 260,
     minSpacing: 32,
   },
   // Løse steiner bærer den første byggingen; større forekomster er fortsatt verdifulle senere.
-  rock: { regenSeconds: 35, maxGatherers: 2, earlyDeposits: 12, earlyRadius: 430 },
+  // OPUS-11: flere tidlige steiner (12 → 18, hvorav 9 nær leiren) og steinutspring i steinrike soner (se landscape.js).
+  rock: { regenSeconds: 35, maxGatherers: 2, earlyDeposits: 18, earlyNear: 9, earlyRadius: 430 },
+  // OPUS-11 · landskap: bekkens bredde/avstand mellom ledd, hvor langt unna leiren bekk, innsjø og steinutspring legges.
+  landscape: { streamWidth: 13, streamClear: 330, lakeClear: 520, outcropClear: 240 },
   human: {
     speed: 30,
     gatherSeconds: 1.3,
@@ -112,7 +115,7 @@ export const BALANCE = {
     veins: {
       copperOre: { count: 3, dist: [380, 1000], reserve: 100, spread: 40, richness: [0.8, 1.3], laterShare: 0.9 },
       tinOre: { count: 2, dist: [700, 1100], reserve: 100, spread: 40, richness: [0.8, 1.3], laterShare: 0.8 },
-      ironOre: { count: 4, dist: [650, 1150], reserve: 120, spread: 50, richness: [0.75, 1.3], laterShare: 1 },
+      ironOre: { count: 5, dist: [650, 1200], reserve: 125, spread: 50, richness: [0.9, 1.35], laterShare: 1 },
       coal: { count: 3, dist: [520, 1100], reserve: 700, spread: 160, richness: [0.8, 1.25], laterShare: 0.9 },
     },
     // Neste åre av samme mineral blir kjent når alle kjente årer er under denne andelen av opprinnelig mengde.
@@ -143,7 +146,7 @@ export const BALANCE = {
     components: { wood: 4, metal: 1, out: 1, seconds: 16 },
     watermill: { wood: 44, stone: 28, planks: 8, mechanicalComponents: 3 },
     windmill: { wood: 38, stone: 20, planks: 10, mechanicalComponents: 3 },
-    minDemand: 2, power: 3, craftMultiplier: 1.65, foodMultiplier: 1.3,
+    minDemand: 2, power: 3, craftMultiplier: 1.65, foodMultiplier: 1.3, ironReserve: 24,
     wearPerSecond: 0.0012, repairAt: 0.42, repair: { wood: 2, mechanicalComponents: 1 },
   },
   industrial: {

@@ -2,6 +2,7 @@
 // småstein, kvister) og et sømløst finkornslag som holder bakken levende ved nærzoom.
 import { makeCanvas, makeNoise, fbm, mix, smooth, clamp, rgba, jitter, dab, mulberry, tileNoise } from './paint.js';
 import { envAt } from './environment.js';
+import { inPond } from '../sim/world.js';
 
 export const TERRAIN_SCALE = 2; // piksler per verdensenhet i terrengbildet
 export const ECOLOGY_SCALE = 0.16; // lavfrekvent og billig: bare tone, ikke detaljtegning
@@ -13,7 +14,7 @@ export function terrainColorFn(state, env) {
   const s = state.seed;
   const nA = makeNoise(s + 11), nB = makeNoise(s + 23), nC = makeNoise(s + 37), nD = makeNoise(s + 41);
   const C = state.settlement.center;
-  const p = state.world.pond;
+  const p = state.world.pond, zones = state.world.zones || [], hasWater = !!((state.world.waters && state.world.waters.length) || (state.world.streams && state.world.streams.length));
   const elev = (x, y) => fbm(nA, x / 650, y / 650, 4);
   return (x, y) => {
     const e = envAt(env, x, y);
@@ -31,9 +32,20 @@ export function terrainColorFn(state, env) {
     col = mix(col, [134, 128, 80], smooth(0.5, 0.78, fbm(nD, x / 300 + 40, y / 300, 3)) * 0.14 * (1 - e.canopy));
     const dc = Math.hypot(x - C.x, (y - C.y) * 1.3);
     col = mix(col, [104, 96, 66], (1 - smooth(30, 140, dc)) * 0.14);
+    // Soner (OPUS-11): steinrike høyder er gråere og barere, enger lysere og åpne, skogsoner mørkere og mosete. Kantene bølger med støy.
+    for (const z of zones) {
+      const zd = Math.hypot((x - z.x) / z.rx, (y - z.y) / z.ry) * (0.82 + 0.36 * fbm(nD, x / 120 + z.x, y / 120, 2));
+      if (zd >= 1.05) continue;
+      const w = 1 - smooth(0.55, 1.05, zd);
+      if (z.kind === 'rocky') col = mix(mix(col, [124, 114, 96], w * 0.42), DIRT, w * 0.12);
+      else if (z.kind === 'meadow') col = mix(col, [126, 128, 70], w * 0.34);
+      else col = mix(col, MOSS, w * 0.28);
+    }
     const pd = Math.hypot((x - p.x) / p.rx, (y - p.y) / p.ry);
     if (pd < 1.5) col = mix(col, WET, (1 - smooth(1.05, 1.5, pd)) * 0.65);
     if (pd < 1.12) col = mix(col, MUD, (1 - smooth(0.98, 1.12, pd)) * 0.8);
+    // Innsjøer og bekk: fuktig bredd og gjørme (bekkens kjerne males som vann i buildTerrain).
+    if (hasWater) { if (inPond(state, x, y, 16)) col = mix(col, WET, 0.5); if (inPond(state, x, y, 5)) col = mix(col, MUD, 0.6); }
     const sh = clamp(1 + (elev(x - 8, y - 8) - elev(x + 8, y + 8)) * 6, 0.9, 1.1) * shade;
     return [col[0] * sh, col[1] * sh, col[2] * sh];
   };
@@ -72,7 +84,7 @@ export function buildTerrain(state, env) {
   ctx.save();
   ctx.scale(TS, TS);
   const rnd = mulberry(state.seed + 99);
-  const inPondArea = (x, y) => Math.hypot((x - pond.x) / pond.rx, (y - pond.y) / pond.ry) < 1.08;
+  const inPondArea = (x, y) => inPond(state, x, y, 4);
   ctx.lineCap = 'round';
 
   // 1) Brede penselstrøk gir maleritekstur uten store flekker.
@@ -177,32 +189,48 @@ export function buildTerrain(state, env) {
     }
   }
 
-  // Tjern: dypt i midten, lysere grunne kanter, bredd av gjørme.
-  ctx.save();
-  ctx.translate(pond.x, pond.y);
-  ctx.scale(1, pond.ry / pond.rx);
-  const g = ctx.createRadialGradient(-pond.rx * 0.15, -pond.rx * 0.1, pond.rx * 0.1, 0, 0, pond.rx);
-  g.addColorStop(0, 'rgb(32,52,58)');
-  g.addColorStop(0.7, 'rgb(46,68,70)');
-  g.addColorStop(0.92, 'rgb(72,88,78)');
-  g.addColorStop(1, 'rgba(82,86,66,0)');
-  ctx.fillStyle = g;
-  ctx.beginPath();
-  ctx.arc(0, 0, pond.rx, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-  for (let i = 0; i < 260; i++) {
-    const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd()) * 0.85;
-    const x = pond.x + Math.cos(a) * pond.rx * d, y = pond.y + Math.sin(a) * pond.ry * d;
-    dab(ctx, x, y, 3 + rnd() * 8, 0.4 + rnd() * 0.5, 0, rnd() < 0.5 ? 'rgba(150,170,172,0.10)' : 'rgba(20,34,40,0.18)');
+  // Bekker (OPUS-11): lav, gjørmete bredd, mørkt vann i midten og lyse refleksjoner. Tegnes før tjern/innsjøer slik at de dekker munningen.
+  for (const s of state.world.streams || []) {
+    const path = () => { ctx.beginPath(); s.pts.forEach((q, i) => (i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y))); };
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = 'rgba(88,80,58,0.55)'; ctx.lineWidth = s.w * 2 + 10; path(); ctx.stroke();
+    ctx.strokeStyle = 'rgba(66,84,78,0.9)'; ctx.lineWidth = s.w * 2 + 3; path(); ctx.stroke();
+    ctx.strokeStyle = 'rgb(44,68,72)'; ctx.lineWidth = s.w * 1.5; path(); ctx.stroke();
+    ctx.strokeStyle = 'rgba(150,176,178,0.22)'; ctx.lineWidth = 1.1; ctx.setLineDash([9, 13]); path(); ctx.stroke(); ctx.setLineDash([]);
+    for (let i = 0; i < s.pts.length - 1; i++) for (let k = 0; k < 9; k++) {
+      const a = s.pts[i], b = s.pts[i + 1], t = rnd(), x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t;
+      const side = rnd() < 0.5 ? -1 : 1, sz = 0.6 + rnd() * 1.4, kk = 0.7 + rnd() * 0.5;
+      dab(ctx, x + side * (s.w + 2 + rnd() * 3), y + (rnd() - 0.5) * 3, sz, sz * 0.6, rnd(), rgba([118 * kk, 114 * kk, 102 * kk], 0.85));
+    }
   }
-  // Steiner og gjørme langs bredden.
-  for (let i = 0; i < 160; i++) {
-    const a = rnd() * Math.PI * 2, d = 1.0 + rnd() * 0.12;
-    const x = pond.x + Math.cos(a) * pond.rx * d, y = pond.y + Math.sin(a) * pond.ry * d;
-    const k = 0.7 + rnd() * 0.5, sz = 0.6 + rnd() * 1.3;
-    dab(ctx, x + 0.3, y + 0.4, sz, sz * 0.5, 0, 'rgba(20,24,18,0.4)');
-    dab(ctx, x, y, sz, sz * 0.6, rnd(), rgba([118 * k, 114 * k, 102 * k], 0.85));
+  // Tjern og innsjøer: dypt i midten, lysere grunne kanter, bredd av gjørme.
+  for (const w of [pond, ...(state.world.waters || [])]) {
+    ctx.save();
+    ctx.translate(w.x, w.y);
+    ctx.scale(1, w.ry / w.rx);
+    const g = ctx.createRadialGradient(-w.rx * 0.15, -w.rx * 0.1, w.rx * 0.1, 0, 0, w.rx);
+    g.addColorStop(0, 'rgb(32,52,58)');
+    g.addColorStop(0.7, 'rgb(46,68,70)');
+    g.addColorStop(0.92, 'rgb(72,88,78)');
+    g.addColorStop(1, 'rgba(82,86,66,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(0, 0, w.rx, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    for (let i = 0; i < Math.round(260 * (w.rx / pond.rx)); i++) {
+      const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd()) * 0.85;
+      const x = w.x + Math.cos(a) * w.rx * d, y = w.y + Math.sin(a) * w.ry * d;
+      dab(ctx, x, y, 3 + rnd() * 8, 0.4 + rnd() * 0.5, 0, rnd() < 0.5 ? 'rgba(150,170,172,0.10)' : 'rgba(20,34,40,0.18)');
+    }
+    // Steiner og gjørme langs bredden.
+    for (let i = 0; i < Math.round(160 * (w.rx / pond.rx)); i++) {
+      const a = rnd() * Math.PI * 2, d = 1.0 + rnd() * 0.12;
+      const x = w.x + Math.cos(a) * w.rx * d, y = w.y + Math.sin(a) * w.ry * d;
+      const k = 0.7 + rnd() * 0.5, sz = 0.6 + rnd() * 1.3;
+      dab(ctx, x + 0.3, y + 0.4, sz, sz * 0.5, 0, 'rgba(20,24,18,0.4)');
+      dab(ctx, x, y, sz, sz * 0.6, rnd(), rgba([118 * k, 114 * k, 102 * k], 0.85));
+    }
   }
   ctx.restore();
   return canvas;

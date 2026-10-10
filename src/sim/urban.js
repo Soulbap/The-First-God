@@ -60,9 +60,12 @@ export function stepUrban(state) {
     // Ett prosjekt om gangen i hver bosetting, og aldri mens noe annet ufullført står der.
     if (state.buildings.some((b) => !b.complete && (b.settlementId || 'first') === S.id)) continue;
     const item = nextUrban(state, S);
-    if (!item || !affordable(state, item.cost) || !findBuildSite(state, item.type, S.id)) continue;
+    if (!item || !affordable(state, item.cost)) continue;
+    const site = findBuildSite(state, item.type, S.id);
+    if (!site) continue;
+    // Kostnaden betales bare når byggingen faktisk starter (tidligere kunne varene trekkes uten at noe ble bygget).
+    if (!startConstruction(state, item.type, { source: `urban:${item.type}`, site, settlementId: S.id })) continue;
     for (const [k, n] of Object.entries(item.cost)) state.resources[k] -= n;
-    startConstruction(state, item.type, { source: `urban:${item.type}`, settlementId: S.id });
     U.built = (U.built || 0) + 1;
     return; // maks ett nytt prosjekt per sjekk
   }
