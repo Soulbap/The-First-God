@@ -42,7 +42,7 @@ Zoom er ikke bare optikk; den skifter hva spilleren kan forstå og gjøre.
 | Nær | Tre, stein, mennesker, leir | Direkte skapelse og tidlig innsamling | Små spirer, vedhauger, bål, første hytte |
 | Område | Leir, marker, skog, nærområder | Samfunnets rytme og oppgraderingsutfall | Stier, åkrer, verksteder, handel |
 | Region/Kontinent | Kontinenter og klima | Sivilisasjonens fotavtrykk | Byklynger, skoger, veier, lys om natten. **Implementert (OPUS-01):** samme planetkamera som under; hjemmeregionen er en ekte flekk på kula med et levende bilde av verdenen |
-| Planet | Hel klode | Planetarisk helse og epoke | Biomfordeling, hav, nattlys. **Implementert (OPUS-01):** WebGL-planet; kjent land i farger, ukjent dempet; utposter og ruter; dag/natt med nattlys |
+| Planet | Hel klode | Planetarisk helse og epoke | Biomfordeling, hav, nattlys. **Implementert (OPUS-01), gated (OPUS-03):** WebGL-planeten krever Luftmåling etter karttegning og Verdens første sivilisasjon; kjent land i farger, ukjent dempet. |
 | Solsystem | Planeter og baner | Ekspansjon og større mål | Kolonier/objekter, lysfenomener |
 | Galakse | Stjernesystemer | Kosmisk arv og syklusens sluttbilde | Stjernenett, guddommelige spor |
 
@@ -259,6 +259,7 @@ En funksjon er ikke visuelt klar bare fordi den finnes i data/UI. Følgende port
 - Prayer Points kommer fra mennesker.
 - Lav systemkompleksitet er en aktiv designregel.
 - (GAMEPLAY-07..10) Byer, kunnskap, flere bosettinger og en flermåls verdensmodell med utposter er bygget uten byggplassering, mikrostyring eller obligatorisk Ragnarok.
+- (OPUS-03) Verdenskart over menneskelig kjente land kommer før planetkameraet. Å besøke et oppdaget land og å se hele planeten er separate evner.
 
 ### Åpne designspørsmål
 

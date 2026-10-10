@@ -103,7 +103,7 @@ const hud = createHud({
   },
   onZoom(f) {
     if (globeMode) { globeZoom(f); return; }
-    if (f > 1 && state.unlocks.worldView && cam.w >= maxWorldW() * 0.97) { enterGlobe(); return; }
+    if (f > 1 && (state.unlocks.mapView || state.unlocks.worldView) && cam.w >= maxWorldW() * 0.97) { goView('world'); return; }
     zoomAt(cam, cam.screenW / 2, cam.screenH / 2, f);
   },
   onRagnarok(phase, id) {
@@ -254,7 +254,7 @@ function globeZoom(factor) {
 }
 
 function setOverview(on) {
-  if (on && !state.unlocks.worldView) return;
+  if (on && !state.unlocks.mapView && !state.unlocks.worldView) return;
   overview = on; hoverRegion = null; down = null;
   canvas.classList.remove('dragging', 'can-gather');
   hudTimer = 0;
@@ -263,6 +263,8 @@ function setOverview(on) {
 function goView(v, duration) {
   revealStage = 0; pendingReveal = null;
   if (v === 'world') {
+    // Verdenskartet kommer før planeten; den komplette kulevisningen krever senere luftmåling.
+    if (!state.unlocks.worldView) { setOverview(true); return; }
     if (!globeR) { setOverview(true); return; }
     if (globeMode) { const L = toLatLon(planet.home.dir); globeGlide(gcam, L.lat, L.lon, gcam.h < GLOBE.continentH * 1.5 ? GLOBE.maxH * 0.92 : GLOBE.continentH, reducedMotion() ? 0.01 : 2.6); }
     else enterGlobe();
@@ -445,7 +447,7 @@ canvas.addEventListener('wheel', (e) => {
   // Reserve: kartoversikten åpnes/lukkes som før.
   if (overview) { if (e.deltaY < 0) goView('area', 1.2); return; }
   // Å zoome ut forbi områdevisningen løfter kameraet opp fra den samme verdenen mot planeten.
-  if (e.deltaY > 0 && state.unlocks.worldView && cam.w >= maxWorldW() * 0.97) { enterGlobe(); return; }
+  if (e.deltaY > 0 && (state.unlocks.mapView || state.unlocks.worldView) && cam.w >= maxWorldW() * 0.97) { goView('world'); return; }
   zoomAt(cam, e.clientX, e.clientY, Math.exp(e.deltaY * 0.0012));
 }, { passive: false });
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -453,7 +455,7 @@ window.addEventListener('keydown', (e) => {
   if (e.target.closest && e.target.closest('input,textarea')) return;
   if (e.code === 'Space' && e.target.closest && e.target.closest('button')) return; // mellomrom aktiverer knappen
   if (e.code === 'Space') { e.preventDefault(); speed = speed === 0 ? savedSpeed : 0; }
-  if ((e.key === 'v' || e.key === 'V') && state.unlocks.worldView) {
+  if ((e.key === 'v' || e.key === 'V') && (state.unlocks.mapView || state.unlocks.worldView)) {
     if (globeMode) exitGlobe('area');
     else if (overview) goView('area', 1.2);
     else if (globeR) enterGlobe();

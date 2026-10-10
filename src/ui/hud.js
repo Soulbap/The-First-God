@@ -340,7 +340,7 @@ export function createHud({ onBuy, onSpeed, onView, onZoom, onRagnarok, onFocus 
     realmBtn.hidden = !showRealm;
     if (mode === 'realm') { if (showRealm) renderRealm(state); else setMode(null, { focus: false }); }
     const worldBtn = els.controls.querySelector('[data-view="world"]');
-    if (worldBtn) worldBtn.hidden = !state.unlocks.worldView;
+    if (worldBtn) worldBtn.hidden = !state.unlocks.mapView && !state.unlocks.worldView;
   }
 
   return {

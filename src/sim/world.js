@@ -29,8 +29,9 @@ export function isFreeForTree(state, x, y) {
   }
   // OPUS-02: folk holder bygdene åpne — skogen vokser ikke tilbake over hjem og åkre. Bygdens kjerne holdes åpen, og rundt hvert hus
   // i en bygd er det litt mer luft enn ellers.
-  for (const s of state.settlements || []) if (s.id !== 'first' && dist(x, y, s.x, s.y) < 118) return false;
-  for (const b of state.buildings) if (dist(x, y, b.x, b.y) < b.radius + ((b.settlementId || 'first') === 'first' ? 26 : 58)) return false;
+  for (const s of state.settlements || []) if (dist(x, y, s.x, s.y) < 118) return false;
+  // Funksjonell klarering, ikke en enorm, abstrakt sirkel: dører, gårdsrom og gater holdes åpne.
+  for (const b of state.buildings) if (dist(x, y, b.x, b.y) < b.radius + 42) return false;
   return true;
 }
 
@@ -130,10 +131,10 @@ export function createWorld(seed = 20261009) {
     const x = range(rng, 60, W - 60), y = range(rng, 60, H - 60);
     if (isFreeForTree(state, x, y) && dist(x, y, C.x, C.y) > 230) addTree(state, rand(rng) < 0.6 ? 'birch' : 'spruce', x, y, range(rng, 0.3, 1));
   }
-  // Steiner.
+  // Løse steiner nær leiren gjør at tilfeldige frø ikke gir en frustrerende første flaskehals.
   let rocks = 0;
-  for (let tries = 0; tries < 200 && rocks < 8; tries++) {
-    const a = rand(rng) * Math.PI * 2, d = range(rng, 190, 820);
+  for (let tries = 0; tries < 300 && rocks < B.rock.earlyDeposits; tries++) {
+    const a = rand(rng) * Math.PI * 2, d = range(rng, 150, rocks < 6 ? B.rock.earlyRadius : 820);
     const x = C.x + Math.cos(a) * d, y = C.y + Math.sin(a) * d * 0.7;
     const r = range(rng, 14, 28);
     if (!inBounds(state, x, y, 60) || inPond(state, x, y, 40)) continue;

@@ -2,7 +2,7 @@
 // Bevisst valg (prosjektansvarlig): ingen offline-fremgang. En lastet verden fortsetter nøyaktig der den ble lagret.
 import { createWorld } from './world.js';
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 // JSON kan ikke uttrykke Infinity/NaN eller typede arrays; de kodes som små merkeobjekter.
 function replacer(key, v) {

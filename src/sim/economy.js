@@ -123,6 +123,10 @@ function applyAction(state, def, a) {
     state.globe.outpostsEnabled = true;
   } else if (a.type === 'connectWorld') {
     state.globe.connected = true;
+  } else if (a.type === 'enableCartography') {
+    state.globe.cartography = true;
+  } else if (a.type === 'enablePlanetCamera') {
+    state.unlocks.worldView = true;
   }
 }
 

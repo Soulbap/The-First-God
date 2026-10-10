@@ -38,6 +38,13 @@ export function stepUrban(state) {
   const U = state.urban;
   if (!U?.enabled || state.time < U.nextAt) return;
   U.nextAt = state.time + B.urban.checkSeconds;
+  // Det første lyet blir et synlig minnested når byen faktisk har vokst fram;
+  // det forsvinner ikke som historien, men leses heller ikke som et vanlig hjem.
+  const capital = state.settlements.find((s) => s.id === 'first');
+  if (capital && ['By', 'Storby'].includes(capital.stage)) {
+    const shelter = state.buildings.find((b) => b.type === 'shelter' && b.complete);
+    if (shelter && !shelter.heritage) { shelter.heritage = true; state.events.push({ type: 'heritage', id: shelter.id, x: shelter.x, y: shelter.y }); }
+  }
   for (const S of state.settlements) {
     if (S.state !== 'active' || S.population.length < 2) continue;
     // Ett prosjekt om gangen i hver bosetting, og aldri mens noe annet ufullført står der.

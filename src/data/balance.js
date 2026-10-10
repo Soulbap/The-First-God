@@ -16,7 +16,8 @@ export const BALANCE = {
     maxTrees: 130,
     minSpacing: 32,
   },
-  rock: { regenSeconds: 35, maxGatherers: 2 },
+  // Løse steiner bærer den første byggingen; større forekomster er fortsatt verdifulle senere.
+  rock: { regenSeconds: 35, maxGatherers: 2, earlyDeposits: 12, earlyRadius: 430 },
   human: {
     speed: 30,
     gatherSeconds: 1.3,
@@ -86,7 +87,7 @@ export const BALANCE = {
   // OPUS-02 · Byplan: folket bygger selv videre når byen har overskudd. `reserve` er det som alltid blir igjen til innsikter.
   urban: { checkSeconds: 6, reserve: { wood: 140, stone: 100, planks: 14, cutstone: 10 } },
   // OPUS-02 · Takkoffer: PP-sluk. Hvert nivå reiser ett stykke av helligdommen; PrP ved Ragnarok vokser med kvadratrot (avtagende).
-  offering: { max: 6, prpScale: 7 },
+  offering: { max: 6, prpScale: 4 },
   // OPUS-02 · Dagklokke: ett døgn i spilltid. Brukes av både planeten og nærbildet (ingen offline-tid).
   day: { seconds: 480, startPhase: 0.3 },
   stats: { productionWindow: 60 },

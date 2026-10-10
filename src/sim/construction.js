@@ -10,8 +10,10 @@ export function siteIsValid(state, type, x, y) {
   const r = B.building[type].radius;
   if (!inBounds(state, x, y, 70) || inPond(state, x, y, r + 14)) return false;
   if (type !== 'field' && dist(x, y, state.stockpile.x, state.stockpile.y) < r + 34) return false;
-  // Tettere enn før (OPUS-02): 9 mellom boliger og verksteder gir smale smau; åkre trenger fortsatt luft.
-  for (const b of state.buildings) if (dist(x, y, b.x, b.y) < r + b.radius + (type === 'field' || b.type === 'field' ? 14 : 9)) return false;
+  // Kollisjon, arbeidsrom og visuell klarering er ulike ting. Små hus kan fortsatt danne gater,
+  // mens verksteder og offentlige bygg trenger plass til aktivitet og inngang.
+  const space = (t) => ({ field: 18, well: 24, market: 34, hall: 32, warehouse: 30, sawmill: 28, mason: 28, sanctuary: 26 }[t] ?? 16);
+  for (const b of state.buildings) if (dist(x, y, b.x, b.y) < r + b.radius + Math.max(space(type), space(b.type))) return false;
   for (const n of state.nodes) {
     const need = n.kind === 'tree' ? r + 22 : r + n.radius + 10;
     if (dist(x, y, n.x, n.y) < need) return false;
@@ -142,7 +144,8 @@ export function startConstruction(state, type, { onComplete = null, source = nul
   };
   if (B.production[type]) { b.cycle = 0; b.active = false; b.idle = null; b.made = 0; }
   state.buildings.push(b);
-  if (settlementId !== 'first') clearTrees(state, b.x, b.y, def.radius + 52);
+  // Også hovedstaden rydder tomter. Klareringen matcher tre-regelen og hindrer gjenvekst ved dør og gårdsrom.
+  clearTrees(state, b.x, b.y, def.radius + 42);
   state.events.push({ type: 'constructionStarted', id: b.id, buildingType: type, x: b.x, y: b.y });
   return b;
 }

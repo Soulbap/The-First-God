@@ -315,6 +315,22 @@ export const UPGRADES = [
     world: 'Veier møter hav og fjell. Fra alle kanter kommer lass til torget.',
     actions: [{ type: 'connectWorld' }],
   },
+  {
+    id: 'cartography', name: 'Karttegnernes kunst', category: 'rike', icon: 'compass',
+    discover: [{ regions: 1 }], cost: { planks: 24, cutstone: 16, food: 20, knowledge: 90 },
+    requires: [{ regions: 2 }, { upgrade: 'great_expedition' }], requireText: 'Krever to oppdagede land og Den store ekspedisjonen',
+    effect: 'De oppdagede landene får navn og lesbare konturer i verdensoversikten.',
+    world: 'Karttegnere samler reisendes ruter, høyder og kyster til et felles kart.',
+    actions: [{ type: 'enableCartography' }],
+  },
+  {
+    id: 'aerial_survey', name: 'Luftmåling', category: 'rike', icon: 'globe',
+    discover: [{ milestone: 'first_world_civilization' }], cost: { planks: 20, cutstone: 16, food: 20, knowledge: 120 },
+    requires: [{ milestone: 'first_world_civilization' }, { upgrade: 'cartography' }], requireText: 'Krever Verdens første sivilisasjon og karttegning',
+    effect: 'Målinger høyt over landet åpner planetkameraet. Ukjente områder forblir dempet.',
+    world: 'Målere leser horisonten fra høyder og tårn; verden blir en helhet uten å bli fullt kjent.',
+    actions: [{ type: 'enablePlanetCamera' }],
+  },
 
   // ---------- OPUS-02: Takkoffer — langsiktig PP-sluk ----------
   {
@@ -400,8 +416,9 @@ export const MILESTONES = [
   { id: 'dawn_civilization', title: 'Sivilisasjonens morgen', text: 'Mark, verksteder og ferdselsårer binder bosettingene sammen til begynnelsen på en sivilisasjon.', when: { all: [{ milestone: 'first_town' }, { regionalProjects: 5 }, { delivery: 6 }] } },
   { id: 'city_rises', title: 'En by reiser seg', text: 'Sagbruk, steinhoggeri og tette hus bærer et større samfunn. Planker og tilhugget stein har gjort landsbyen til en by.', when: { stageMin: 'By' } },
   { id: 'age_of_knowledge', title: 'Kunnskapens tidsalder', text: 'Det folk lærer, deles nå på tvers av håndverk og hjem. Kunnskapshallen samler det som før gikk tapt.', when: { all: [{ milestone: 'city_rises' }, { techs: 4 }, { built: 'hall' }, { knowledge: 120 }] } },
-  { id: 'connected_realm', title: 'Et sammenhengende rike', text: 'Flere bosettinger med hver sin rolle er bundet sammen av stier og leveranser. Verden har blitt for stor til å sees fra ett sted.', when: { all: [{ milestone: 'age_of_knowledge' }, { settlements: 4 }, { stageMin: 'By' }, { delivery: 14 }, { roles: 3 }, { routes: 3 }, { upgrade: 'trade_roads' }] }, unlock: 'worldView' },
+  { id: 'connected_realm', title: 'Et sammenhengende rike', text: 'Flere bosettinger med hver sin rolle er bundet sammen av stier og leveranser. Verdenskartet viser nå landene menneskene kjenner.', when: { all: [{ milestone: 'age_of_knowledge' }, { settlements: 4 }, { stageMin: 'By' }, { delivery: 14 }, { roles: 3 }, { routes: 3 }, { upgrade: 'trade_roads' }] }, unlock: 'mapView' },
   { id: 'first_world_civilization', title: 'Verdens første sivilisasjon', text: 'Utposter i fjerne land sender varer hjem. En sivilisasjon som begynte med ett ly, kjenner nå verden.', when: { all: [{ milestone: 'connected_realm' }, { upgrade: 'connected_world' }, { regions: 4 }, { outposts: 2 }, { caravans: 6 }] } },
+  { id: 'planetary_survey', title: 'En verden måles', text: 'Folkets kart og målinger binder de kjente landene til én planet. Det ukjente er fortsatt ukjent.', when: { upgrade: 'aerial_survey' }, unlock: 'worldView' },
 ];
 
 export const upgradeById = (id) => UPGRADES.find((u) => u.id === id);

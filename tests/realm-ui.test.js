@@ -31,9 +31,10 @@ test('alle krav bruker kjente kravtyper (ellers kan innhold aldri låses opp)', 
 test('full spilling kjøper alt innhold (ingen oppgradering er utilgjengelig)', () => {
   const { s, bot } = reached('first_world_civilization');
   const bought = new Set(bot.bought.map((b) => b.id));
-  const never = UPGRADES.filter((u) => !bought.has(u.id)).map((u) => u.id);
+  // Luftmåling ligger bevisst etter «Verdens første sivilisasjon»; den er ikke del av den gamle sluttlinjen.
+  const never = UPGRADES.filter((u) => !bought.has(u.id) && u.id !== 'aerial_survey').map((u) => u.id);
   assert.deepEqual(never, [], 'alle oppgraderinger kan nås');
-  const ms = MILESTONES.filter((m) => s.milestones[m.id] == null).map((m) => m.id);
+  const ms = MILESTONES.filter((m) => s.milestones[m.id] == null && m.id !== 'planetary_survey').map((m) => m.id);
   assert.deepEqual(ms, [], 'alle milepæler kan nås');
 });
 
@@ -78,7 +79,7 @@ test('milepæler og meldinger: oversikten annonseres, og sluttmilepælen vises s
   const list = reachedMilestones(s);
   assert.equal(list.at(-1).id, 'first_world_civilization');
   const realm = list.find((m) => m.id === 'connected_realm');
-  assert.match(realm.opens, /planetvisningen/); // OPUS-01: oversikten er nå planeten
+  assert.match(realm.opens, /verdensoversikten/);
   const p = classifyPresentation({ type: 'milestone', id: 'first_world_civilization', title: 'Verdens første sivilisasjon', text: 'x' });
   assert.equal(p.kicker, 'Milepæl');
   const card = insightCard(createGame(), UPGRADES.find((u) => u.id === 'sawmill_up'));

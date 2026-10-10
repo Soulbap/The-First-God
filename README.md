@@ -35,6 +35,12 @@ Spillet har vokst langt forbi den første skiven: landsby, region, tidlig sivili
 - **Planeten** har elver, fjellkjeder og skogbelter; ruter og lys følger det folket faktisk har gjort.
 - Se `docs/opus-02/`. Ingen menneske har spilltestet; lyden er ikke lyttet til.
 
+## OPUS-03: verden verd å oppdage
+
+- **Kart før planet.** «Et sammenhengende rike» åpner verdenskartet over kjente land. Den komplette planetvisningen krever senere **Karttegnernes kunst** og **Luftmåling** etter «Verdens første sivilisasjon».
+- **Levende og ryddet by.** Trær får ikke vokse tilbake ved bygg og bykjerne, offentlige bygg får arbeidsrom, og det første lyet blir et minnested når byen vokser frem.
+- Se `docs/opus-03/` for implementerte grenser og spillteststatus.
+
 Rask kontroll: `npm test` (122 tester) og `node tools/playthrough.mjs` (spiller hele veien i simuleringen) og `node tools/playthrough-multi.mjs` (seks frø).
 
 ## Forutsetninger

@@ -96,7 +96,7 @@ export function currentEpoch(state) {
 export function reachedMilestones(state) {
   return MILESTONES.filter((m) => state.milestones[m.id] != null)
     .sort((a, b) => state.milestones[a.id] - state.milestones[b.id])
-    .map((m) => ({ id: m.id, title: m.title, text: m.text, opens: (m.unlock === 'zoomArea' || m.unlock === 'villageView') ? 'Viser bosettingen i områdevisning' : m.unlock === 'worldView' ? 'Åpner planetvisningen (Planet, V eller rull ut)' : '' }));
+    .map((m) => ({ id: m.id, title: m.title, text: m.text, opens: (m.unlock === 'zoomArea' || m.unlock === 'villageView') ? 'Viser bosettingen i områdevisning' : m.unlock === 'mapView' ? 'Åpner verdensoversikten over kjente land' : m.unlock === 'worldView' ? 'Åpner planetvisningen (Planet, V eller rull ut)' : '' }));
 }
 
 // ---------- GAMEPLAY-07..10: Rike-panelet ----------

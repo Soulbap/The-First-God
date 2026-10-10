@@ -15,8 +15,11 @@ export function ragnarokAward(state) {
   const milestones = Object.keys(state.milestones).length;
   // Takkoffer: avtagende (kvadratrot) — de første stykkene betyr mest.
   const offerings = offeringPrp(state.buildings.filter((b) => b.complete && b.type === 'sanctuary').length);
-  return Math.floor(Math.sqrt(state.totals.wood + state.totals.stone) / 4) + homes + Math.floor(state.totals.pp / 10)
-    + Math.floor(state.totals.knowledge / 40) + (state.settlements.length - 1) + outposts * 2 + milestones + offerings;
+  // Gjentatt passiv produksjon skal ha avtagende verdi. Utvikling, ikke venting, er den viktigste arven.
+  const material = Math.floor(Math.sqrt(state.totals.wood + state.totals.stone) / 11);
+  const prayer = Math.floor(Math.sqrt(state.totals.pp) / 4);
+  const knowledge = Math.floor(Math.sqrt(state.totals.knowledge) / 3);
+  return material + homes * 2 + prayer + knowledge + (state.settlements.length - 1) * 2 + outposts * 3 + milestones * 2 + offerings;
 }
 
 // Kort minne om syklusen (vises som minnestein ved tjernet i senere sykluser).

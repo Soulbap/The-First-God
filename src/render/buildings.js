@@ -470,7 +470,7 @@ export function buildingSprite(b, variant = 0) {
   if (entry && entry.level === level && entry.variant === variant) return entry.sprite;
   const p = level / STEPS;
   const seed = b.id * 101 + 7;
-  const sprite = b.type === 'shelter' ? paintShelter(seed, p)
+  const sprite = b.type === 'shelter' ? (b.heritage ? paintCottage(seed + 701, p) : paintShelter(seed, p))
     : b.type === 'hut' ? (variant ? paintCottage(seed, p) : paintHut(seed, p))
       : b.type === 'well' ? paintWell(seed, p)
       : b.type === 'warehouse' ? paintWarehouse(seed, p)

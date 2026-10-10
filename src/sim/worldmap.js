@@ -41,7 +41,7 @@ export function createGlobe(seed) {
     });
   }
   return {
-    regions, expeditionsEnabled: false, outpostsEnabled: false, connected: false,
+    regions, expeditionsEnabled: false, outpostsEnabled: false, connected: false, cartography: false, activeRegionId: 'home',
     mission: null, nextMissionAt: Infinity, caravans: [],
     stats: { discovered: 0, outposts: 0, established: 0, caravanDeliveries: 0, expeditions: 0 },
   };
@@ -50,6 +50,10 @@ export function createGlobe(seed) {
 export const regionById = (state, id) => state.globe.regions.find((r) => r.id === id);
 export const discoveredRegions = (state) => state.globe.regions.filter((r) => !r.home && r.state !== regionState.UKJENT);
 export const outpostRegions = (state) => state.globe.regions.filter((r) => r.state === regionState.UTPOST || r.state === regionState.ETABLERT);
+// Et besøkbart land er menneskelig oppdaget. Den detaljerte lokale projeksjonen er deterministisk og avledes
+// fra regionens autoritative tilstand; den skriver aldri økonomi eller befolkning ved kameraskifte.
+export function visitableRegion(state, id) { const r = regionById(state, id); return !!r && (r.home || r.state !== regionState.UKJENT); }
+export function visitRegion(state, id) { if (!visitableRegion(state, id)) return false; state.globe.activeRegionId = id; return true; }
 const neighbours = (state, r) => state.globe.regions.filter((q) => q !== r && Math.abs(q.col - r.col) <= 1 && Math.abs(q.row - r.row) <= 1);
 
 // Områder som ligger inntil kjent land, og dermed kan nås av en ekspedisjon.

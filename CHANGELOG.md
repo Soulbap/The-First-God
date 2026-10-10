@@ -32,6 +32,16 @@ Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på ve
 ## [Unreleased]
 
 ### Added
+- **OPUS-03 · verden verd å oppdage**: Tidlig stein er mer pålitelig, bytomter rydder trær og bruker bygg-avhengig klarering, og det første lyet blir et minnested når hovedstaden når bystadiet.
+- **OPUS-03 · kart før planet**: Et verdenskart over kjente land åpnes ved sammenhengende rike; karttegning og Luftmåling er en senere, eksplisitt vei til planetkameraet.
+
+### Changed
+- **OPUS-03 · arv**: PrP bruker nå avtagende uttelling for materialer, bønn og kunnskap; ekko er dyrere slik at én første syklus gir valg, ikke hele treet.
+
+### Tests
+- **OPUS-03**: La til regressjoner for tidlig stein, urban skog, funksjonell klarering, PrP-tak, kart/planet-gating og besøkstilstand. `npm test`: 128/128 bestått.
+
+### Added
 - **GAMEPLAY-06 · sivilisasjonens morgen**: Mat er en ny, synlig ressurs fra autonome åkre. Den brukes bare når en ny innbygger kan komme til et ledig hjem; tom beholdning stopper dermed vekst uten dødsfall eller økonomisk kollaps.
 - **GAMEPLAY-06 · utviklede bosettinger**: Bosettingene leses nå som Leir, Grend, Landsby, Voksende landsby eller Tidlig by ut fra befolkning, hjem, infrastruktur og regionale forbindelser. Roller oppstår uten spillerordre fra dyrket mark, verksted eller lokale skog-/steinforekomster.
 - **GAMEPLAY-06 · infrastruktur og region**: Åker og verksted bruker den eksisterende autonome byggeflyten og gyldig tomtesøk. Regional logistikk bygger videre med fysiske leveranser, først til den unge bosettingens åker og deretter verksted.
