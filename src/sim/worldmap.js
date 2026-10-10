@@ -32,12 +32,16 @@ export function createGlobe(seed) {
     const biome = home ? 'skog' : BIOME_ORDER[Math.floor(rand(rng) * BIOME_ORDER.length)];
     const idx = (used[biome] = (used[biome] ?? -1) + 1);
     const inventory = Object.fromEntries(BIOMES[biome].goods.map(([res, n]) => [res, Math.round(n * (home ? 8 : 16) * (0.8 + rand(rng) * 0.4))]));
+    // Vannadgang er fysisk, seedet geografi. Den endres aldri når området kartlegges.
+    const coast = biome === 'kyst' || (!home && rand(rng) < 0.16);
+    const river = biome === 'dal' || (home ? rand(rng) < 0.72 : rand(rng) < 0.28);
     regions.push({
       id: `r${col}${row}`, col, row, biome, home,
       name: home ? 'Hjemlandet' : NAME_STEM[biome][idx % NAME_STEM[biome].length] + (idx >= NAME_STEM[biome].length ? ' II' : ''),
       richness: home ? 1 : 0.8 + rand(rng) * 0.6,
       steps: Math.max(Math.abs(col - H.col), Math.abs(row - H.row)),
       state: home ? regionState.HJEM : regionState.UKJENT,
+      knowledge: home ? 'charted' : 'unknown', water: { coast, river, openSea: coast },
       pop: 0, discoveredAt: null, outpostAt: null, nextGrowAt: Infinity, nextCaravanAt: Infinity, caravans: 0, delivered: 0,
       inventory,
     });
@@ -45,8 +49,8 @@ export function createGlobe(seed) {
   const home = regions.find((r) => r.home);
   return {
     regions, expeditionsEnabled: false, outpostsEnabled: false, connected: false, cartography: false, activeRegionId: home.id,
-    mission: null, nextMissionAt: Infinity, caravans: [],
-    stats: { discovered: 0, outposts: 0, established: 0, caravanDeliveries: 0, expeditions: 0 },
+    mission: null, nextMissionAt: Infinity, caravans: [], vessels: [],
+    stats: { discovered: 0, surveyed: 0, charted: 0, outposts: 0, established: 0, caravanDeliveries: 0, maritimeDeliveries: 0, expeditions: 0 },
   };
 }
 
@@ -63,6 +67,17 @@ const neighbours = (state, r) => state.globe.regions.filter((q) => q !== r && Ma
 export function reachableUnknown(state) {
   return state.globe.regions.filter((r) => r.state === regionState.UKJENT && neighbours(state, r).some((q) => q.home || q.state !== regionState.UKJENT))
     .sort((a, b) => a.steps - b.steps || a.row - b.row || a.col - b.col);
+}
+
+// Landruter er alltid mulige mellom naboregioner; vannruter krever vannadgang i begge ender
+// og et faktisk bygget fartøy. Denne lille modellen erstatter ikke den seedede geografien.
+export function routeMode(state, from, to) {
+  const a = typeof from === 'string' ? regionById(state, from) : from;
+  const b = typeof to === 'string' ? regionById(state, to) : to;
+  if (!a || !b) return 'land';
+  const water = (a.water?.coast || a.water?.river) && (b.water?.coast || b.water?.river);
+  if (water && state.globe.vessels?.length) return (a.water.coast && b.water.coast) ? 'sea' : 'river';
+  return 'land';
 }
 
 // Hvor på kartkanten reisende forlater/kommer inn til hjemmeregionen for en gitt region.
@@ -136,6 +151,7 @@ function completeMission(state) {
   const members = m.members.map((id) => state.humans.find((q) => q.id === id)).filter(Boolean);
   if (m.kind === 'expedition') {
     region.state = regionState.OPPDAGET; region.discoveredAt = state.time;
+    region.knowledge = 'discovered';
     G.stats.discovered++; G.stats.expeditions++;
     // Hver oppdagelse gir kunnskap, og de nærmeste naboene kommer i sikte.
     addKnowledge(state, 3 + region.steps * 2, settlementById(state, 'first'));
@@ -175,14 +191,24 @@ function stepOutposts(state) {
       const interval = W.caravanSeconds * (r.state === regionState.ETABLERT ? 0.75 : 1);
       r.nextCaravanAt = state.time + interval;
       if (G.caravans.length >= W.maxCaravans) continue;
-      const scale = (r.pop / 3) * r.richness * (G.connected ? 1.5 : 1);
+      const mode = routeMode(state, r, G.regions.find((q) => q.home));
+      const vessel = mode === 'land' ? null : G.vessels.find((v) => !v.route);
+      // En båt kan ikke brukes av to vareruter samtidig; ingen teleportering via dekorative skip.
+      if (mode !== 'land' && !vessel) continue;
+      const scale = (r.pop / 3) * r.richness * (G.connected ? 1.5 : 1) * (mode === 'sea' ? 1.45 : mode === 'river' ? 1.2 : 1);
       const wantsMetal = state.materials?.enabled;
       const sources = BIOMES[r.biome].goods.filter(([res]) => !wantsMetal || ['copperOre', 'tinOre', 'ironOre', 'charcoal'].includes(res) || state.resources[res] < 8);
-      const goods = sources.map(([res, n]) => ({ res, amount: Math.min(r.inventory?.[res] || 0, Math.max(1, Math.round(n * scale))) })).filter((g) => g.amount > 0);
+      let remaining = vessel?.capacity ?? Infinity;
+      const goods = sources.map(([res, n]) => {
+        const amount = Math.min(remaining, r.inventory?.[res] || 0, Math.max(1, Math.round(n * scale)));
+        remaining -= amount;
+        return { res, amount };
+      }).filter((g) => g.amount > 0);
       if (!goods.length) continue;
       for (const g of goods) r.inventory[g.res] -= g.amount;
       const e = edgePoint(state, r);
-      G.caravans.push({ id: state.nextId++, regionId: r.id, x: e.x, y: e.y, goods, dir: 1, walk: 0, look: { tunic: 2 + (r.col % 3), skin: r.row % 4, hair: (r.col + r.row) % 4, height: 1, pace: 1 } });
+      if (vessel) { vessel.route = r.id; vessel.cargo = goods; vessel.progress = 0; }
+      G.caravans.push({ id: state.nextId++, regionId: r.id, x: e.x, y: e.y, goods, mode, vesselId: vessel?.id || null, dir: 1, walk: 0, look: { tunic: 2 + (r.col % 3), skin: r.row % 4, hair: (r.col + r.row) % 4, height: 1, pace: 1 } });
       r.caravans++;
     }
   }
@@ -191,7 +217,7 @@ function stepOutposts(state) {
 function stepCaravans(state, dt) {
   const G = state.globe, C = state.stockpile;
   for (const c of G.caravans) {
-    const dx = C.x - c.x, dy = C.y + 14 - c.y, d = Math.hypot(dx, dy), step = B.globe.caravanSpeed * (state.modifiers.walkSpeed || 1) * dt;
+    const dx = C.x - c.x, dy = C.y + 14 - c.y, d = Math.hypot(dx, dy), step = B.globe.caravanSpeed * (state.modifiers.walkSpeed || 1) * (c.mode === 'sea' ? 1.65 : c.mode === 'river' ? 1.28 : 1) * dt;
     if (d <= step) { c.arrived = true; continue; }
     c.x += dx / d * step; c.y += dy / d * step; c.walk += step; c.dir = dx > 0 ? 1 : -1;
     addWear(state, c.x, c.y, B.wear.perSecondWalking * B.wear.transportMultiplier * dt);
@@ -203,6 +229,7 @@ function stepCaravans(state, dt) {
       state.resources[g.res] += g.amount; state.totals[g.res] += g.amount;
     }
     r.caravans--; r.delivered++; G.stats.caravanDeliveries++;
+    if (c.mode !== 'land') { G.stats.maritimeDeliveries++; const v = G.vessels.find((q) => q.id === c.vesselId); if (v) { v.route = null; v.cargo = null; v.x = state.stockpile.x - 50; v.y = state.stockpile.y + 42; } }
     recordTrip(state, r.id, 'first', c.goods[0].res, c.goods[0].amount);
     state.events.push({ type: 'caravanArrived', regionId: r.id, x: c.x, y: c.y });
     storyWorld(state, 'caravan', r);

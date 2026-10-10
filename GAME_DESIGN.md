@@ -277,6 +277,10 @@ En funksjon er ikke visuelt klar bare fordi den finnes i data/UI. Følgende port
 
 **Bekreftet:** Metall er en kontinuerlig kapasitet, ikke en alder. Malmforekomster er seedede og begrensede; menneskene oppdager dem, etablerer en enkel utvinning og bygger selv kullmile og smelteplass når kunnskapen og lageret tillater det. Kobber, tinn, trekkull og arbeid gir bronse; jern følger en egen kunnskapsgren med jernmalm og reduksjonsbrensel. Regionenes varelagre er autoritative, og karavaner flytter reelle varer med tid i transit.
 
+## OPUS-05 · navigasjon og oppdagelse — implementert (minste vertikale skive)
+
+**Bekreftet:** Regioners vannadgang er seedet, fysisk geografi og endres ikke av kartlegging. Geografisk kunnskap er separat fra oppdagelse og besøksadgang: `ukjent → oppdaget → oppmålt → kartlagt`. Små båter blir først til når mennesker har valgt navigasjon, bygd en landingsplass ved den lokale vannkanten og brukt virkelige varer fra lageret. Vanntransport bruker samme reserverte last og leveringsøyeblikk som landtransport. Planetkameraet har ingen ny navigasjonsgate.
+
 ## 11. Prinsipp for videre utvikling
 
 Hver ny endring må kunne besvare: «Hva kan spilleren se i verden som følge av dette?» Hvis svaret bare er et større tall, må endringen få en synlig følge, kombineres med en annen effekt eller avvises. Den minste helhetlige iterasjonen er alltid foretrukket.

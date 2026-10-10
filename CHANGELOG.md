@@ -31,6 +31,15 @@ Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på ve
 ```md
 ## [Unreleased]
 
+### Added
+- **OPUS-05 · navigasjon og oppdagelse**: Seedet vannadgang, kartkunnskap fra oppdaget til kartlagt, autonome landingsplasser/båter og sjølast som bruker OPUS-04s autoritative vareflyt.
+
+### Changed
+- Save-formatet er v5 og fyller inn OPUS-05-felter fra v2–v4. Verdenskartet toner usurveyert land ned og viser maritime ruter separat.
+
+### Tests
+- La til målrettede tester for deterministisk navigerbarhet, båtkostnad, kartkunnskap, sjølast, ressursbevaring og lagre/lese under seilas.
+
 ### Docs
 - La til den kanoniske dokumentasjonspakken for kontinuerlig sivilisasjonsutvikling fra første ly til første vellykkede orbitale ferd: masterdesign, teknologiavhengigheter, ressurs-/industrikjeder, visuell verdensguide og avhengighetsbasert veikart. Avklarer at teknologier gir evner og synlige konsekvenser uten harde aldersgater; kart, besøk og planetkamera er ulike evner; PP og PrP er ulike ressurser; og orbital ferd er ikke gravitasjonsflukt. Ingen spillkode er endret.
 

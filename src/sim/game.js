@@ -20,6 +20,7 @@ import { applyLegacy } from './legacy.js';
 import { storyMilestone } from './story.js';
 import { stepUrban } from './urban.js';
 import { stepMaterials } from './materials.js';
+import { stepNavigation } from './navigation.js';
 
 export const DT = B.dt;
 
@@ -45,6 +46,7 @@ export function step(state, dt = DT) {
   stepCivilization(state, dt);
   stepProduction(state, dt);
   stepMaterials(state, dt);
+  stepNavigation(state, dt);
   stepRealm(state, dt);
   stepUrban(state, dt);
   stepWorld(state, dt);

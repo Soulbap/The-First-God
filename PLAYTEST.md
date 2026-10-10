@@ -1,5 +1,13 @@
 # Spilltest — Genesis-01
 
+## OPUS-05 · navigasjon og oppdagelse
+
+- [ ] Spill frem til «Hinsides de kjente landene», og bekreft at utforskere åpner regioner uten at spilleren velger målet.
+- [ ] Etter «Kystens veivisere»: se at landingsplassen bygges ved vannet, at tre/planker trekkes, og at en båt først sjøsettes etter fullført kai.
+- [ ] I verdenskartet: sammenlign et oppdaget, oppmålt og kartlagt land; alle tre skal være besøkbare, men ha ulik lesbarhet.
+- [ ] Etabler en kystregion og kontroller at sjølast vises som blå rute/markør, først endrer hjemmebeholdningen ved ankomst og ikke dupliseres etter lagre/lese.
+- [ ] Bekreft at planetknappen fortsatt er låst før Luftmåling og at Ragnarok starter med ingen fartøy, havner eller kartkunnskap.
+
 ## OPUS-04 · Materialer
 
 - [ ] Når **Malmens tegn** er valgt: se etter en farget malmåre, gruvearbeid, kullmile og en røykende smelteplass.

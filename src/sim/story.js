@@ -26,8 +26,10 @@ const BUILT = {
   hall: (who, where) => `Kunnskapshallen sto ferdig ${where}.`,
   well: (who, where) => `${who || 'Folket'} gravde den første brønnen ${where}.`,
   warehouse: (who, where) => `Et varehus ble reist ${where}.`,
+  dock: (who, where) => `${who || 'Folket'} bygde en liten landingsplass ${where}.`,
+  boatyard: (who, where) => `Båtbyggerne åpnet et verksted ${where}.`,
 };
-const KIND = { shelter: 'home', hut: 'home', townhouse: 'home', field: 'land', sawmill: 'work', mason: 'work', workshop: 'work', market: 'civic', hall: 'civic', well: 'civic', warehouse: 'work', fire: 'fire', hearth: 'fire', storage: 'work' };
+const KIND = { shelter: 'home', hut: 'home', townhouse: 'home', field: 'land', sawmill: 'work', mason: 'work', workshop: 'work', market: 'civic', hall: 'civic', well: 'civic', warehouse: 'work', dock: 'route', boatyard: 'work', fire: 'fire', hearth: 'fire', storage: 'work' };
 
 export function storyBuilt(state, b) {
   const at = { x: b.x, y: b.y };

@@ -51,14 +51,15 @@ function bakeBackground(state, layout, R, dpr) {
       ctx.drawImage(R.wearCanvas, c.x, c.y, c.w, c.h);
     } else if (known) {
       const col = BIOMES[r.biome].color, rnd = mulberry(seed);
-      ctx.fillStyle = rgba(col, 1); ctx.fillRect(c.x, c.y, c.w, c.h);
+      const clarity = r.knowledge === 'charted' ? 1 : r.knowledge === 'surveyed' ? 0.72 : 0.45;
+      ctx.fillStyle = rgba(col, clarity); ctx.fillRect(c.x, c.y, c.w, c.h);
       for (let i = 0; i < 160; i++) dab(ctx, c.x + rnd() * c.w, c.y + rnd() * c.h, 3 + rnd() * 12, 1.5 + rnd() * 5, rnd() * 3, rgba(jitter(col, rnd, 0.35), 0.25));
       // Enkle motiver: åser/trær/vann avhengig av landskap.
       for (let i = 0; i < 26; i++) {
         const x = c.x + 0.08 * c.w + rnd() * c.w * 0.84, y = c.y + 0.12 * c.h + rnd() * c.h * 0.76;
         if (r.biome === 'fjell') { ctx.fillStyle = 'rgba(40,38,34,0.45)'; ctx.beginPath(); ctx.moveTo(x - 7, y + 4); ctx.lineTo(x, y - 8); ctx.lineTo(x + 8, y + 4); ctx.fill(); ctx.fillStyle = 'rgba(224,222,212,0.5)'; ctx.beginPath(); ctx.moveTo(x - 2, y - 4); ctx.lineTo(x, y - 8); ctx.lineTo(x + 2.4, y - 4); ctx.fill(); }
         else if (r.biome === 'skog' || r.biome === 'dal') { ctx.fillStyle = 'rgba(28,48,30,0.55)'; ctx.beginPath(); ctx.moveTo(x - 3.2, y + 3); ctx.lineTo(x, y - 7); ctx.lineTo(x + 3.2, y + 3); ctx.fill(); }
-        else if (r.biome === 'kyst') dab(ctx, x, y, 8 + rnd() * 8, 1.4, 0, 'rgba(186,206,206,0.28)');
+        else if (r.biome === 'kyst') dab(ctx, x, y, 8 + rnd() * 8, 1.4, 0, `rgba(186,206,206,${0.28 * clarity})`);
         else dab(ctx, x, y, 7 + rnd() * 9, 1.4, 0.1, 'rgba(210,196,120,0.3)');
       }
     } else {
@@ -108,7 +109,8 @@ export function drawOverview(ctx, R, state, { sw, sh, dpr, time, hoverId }) {
     if (r.home) continue;
     const c = layout.cells.get(r.id), cx = c.x + c.w / 2, cy = c.y + c.h / 2;
     if (r.state === 'utpost' || r.state === 'etablert') {
-      ctx.strokeStyle = 'rgba(236,208,140,0.75)'; ctx.lineWidth = r.state === 'etablert' ? 2.4 : 1.6; ctx.setLineDash(r.state === 'etablert' ? [] : [8, 5]);
+      const sea = r.water?.coast && G.regions.find((q) => q.home)?.water?.coast && G.vessels?.length;
+      ctx.strokeStyle = sea ? 'rgba(122,190,204,0.88)' : 'rgba(236,208,140,0.75)'; ctx.lineWidth = r.state === 'etablert' ? 2.4 : 1.6; ctx.setLineDash(r.state === 'etablert' ? [] : [8, 5]);
       ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cap.x, cap.y); ctx.stroke(); ctx.setLineDash([]);
     }
   }
@@ -144,7 +146,7 @@ export function drawOverview(ctx, R, state, { sw, sh, dpr, time, hoverId }) {
   // Karavaner som går inn til hovedstaden (de er faktiske figurer i hjemmeregionen).
   for (const c of G.caravans) {
     const p = mapPt(c.x, c.y);
-    ctx.fillStyle = '#d4b477'; ctx.beginPath(); ctx.arc(p.x, p.y, 2.6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = c.mode === 'land' ? '#d4b477' : '#82b6bd'; ctx.beginPath(); ctx.arc(p.x, p.y, 2.6, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = 'rgba(20,14,8,0.8)'; ctx.lineWidth = 0.8; ctx.stroke();
   }
 

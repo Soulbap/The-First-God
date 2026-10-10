@@ -324,6 +324,22 @@ export const UPGRADES = [
     actions: [{ type: 'enableCartography' }],
   },
   {
+    id: 'navigation', name: 'Kystens veivisere', category: 'rike', icon: 'compass',
+    discover: [{ regions: 2 }], cost: { wood: 70, planks: 18, food: 20, knowledge: 70 },
+    requires: [{ regions: 2 }, { upgrade: 'great_expedition' }], requireText: 'Krever to oppdagede land og Den store ekspedisjonen',
+    effect: 'Folk bygger landingsplass ved farbart vann, sjøsetter små båter og gjør reiser over vann sikrere.',
+    world: 'Reisende følger elver og kyst; tømmer blir til skrog ved vannkanten.',
+    actions: [{ type: 'enableNavigation' }],
+  },
+  {
+    id: 'advanced_navigation', name: 'Seil og stjernekart', category: 'rike', icon: 'compass',
+    discover: [{ upgrade: 'navigation' }, { outposts: 1 }], cost: { wood: 100, planks: 30, cutstone: 12, food: 24, knowledge: 130 },
+    requires: [{ upgrade: 'navigation' }, { upgrade: 'cartography' }, { outposts: 1 }], requireText: 'Krever navigasjon, karttegning og en utpost',
+    effect: 'Større seilfartøy gjør kysthandel mer pålitelig og kartene mer presise.',
+    world: 'Seil viser seg mellom havnene, mens karttegnerne samler tryggere ruter.',
+    actions: [{ type: 'enableAdvancedNavigation' }],
+  },
+  {
     id: 'aerial_survey', name: 'Luftmåling', category: 'rike', icon: 'globe',
     discover: [{ milestone: 'first_world_civilization' }], cost: { planks: 20, cutstone: 16, food: 20, knowledge: 120 },
     requires: [{ milestone: 'first_world_civilization' }, { upgrade: 'cartography' }], requireText: 'Krever Verdens første sivilisasjon og karttegning',

@@ -51,6 +51,8 @@ export const BALANCE = {
     mine: { radius: 28, work: 34, minRing: 150 },
     charcoal_kiln: { radius: 24, work: 28, minRing: 145 },
     smelter: { radius: 32, work: 42, minRing: 145 },
+    dock: { radius: 30, work: 38, minRing: 135 },
+    boatyard: { radius: 34, work: 44, minRing: 145 },
     // GAMEPLAY-07/08: byinfrastruktur og sivilt bygg.
     sawmill: { radius: 38, work: 40, minRing: 120 },
     mason: { radius: 34, work: 40, minRing: 120 },
@@ -92,6 +94,7 @@ export const BALANCE = {
   // Verdens-regioner: avstand i «ruter». Reisetid er abstrakt (ingen individuell simulering utenfor kartet).
   globe: { cols: 5, rows: 3, expeditionSecondsPerStep: 55, outpostSecondsPerStep: 70, caravanSeconds: 46, caravanSpeed: 46, maxCaravans: 4,
     expedition: { wood: 30, food: 8 }, outpost: { wood: 60, stone: 30, planks: 8, food: 8 }, outpostParty: 3, outpostGrowSeconds: 55, outpostCap: 8, establishedPop: 6 },
+  navigation: { dock: { wood: 34, stone: 12, planks: 8 }, boat: { wood: 18, planks: 6 }, sail: { wood: 28, planks: 12 }, surveySeconds: 72, maxVessels: 3 },
   // OPUS-01 · Høstfest: overskuddsmat blir en samling ved ildstedet med dobbel bønn. Automatisk (idle), aldri tvunget.
   festival: { minFood: 30, base: 10, perPerson: 0.8, interval: 110, duration: 28, prayerMultiplier: 2, joinChance: 0.7 },
   settlement: { clearRadius: 150, localHomeCapacity: 2 },

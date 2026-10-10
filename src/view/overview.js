@@ -45,4 +45,4 @@ export function frontierIds(state) {
 
 // Signatur for den statiske bakgrunnen: endres bare når kartet faktisk har endret seg.
 export const overviewSignature = (state, layout) =>
-  `${Math.round(layout.sw)}x${Math.round(layout.sh)}|${state.globe.regions.map((r) => r.state).join('')}|${state.settlements.length}`;
+  `${Math.round(layout.sw)}x${Math.round(layout.sh)}|${state.globe.regions.map((r) => r.state + r.knowledge).join('')}|${state.settlements.length}`;

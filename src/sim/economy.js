@@ -126,6 +126,10 @@ function applyAction(state, def, a) {
     state.globe.connected = true;
   } else if (a.type === 'enableCartography') {
     state.globe.cartography = true;
+  } else if (a.type === 'enableNavigation') {
+    state.navigation.enabled = true; state.navigation.nextSurveyAt = state.time + 8;
+  } else if (a.type === 'enableAdvancedNavigation') {
+    state.navigation.enabled = true; state.navigation.advanced = true; state.navigation.nextSurveyAt = state.time + 4;
   } else if (a.type === 'enablePlanetCamera') {
     state.unlocks.worldView = true;
   } else if (a.type === 'enableMaterials') {

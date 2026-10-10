@@ -81,6 +81,8 @@ export function createWorld(seed = 20261009) {
     globe: createGlobe(seed),
     civilization: { foodUnlocked: false, exchangeUnlocked: false, nextFoodAt: Infinity, nextPopulationAt: Infinity, foodHarvests: 0, exchangeDeliveries: 0, festivalUntil: -Infinity, nextFestivalAt: 0, festivals: 0 },
     materials: { enabled: false, ironworking: false, toolTier: 'stein', gatherBonus: 1, trades: [], delivered: 0 },
+    // OPUS-05: transportkapasitet er sykluslokal. Fartøy og kai må bygges av ekte lager.
+    navigation: { enabled: false, advanced: false, docks: 0, boats: 0, vesselsBuilt: 0, nextSurveyAt: Infinity },
     stockpile: { x: C.x + 4, y: C.y + 48 },
     resources: { wood: 0, stone: 0, food: 0, planks: 0, cutstone: 0, copperOre: 0, tinOre: 0, ironOre: 0, charcoal: 0, copper: 0, bronze: 0, iron: 0, knowledge: 0, pp: 0 },
     totals: { wood: 0, stone: 0, food: 0, planks: 0, cutstone: 0, copperOre: 0, tinOre: 0, ironOre: 0, charcoal: 0, copper: 0, bronze: 0, iron: 0, knowledge: 0, pp: 0, manualClicks: 0 },
