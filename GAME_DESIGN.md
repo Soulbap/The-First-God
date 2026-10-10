@@ -277,6 +277,18 @@ En funksjon er ikke visuelt klar bare fordi den finnes i data/UI. Følgende port
 
 Hver ny endring må kunne besvare: «Hva kan spilleren se i verden som følge av dette?» Hvis svaret bare er et større tall, må endringen få en synlig følge, kombineres med en annen effekt eller avvises. Den minste helhetlige iterasjonen er alltid foretrukket.
 
+## Continuous Civilization Progression — First Shelter to Spaceflight
+
+**Bekreftet:** Sivilisasjonen utvikles kontinuerlig gjennom materialer, kunnskap, kapasitet, geografi og autonome menneskelige handlinger — aldri gjennom harde aldersknapper. Historiske epoker kan beskrive utviklingen, men er ikke globale spillgater. En teknologi er en ny evne; den må få fungerende infrastruktur og en lesbar følge i verden før den teller som utviklet.
+
+Reisen går fra ly, ild og mattrygghet via organisert håndverk, metall, kart/navigasjon, mekanisk arbeid, damp, elektrisitet, motorer og luftfart til avansert kjemi, presisjon, elektronikk og raketter. Grenene møtes, men følger ikke én lineær sti. Elektrisitet trenger generator, distribusjon og forbruk; første orbital ferd trenger avansert metall, kjemi, presisjon, elektronikk, energi og organisert industrikapasitet.
+
+Menneskene utforsker, bygger, oppgraderer, transporterer og vedlikeholder selv; spilleren velger retning i meny, aldri arbeidere eller ekspedisjonsmål. Bosettinger utvikles ujevnt etter ressurser, ruter og kunnskap. Utforskning, kartlegging, besøksadgang og kameraskala er separate: menneskene kan oppdage og spilleren kan besøke en region før den er presist kartlagt eller hele planeten kan sees. Planetkameraet er en sen luftmåling-/avansert-observasjons-evne; ukjente områder skal fortsatt være dempet.
+
+Ragnarok er fortsatt frivillig. PP er syklusintern bønn; PrP er metaressurs fra avsluttet Ragnarok. Permanente ekko gjør nye sykluser mer effektive uten å hoppe over nødvendige utviklingsledd. En ubrutt, lang syklus skal teoretisk kunne nå romferd. Sluttpunktet er en vellykket autonom, ubemannet orbital ferd med signal tilbake — ikke gravitasjonsflukt. Solsystemutvikling er en separat framtidsoppgave.
+
+Kanoniske detaljer og status finnes i [masterdesignet](docs/design/CIVILIZATION_PROGRESSION_MASTER.md), [teknologiavhengighetene](docs/design/TECHNOLOGY_DEPENDENCIES.md), [ressurs- og industrikjedene](docs/design/RESOURCE_AND_INDUSTRY_CHAINS.md), [verdensguiden](docs/design/WORLD_EVOLUTION_GUIDE.md) og [veikartet](docs/design/CIVILIZATION_IMPLEMENTATION_ROADMAP.md). Den dokumenterte kontinuerlige modellen erstatter eldre, uforpliktende antydninger om at planetkamera automatisk følger ett sivilisasjonstrinn.
+
 ## 12. Genesis-01 — implementasjonsstatus (2026-10-09)
 
 Prototypen finnes og er spillbar. Denne seksjonen beskriver hva som er bygget og hvilke antakelser som ble gjort. Bekreftede prinsipper over er ikke endret.

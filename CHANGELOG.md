@@ -31,6 +31,9 @@ Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på ve
 ```md
 ## [Unreleased]
 
+### Docs
+- La til den kanoniske dokumentasjonspakken for kontinuerlig sivilisasjonsutvikling fra første ly til første vellykkede orbitale ferd: masterdesign, teknologiavhengigheter, ressurs-/industrikjeder, visuell verdensguide og avhengighetsbasert veikart. Avklarer at teknologier gir evner og synlige konsekvenser uten harde aldersgater; kart, besøk og planetkamera er ulike evner; PP og PrP er ulike ressurser; og orbital ferd er ikke gravitasjonsflukt. Ingen spillkode er endret.
+
 ### Added
 - **OPUS-03 · verden verd å oppdage**: Tidlig stein er mer pålitelig, bytomter rydder trær og bruker bygg-avhengig klarering, og det første lyet blir et minnested når hovedstaden når bystadiet.
 - **OPUS-03 · kart før planet**: Et verdenskart over kjente land åpnes ved sammenhengende rike; karttegning og Luftmåling er en senere, eksplisitt vei til planetkameraet.

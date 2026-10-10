@@ -85,3 +85,5 @@ npm test
 - [AGENTS.md](AGENTS.md) — obligatoriske arbeidsregler for mennesker og AI-agenter.
 - [CHANGELOG.md](CHANGELOG.md) — endringslogg.
 - [PLAYTEST.md](PLAYTEST.md) — sjekkliste for spilltesting av Genesis-01.
+- [Langsiktig sivilisasjonsdesign](docs/design/CIVILIZATION_PROGRESSION_MASTER.md) — kanonisk utvikling fra første ly til første orbitale ferd.
+- [Teknologiavhengigheter](docs/design/TECHNOLOGY_DEPENDENCIES.md), [ressurs- og industrikjeder](docs/design/RESOURCE_AND_INDUSTRY_CHAINS.md), [verdensguide](docs/design/WORLD_EVOLUTION_GUIDE.md) og [veikart](docs/design/CIVILIZATION_IMPLEMENTATION_ROADMAP.md).

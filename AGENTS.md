@@ -159,6 +159,10 @@ Før større systemer bygges, prioriter den vertikale prototypen definert i `GAM
 
 Alt som ikke styrker disse punktene, skal vurderes som senere arbeid.
 
+## 9.1 Kanonisk langtidsprogresjon
+
+Før design eller implementasjon etter OPUS-03 skal relevante deler av `docs/design/CIVILIZATION_PROGRESSION_MASTER.md` leses sammen med `TECHNOLOGY_DEPENDENCIES.md`, `RESOURCE_AND_INDUSTRY_CHAINS.md`, `WORLD_EVOLUTION_GUIDE.md` og `CIVILIZATION_IMPLEMENTATION_ROADMAP.md`. De er autoritative for reisen fra første ly til første orbitale ferd. De bekrefter kontinuerlig utvikling, autonomi og planetgate etter avansert observasjon; de er ikke autorisasjon til å starte nytt innhold før gjeldende spilltesting er vurdert.
+
 ## 10. Teknisk arbeidsflyt (Genesis-01-grunnlaget)
 
 - **Kjøre spillet:** `npm start` (eller `start.bat`) → http://localhost:5173. Ingen avhengigheter skal installeres.
