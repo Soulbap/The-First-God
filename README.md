@@ -26,7 +26,16 @@ Spillet har vokst langt forbi den første skiven: landsby, region, tidlig sivili
 - **Høstfest**, **Ragnarok med arv** (ekko og minnesteiner), **lagring** (ingen offline-fremgang) og **lyd** (M for av/på).
 - Se `docs/opus-01/`.
 
-Rask kontroll: `npm test` (106 tester) og `node tools/playthrough.mjs` (spiller hele veien i simuleringen).
+## OPUS-02: en sivilisasjon verdt å se på
+
+- **Byen vokser av seg selv.** Innsikten **Byplan** lar folket bygge brønner, bolighus og varehus; hus får eget preg, hallen får klokketårn, gater legges langs dørene, og bygdene viser det de lever av (tømmerstabler, bruddhull, åkerstriper).
+- **Døgn og natt.** Samme klokke for planeten og nærbildet; varm skumring, lesbar natt med lysende vinduer og lykter.
+- **Navn og kronikk.** Alle innbyggere har norske navn (hold pekeren over dem); **Kronikk** i menyen samler ekte hendelser.
+- **Takkoffer** bruker overskuddet av bønn (PP) til å reise en helligdom i seks stykker.
+- **Planeten** har elver, fjellkjeder og skogbelter; ruter og lys følger det folket faktisk har gjort.
+- Se `docs/opus-02/`. Ingen menneske har spilltestet; lyden er ikke lyttet til.
+
+Rask kontroll: `npm test` (122 tester) og `node tools/playthrough.mjs` (spiller hele veien i simuleringen) og `node tools/playthrough-multi.mjs` (seks frø).
 
 ## Forutsetninger
 

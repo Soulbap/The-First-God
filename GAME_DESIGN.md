@@ -401,3 +401,22 @@ Rapporter: `docs/opus-01/`. Prosjektansvarlig presiserte under arbeidet: **spill
 - Ekkoenes styrke og PrP-formelen er provisoriske.
 - Planetens størrelse i forhold til hjemmeregionen (hjemmet ~4,6°, nabolandene ~10° unna) er et lesbarhetsvalg, ikke realistisk skala.
 - Lyden er et grunnlag, ikke ferdig lyddesign; den er ikke vurdert ved lytting i dette arbeidet.
+
+## 15. OPUS-02 — en sivilisasjon verdt å se på (2026-10-10)
+
+Rapporter: `docs/opus-02/`. Beslutningene under er **implementert** av utvikleren i denne økten, men **ikke bekreftet av prosjektansvarlig** og ikke spilltestet av et menneske.
+
+### Implementert
+
+- **Byplan** er en innsikt (etter «Sivilisasjonens morgen»). Deretter bygger folket selv brønner, bolighus (opptil 8 i hovedstaden), varehus og flere hytter i bygdene når det er overskudd; det finnes en reservegrense for andre innsikter. Ingen byggplassering for spilleren.
+- **Takkoffer** er et avtagende PP-sluk i seks nivåer som reiser en helligdom og gir litt PrP ved Ragnarok (`round(7·√n)`); ingen spillbonus.
+- **Utviklingstrinn leses i verden**: halmhytter blir tømmerstuer når en bosetting blir «By»; gater avledet av dørene (grus → stein); hver bosetting viser det den lever av gjennom rekvisitter fra faktisk produksjon; dyrket mark vokser med innhøstinger; folk rydder tomta i bygdene.
+- **Døgnklokke**: 480 s spilltid per døgn, felles for planeten og nærbildet; natten er dempet, aldri svart. Pause stopper også sola (valg: samme klokke, ingen sanntid).
+- **Navn og kronikk**: norske navn (egen generator, ingen rng), en Kronikk med ekte hendelser (maks 90), små meldinger bare for stille hendelser.
+- **Planeten**: elver (priority-flood), fjellkjeder, skogtetthet fra landskapet, svake ruter, lys etter folketall.
+
+### Åpent
+
+- Døgnlengde, nattens mørke, Byplan-pris og reservegrense, Takkoffer-priser og PrP-skala (`BALANCE.day/urban/offering`) er provisoriske.
+- Skal verkstedene ha faktiske arbeidere (påvirker økonomien)? Skal hjemmeregionen ha en bekk som kobles til planetens elver (krever kryssing)? Ikke bestemt.
+- Lydbildet er ikke vurdert ved lytting.

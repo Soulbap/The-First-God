@@ -167,6 +167,12 @@ function maybeExplore(state, h) {
   return true;
 }
 
+// Rusling i en ellipse med tyngde mot midten (to rng-trekk som før). Et jevnt rektangel ga flate, rettkantede slitasjeplattformer i bakken.
+function wanderPoint(state, rx, ry) {
+  const a = rand(state.rng) * Math.PI * 2, r = Math.sqrt(rand(state.rng));
+  return { x: Math.cos(a) * r * rx, y: Math.sin(a) * r * ry };
+}
+
 function chooseTask(state, h) {
   if (state.expansion.founding && !state.expansion.founded && !state.expansion.founders.length && state.humans.length >= B.human.foundingParty) {
     const founders = state.humans.slice(0, B.human.foundingParty);
@@ -198,7 +204,7 @@ function chooseTask(state, h) {
   // Folk i en ung bosetting bruker annenhver runde på livet rundt ildstedet i stedet for å sanke.
   if (h.settlementId !== 'first' && state.expansion.founded && h.deliveries % 2 === 0) {
     const S = settlementById(state, h.settlementId);
-    if (S) { h.tx = S.x + range(state.rng, -95, 95); h.ty = S.y + range(state.rng, -55, 65); h.state = 'wander'; return; }
+    if (S) { const w = wanderPoint(state, 95, 60); h.tx = S.x + w.x; h.ty = S.y + 5 + w.y; h.state = 'wander'; return; }
   }
   if (maybeExplore(state, h)) return;
   // 2) Sanking.
@@ -216,8 +222,9 @@ function chooseTask(state, h) {
   }
   // 3) Ingen gyldig oppgave: rusle litt i leiren og prøv igjen (ingen vranglås).
   const C = state.settlement.center;
-  h.tx = C.x + range(state.rng, -90, 90);
-  h.ty = C.y + range(state.rng, -40, 60);
+  const w = wanderPoint(state, 90, 52);
+  h.tx = C.x + w.x;
+  h.ty = C.y + 10 + w.y;
   h.state = 'wander';
 }
 

@@ -213,7 +213,9 @@ export function createRenderer(canvas) {
     for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
       const d = Math.hypot((i + 0.5) * cell - x, ((j + 0.5) * cell - y) * 1.5);
       const a = v * (1 - smooth(r0, r1, d));
-      if (a > R.exposure[j * cols + i]) R.exposure[j * cols + i] = a;
+      // Taket (0,62) hindrer flate, rutenett-rette plattformer av bar jord: støyen i tegningen får da fortsatt styre kanten (OPUS-02).
+      const ac = a > 0.62 ? 0.62 : a;
+      if (ac > R.exposure[j * cols + i]) R.exposure[j * cols + i] = ac;
     }
   };
   R.worn = (state, x, y) => {
@@ -306,13 +308,13 @@ export function createRenderer(canvas) {
       const i0 = Math.max(0, Math.floor((x - r) / cell)), i1 = Math.min(cols - 1, Math.ceil((x + r) / cell));
       const j0 = Math.max(0, Math.floor((y - r) / cell)), j1 = Math.min(rows - 1, Math.ceil((y + r) / cell));
       for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
-        const a = v * (1 - smooth(r * 0.55, r, Math.hypot((i + 0.5) * cell - x, (j + 0.5) * cell - y)));
+        const a = v * (1 - smooth(r * 0.2, r, Math.hypot((i + 0.5) * cell - x, (j + 0.5) * cell - y)));
         if (a > arr[j * cols + i]) arr[j * cols + i] = a;
       }
     };
     for (const net of R.streets) for (const e of net.edges) {
       const paved = net.rank >= 6 || (net.rank >= 5 && e.core);
-      for (const q of e.pts) { lay(R.lane, q.x, q.y, 11, 0.95); if (paved) lay(R.pave, q.x, q.y, 9, 0.95); }
+      for (const q of e.pts) { lay(R.lane, q.x, q.y, 9, 0.78); if (paved) lay(R.pave, q.x, q.y, 9, 0.95); }
     }
     // Skriv bare der noe er slitt (nå eller forrige gang).
     let minI = cols, maxI = -1, minJ = rows, maxJ = -1;
@@ -328,7 +330,17 @@ export function createRenderer(canvas) {
     const Wp = cols * WS, px = R.wearImg.data, nz = R.wearNoise, ex = R.exposure, pv = R.pave, ln = R.lane;
     // Ytelse: maks(slitasje, eksponering) per celle beregnes én gang; interpolasjonen er skrevet ut uten funksjonskall.
     const M = R.wearMax || (R.wearMax = new Float32Array(cols * rows));
-    for (let j = box.j0; j <= box.j1; j++) for (let i = box.i0; i <= box.i1; i++) { const k = j * cols + i; M[k] = data[k] > ex[k] ? data[k] : ex[k]; }
+    // Slitasjen jevnes ut over ca. tre celler (to [1,2,1]-pass) før den tegnes: mettet trafikk gir ellers flate, rutenett-rette plattformer (OPUS-02).
+    const soft = R.wearSoft || (R.wearSoft = new Float32Array(cols * rows)), tmp = R.wearTmp || (R.wearTmp = new Float32Array(cols * rows));
+    const jx0 = Math.max(0, box.j0 - 3), jx1 = Math.min(rows - 1, box.j1 + 3), ix0 = Math.max(0, box.i0 - 3), ix1 = Math.min(cols - 1, box.i1 + 3);
+    for (let j = jx0; j <= jx1; j++) for (let i = ix0; i <= ix1; i++) soft[j * cols + i] = data[j * cols + i];
+    for (let pass = 0; pass < 2; pass++) {
+      for (let j = jx0; j <= jx1; j++) for (let i = ix0; i <= ix1; i++) { const k = j * cols + i; tmp[k] = (soft[j * cols + Math.max(ix0, i - 1)] + 2 * soft[k] + soft[j * cols + Math.min(ix1, i + 1)]) * 0.25; }
+      for (let j = jx0; j <= jx1; j++) for (let i = ix0; i <= ix1; i++) { const k = j * cols + i; soft[k] = (tmp[Math.max(jx0, j - 1) * cols + i] + 2 * tmp[k] + tmp[Math.min(jx1, j + 1) * cols + i]) * 0.25; }
+    }
+    // `eff` = den utjevnede slitasjen, men aldri over den faktiske: smale stier (peker ~0,35 etter utjevning) beholder det meste, plattformer får myke, ujevne kanter.
+    const eff = R.wearEff || (R.wearEff = new Float32Array(cols * rows));
+    for (let j = box.j0; j <= box.j1; j++) for (let i = box.i0; i <= box.i1; i++) { const k = j * cols + i; const s2 = soft[k] * 1.9 + 0.12; eff[k] = data[k] < s2 ? data[k] : s2; M[k] = eff[k] > ex[k] ? eff[k] : ex[k]; }
     // Pikselpasset deles opp: selve kartleggingen er rask, men fargeleggingen (~200 000 piksler) fordeles over flere bilder (R.stepWear).
     const rowBody = (py) => {
       const fy = (py + 0.5) / WS - 0.5, jf = Math.floor(fy), v = fy - jf;
@@ -346,13 +358,14 @@ export function createRenderer(canvas) {
         const shade = 0.78 + n * 0.5;
         let r = 112 * shade, g = 94 * shade, b = 68 * shade;
         // Ønskelinjer modnes: det som går mest, blir til en lys grusvei med småstein (historien ligger i bakken).
-        const walk0 = (data[a00] * (1 - u) + data[a10] * u) * (1 - v) + (data[a01] * (1 - u) + data[a11] * u) * v;
+        const walk0 = (eff[a00] * (1 - u) + eff[a10] * u) * (1 - v) + (eff[a01] * (1 - u) + eff[a11] * u) * v;
         const lane = (ln[a00] * (1 - u) + ln[a10] * u) * (1 - v) + (ln[a01] * (1 - u) + ln[a11] * u) * v;
         const walk = walk0 > lane ? walk0 : lane;
         if (walk > 0.5) {
-          const road = smooth(0.62, 0.9, walk + (n - 0.5) * 0.18);
+          // OPUS-02: bredere overgang og mer støy — tett trafikk gir flekkete grus og jord, ikke en flat plate med rette kanter.
+          const road = smooth(0.58, 1.12, walk + (n - 0.5) * 0.55);
           if (road > 0) {
-            const grit = (n > 0.82 ? 1.18 : n < 0.12 ? 0.82 : 1) * (0.9 + n * 0.2);
+            const grit = (n > 0.82 ? 1.18 : n < 0.12 ? 0.8 : 1) * (0.84 + n * 0.32);
             r += (160 * grit - r) * road; g += (146 * grit - g) * road; b += (116 * grit - b) * road;
             if (road > a) a = road;
           }

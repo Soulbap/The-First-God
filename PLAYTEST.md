@@ -96,3 +96,15 @@ Spill fra start til «Et sammenhengende rike» eller lenger (lagringen gjør at 
 
 ## Lyd
 - [ ] Er lyden behagelig og lav nok? Mangler noe?
+
+# Spilltest — OPUS-02 (en sivilisasjon verdt å se på)
+
+Ingen menneske har spilt denne versjonen. Se `docs/opus-02/PLAYTEST_REPORT.md` for bot-resultater (seks frø, 82–87 min, ingen negative beholdninger, ingen fastlåsing) og det som mangler.
+
+**Det en person bør vurdere:**
+- Er Byplan et meningsfullt kjøp, og kommer byen «viktig» nok ut av det?
+- Er natten pen og lesbar (aldri for mørk), og er skumringen for kort/lang (480 s døgn)?
+- Er Kronikken til å leve med: for mange/få poster, riktige tidspunkt for små meldinger?
+- Er Takkoffer verdt PP-en, og påvirker det Ragnarok-valget riktig?
+- Lyden: tjern, verksted, torg, natt — **ikke lyttet til** av noen ennå.
+- Gjør hover-navn og hverdagsatferd (bøtte, kurv, bok) at folk føles som individer?

@@ -8,22 +8,22 @@
 
 | frø | første landsby | første by | en by reiser seg | kunnskapens tidsalder | sammenhengende rike | verdens første sivilisasjon |
 |---|---|---|---|---|---|---|
-| 20261009 (referanse) | 13:15 | 40:10 | 55:33 | 62:42 | 73:18 | **87:13** |
-| 1 | 14:17 | 41:10 | 55:51 | 62:57 | 73:23 | 87:12 |
-| 7 | 12:28 | 40:56 | 57:59 | 64:15 | 71:16 | 86:58 |
-| 34 | 12:46 | 40:45 | 56:10 | 63:29 | 70:20 | 85:41 |
-| 100 | 15:03 | 42:27 | 57:43 | 65:32 | 76:50 | 90:33 |
-| 2026 | 11:40 | 36:33 | 52:32 | 59:01 | 65:23 | 81:02 |
+| 20261009 (referanse) | 13:15 | 40:23 | 57:11 | 63:30 | 69:34 | **84:47** |
+| 1 | 14:17 | 41:22 | 55:45 | 63:48 | 69:36 | 85:12 |
+| 7 | 12:28 | 40:28 | 55:18 | 62:44 | 68:08 | 84:06 |
+| 34 | 12:46 | 39:48 | 53:30 | 61:39 | 71:16 | 86:08 |
+| 100 | 15:03 | 42:14 | 58:34 | 65:12 | 73:00 | 86:39 |
+| 2026 | 11:40 | 37:25 | 51:34 | 59:43 | 67:20 | 82:34 |
 
-- Alle seks frø når sluttmilepælen (81–91 min; OPUS-01 rapporterte 80–97 min). Tiden er *ikke* optimalisert; den økte litt for referansefrøet (83:47 → 87:13) fordi byen nå bruker ressurser på hus, brønner, varehus og helligdom, og befolkningen er større (78 mot 39 på slutten).
-- Etter målet (5 min videre): 78 folk, 59 bygg, 19 byvekstbygg, 5 av 6 helligdomsstykker, 30–33 høstfester, kronikken full (90 poster, øvre grense), lagring/lasting ga samme bygg-antall.
+- Alle seks frø når sluttmilepælen (82,5–86,7 min; OPUS-01 rapporterte 80–97 min). Tiden er *ikke* optimalisert; den økte litt for referansefrøet (83:47 → 84:47) fordi byen nå bruker ressurser på hus, brønner, varehus og helligdom, og befolkningen er større (75–78 mot 39 på slutten).
+- Etter målet (5 min videre): 75–78 folk, 58–59 bygg, 19 byvekstbygg, 4–5 av 6 helligdomsstykker, 29–31 høstfester, kronikken full (90 poster, øvre grense), lagring/lasting ga samme bygg-antall.
 - **Negative beholdninger: 0** (kontrollert hvert sekund). **Lengste periode uten endring** i milepæler/bygg/folk/oppdagelser/innsikter: 3,0–3,8 min — ventetid mellom bygg/leveranser, ingen fastlåsing.
 - Alle fire bosettinger utvikler seg (hovedstad *Storby*, tre bygder *Tidlig by*). Hovedstaden får bolighus 8, brønner 2, varehus 2.
 
 ## 2. Økonomi og PP
 
 - Slutten har fortsatt stort overskudd av trevirke/stein (~3 000 / ~2 000). Byplanens reservegrense (140/100) beskytter innsiktene; overskuddet er et bevisst, ikke løst, funn (neste idé: flere sluk).
-- **Takkoffer** brukes av boten (5 av 6 nivåer). PP på slutten 329–659, altså ikke lenger ubegrenset opphopning (OPUS-01: ~780 uten bruk). Nivå 6 koster 734 PP.
+- **Takkoffer** brukes av boten (4–5 av 6 nivåer). PP på slutten 141–684, altså ikke lenger ubegrenset opphopning (OPUS-01: ~780 uten bruk). Nivå 6 koster 734 PP.
 - PrP-tildeling: helligdom gir `round(7·√n)` (7, 10, 12, 14, 16, 17 for 1–6) — avtagende, ellers ingen spillbonus (testet).
 
 ## 3. Prestige/Ragnarok (testet i kode, ikke spilt av menneske)
