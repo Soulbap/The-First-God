@@ -126,12 +126,14 @@ Når en utgivelse opprettes, flyttes `Unreleased`-punkter til en datert versjons
 - **OPUS-02 · Gatenett, gårdsplasser og dyrket mark** (`render/streets.js`, `yards.js`, `farmland.js`, `civic.js`): gater avledet av dørene, tømmerstuer i byen, bolighus med eget preg, klokketårn på hallen, rekvisitter etter faktisk produksjon, åkerteiger som følger høstesyklusen.
 - **OPUS-02 · Planet**: elver (`src/sim/hydrology.js`), fjellkjeder, skogtetthet fra landskapet, svake buede ruter, veier i overflaten og lys etter folketall.
 - **OPUS-02 · Lydbilde** (`src/audio/scene.js`, `ambience.js`): tjern, skogsus, sirisser/ugle, sag og meisel, torgmumling, byhumring. Ikke lyttet til av et menneske.
-- **OPUS-02 · verktøy**: `tools/snapshots.mjs`, `tools/capture-opus02.mjs`, `tools/sprites.html`, `tools/planetmap.mjs`; dokumenter under `docs/opus-02/`.
+- **OPUS-02 · verktøy**: `tools/bakeplanet.mjs` + `?debug&planet=` (forhåndsbakt planet), `tools/receiver.mjs`, `tools/playthrough-multi.mjs`; `tools/snapshots.mjs`, `tools/capture-opus02.mjs`, `tools/sprites.html`, `tools/planetmap.mjs`; dokumenter under `docs/opus-02/`.
 
 ### Changed
 - Tomtevalget er tettere (9 mellom bygg) og hus legger seg langs rutene mot andre bosettinger; folk rydder tomta i bygdene og skogen gror ikke inn over dem; matbygda får en ekstra åker.
 - Bakkelagets pikselpass fordeles over flere bilder (ingen enkeltstående pause); stikanter er jevnere. Planetteksturens alfa bærer nå skogtetthet (vann ≈ 64, land 160–255).
 - Hovedmenyen får en femte knapp (Kronikk) og løftes over kontrollene på smale vinduer.
+- Rusling i bygdene trekker mål i en ellipse (samme antall rng-trekk) i stedet for et rektangel, og mettet slitasje jevnes ut før tegning: slutt på flate, rettkantede jordplattformer rundt bygdene.
+- Planetnatten er blå og dempet i stedet for svart; hjemmetonen er rund og støyet i stedet for rektangulær; skogmassen rundt hjemmet er lysere.
 
 ### Tests
 - `tests/opus02.test.js`: Byplan, byvekst uten overlapp, Takkoffer, kronikk/navn (determinisme, ingen duplikater, lagring), gatenett, elver, dagklokke, lydbilde, aktivitet, lagring midt i byvekst, Ragnarok-start.
