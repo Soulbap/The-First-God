@@ -28,16 +28,16 @@ const SETUP = `
 `;
 const near = (w) => `const C = T.state.settlements[0]; T.view(C.x - 10, C.y + 20, ${w});`;
 const SCENES = [
-  ['01-first-shelter', `await load('shelter'); day(0.42); const C = T.state.settlement.center; T.view(C.x - 10, C.y - 30, 560); settle();`],
-  ['02-growing-village', `await load('village'); day(0.45); const C = T.state.settlement.center; T.view(C.x - 10, C.y - 10, 760); settle();`],
-  ['03-first-town', `await load('town'); day(0.45); ${near(860)} settle();`],
-  ['04-first-city', `await load('city'); day(0.45); ${near(940)} settle();`],
-  ['05-mature-city', `await load('mature'); day(0.45); ${near(1000)} settle();`],
-  ['06-forestry-settlement', `await load('mature'); day(0.45); const s = bySettlement('Sagbruksbygd'); T.view(s.x, s.y + 30, 820); settle();`],
-  ['07-stone-settlement', `await load('mature'); day(0.45); const s = bySettlement('Steinhoggerbygd'); T.view(s.x, s.y + 30, 820); settle();`],
-  ['08-regional-network', `await load('mature'); day(0.45); T.view(1200, 840, 2250); settle();`],
-  ['09a-transition-near', `await load('world'); day(0.5); const C = T.state.settlement.center; T.view(C.x + 40, C.y - 20, 1400); settle();`],
-  ['09b-transition-area', `await load('world'); day(0.5); const C = T.state.settlement.center; T.view(C.x + 40, C.y - 20, 2300); settle();`],
+  ['01-first-shelter', `await load('shelter'); day(0.42); const C = T.state.settlement.center; T.view(C.x - 10, C.y - 30, 560); settle(); close();`],
+  ['02-growing-village', `await load('village'); day(0.45); const C = T.state.settlement.center; T.view(C.x - 10, C.y - 10, 760); settle(); close();`],
+  ['03-first-town', `await load('town'); day(0.45); ${near(860)} settle(); close();`],
+  ['04-first-city', `await load('city'); day(0.45); ${near(940)} settle(); close();`],
+  ['05-mature-city', `await load('mature'); day(0.45); ${near(1000)} settle(); close();`],
+  ['06-forestry-settlement', `await load('mature'); day(0.45); const s = bySettlement('Sagbruksbygd'); T.view(s.x, s.y + 30, 820); settle(); close();`],
+  ['07-stone-settlement', `await load('mature'); day(0.45); const s = bySettlement('Steinhoggerbygd'); T.view(s.x, s.y + 30, 820); settle(); close();`],
+  ['08-regional-network', `await load('mature'); day(0.45); T.view(1200, 840, 2250); settle(); close();`],
+  ['09a-transition-near', `await load('world'); day(0.5); const C = T.state.settlement.center; T.view(C.x + 40, C.y - 20, 1400); settle(); close();`],
+  ['09b-transition-area', `await load('world'); day(0.5); const C = T.state.settlement.center; T.view(C.x + 40, C.y - 20, 2300); settle(); close();`],
   ['09c-transition-region', `await load('world'); day(0.5); await planetAt(0.11);`],
   ['09d-transition-continent-near', `await load('world'); day(0.5); await planetAt(0.3);`],
   ['10-continent', `await load('world'); day(0.5); await planetAt(0.8);`],
@@ -45,10 +45,10 @@ const SCENES = [
   ['12-planet-established', `await load('world'); day(0.5); await planetAt(3.1, -0.05);`],
   ['13-planet-night', `await load('world'); day(0.0); await planetAt(2.2, -0.05);`],
   ['14-ragnarok-aftermath', `await load('world'); day(0.45); document.querySelector('[data-nav="ragnarok"]').click(); settle(1); document.getElementById('ragnarok-confirm').click(); settle(2); close(); const C = T.state.settlement.center; T.view(C.x - 200, C.y + 160, 700); settle(3);`],
-  ['15a-day-dawn', `await load('mature'); day(0.27); ${near(1000)} settle();`],
-  ['15b-day-noon', `await load('mature'); day(0.5); ${near(1000)} settle();`],
-  ['15c-day-dusk', `await load('mature'); day(0.72); ${near(1000)} settle();`],
-  ['15d-day-night', `await load('mature'); day(0.0); ${near(1000)} settle();`],
+  ['15a-day-dawn', `await load('mature'); day(0.27); ${near(1000)} settle(); close();`],
+  ['15b-day-noon', `await load('mature'); day(0.5); ${near(1000)} settle(); close();`],
+  ['15c-day-dusk', `await load('mature'); day(0.72); ${near(1000)} settle(); close();`],
+  ['15d-day-night', `await load('mature'); day(0.0); ${near(1000)} settle(); close();`],
 ];
 const active = only ? SCENES.filter(([n]) => only.split(',').some((p) => n.startsWith(p.trim()))) : SCENES;
 
@@ -70,7 +70,7 @@ function client(url) {
     if (msg.method === 'Runtime.consoleAPICalled' && msg.params.type === 'error') errors.push(msg.params.args.map((a) => a.value ?? a.description).join(' '));
   };
   const ready = new Promise((r) => { ws.onopen = r; });
-  const send = (method, params = {}) => new Promise((resolve, reject) => { const n = ++id; pending.set(n, (msg) => (msg.error ? reject(new Error(`${method}: ${msg.error.message}`)) : resolve(msg.result))); ws.send(JSON.stringify({ id: n, method, params })); });
+  const send = (method, params = {}) => new Promise((resolve, reject) => { const n = ++id; setTimeout(() => { if (pending.has(n)) { pending.delete(n); reject(new Error(`${method}: tidsavbrudd`)); } }, 60000); pending.set(n, (msg) => (msg.error ? reject(new Error(`${method}: ${msg.error.message}`)) : resolve(msg.result))); ws.send(JSON.stringify({ id: n, method, params })); });
   return { ready, send, close: () => ws.close() };
 }
 const evaluate = async (cdp, expression) => {
@@ -86,15 +86,18 @@ try {
   const cdp = client(await connect());
   await cdp.ready;
   await cdp.send('Runtime.enable'); await cdp.send('Page.enable');
+  // Siden lastes én gang (planetbakingen er dyr); hver scene laster sin egen tilstand fra snap/.
+  await cdp.send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 1, mobile: false });
+  await cdp.send('Page.navigate', { url: `${base}/?debug` });
+  for (let i = 0; i < 300; i++) { if (await evaluate(cdp, '!!window.TFG').catch(() => false)) break; await sleep(100); }
   for (const [name, js] of active) {
-    await cdp.send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 1, mobile: false });
-    await cdp.send('Page.navigate', { url: `${base}/?debug` });
-    for (let i = 0; i < 300; i++) { if (await evaluate(cdp, '!!window.TFG').catch(() => false)) break; await sleep(100); }
     try {
       await evaluate(cdp, `(async () => { ${SETUP} ${js} })()`);
     } catch (e) { console.log('FEIL i scene', name, String(e).slice(0, 200)); continue; }
     await sleep(500);
-    const shot = await cdp.send('Page.captureScreenshot', { format: 'jpeg', quality: 86 });
+    await cdp.send('Page.bringToFront').catch(() => {});
+    let shot;
+    try { shot = await cdp.send('Page.captureScreenshot', { format: 'jpeg', quality: 86, fromSurface: true }); } catch (e) { console.log('FEIL (skjermbilde)', name, String(e)); continue; }
     const file = path.join(outDir, `${name}-${suffix}.jpg`);
     fs.writeFileSync(file, Buffer.from(shot.data, 'base64'));
     console.log('lagret', file);

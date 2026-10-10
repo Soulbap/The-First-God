@@ -67,6 +67,16 @@ function startPlanetBake(regions) {
   const plain = regions.map((r) => ({ id: r.id, col: r.col, row: r.row, biome: r.biome, home: r.home }));
   planetReady = new Promise((resolve) => {
     const done = (out) => { baked = out; if (globeR) globeR.setSurface(out); resolve(true); };
+    // Utviklerkrok (?debug&planet=/snap/planet-<frø>.bin, laget av tools/bakeplanet.mjs): last ferdig bakte flater i stedet for å bake.
+    const pre = params.has('debug') && params.get('planet');
+    if (pre) {
+      fetch(pre).then((r) => r.arrayBuffer()).then((buf) => {
+        const v = new DataView(buf), gw = v.getUint32(0, true), gh = v.getUint32(4, true), lw = v.getUint32(8, true), span = v.getFloat32(12, true);
+        const g = new Uint8ClampedArray(buf.slice(20, 20 + gw * gh * 4)), l = new Uint8ClampedArray(buf.slice(20 + gw * gh * 4, 20 + gw * gh * 4 + lw * lw * 4));
+        done({ global: { w: gw, h: gh, data: g }, local: { w: lw, h: lw, span, data: l } });
+      }).catch(() => done(bakePlanet(SEED, plain)));
+      return;
+    }
     try {
       const worker = new Worker(new URL('./render/planetWorker.js', import.meta.url), { type: 'module' });
       worker.onmessage = (e) => { done(e.data); worker.terminate(); };

@@ -215,3 +215,27 @@ test('Aktivitet: hvert menneske har en lesbar, norsk beskrivelse uansett tilstan
   for (const st of ['idle', 'gather', 'toStore', 'build', 'rest', 'maintain', 'toDeliver', 'toExplore', 'toFound', 'away', 'ukjent']) assert.ok(activityOf(s, { ...tmpl, state: st }).length > 3, st);
   assert.ok(states.size >= 1);
 });
+
+test('Lagring midt i byvekst, reise og bygging gir identisk videre forløp (ingen duplikate hendelser)', () => {
+  const s = createGame(20261009), bot = makeBot();
+  // Spill til byvekst faktisk er i gang (ikke satt opp av testen).
+  assert.ok(playTo(s, bot, (g) => g.buildings.some((b) => String(b.source).startsWith('urban:') && !b.complete), 14400), 'fant et bygg under oppføring');
+  const copy = deserialize(serialize(s));
+  assert.ok(copy);
+  for (let i = 0; i < 60 * 120; i++) { step(s); step(copy); if (s.events.length > 200) { s.events.length = 0; copy.events.length = 0; } }
+  const key = (g) => JSON.stringify({ b: g.buildings.map((q) => [q.type, Math.round(q.x), Math.round(q.y), q.complete]), r: Object.fromEntries(Object.entries(g.resources).map(([k, v]) => [k, Math.round(v)])), c: g.chronicle.entries.map((e) => e.text), n: g.humans.map((h) => h.name) });
+  assert.equal(key(copy), key(s));
+  assert.equal(new Set(copy.chronicle.entries.map((e) => e.text)).size, copy.chronicle.entries.length, 'ingen duplikater');
+});
+
+test('Ragnarok-forberedelse: tildeling teller bare ferdige helligdomsstykker, og en ny syklus starter uten kronikk eller byvekst', () => {
+  const { s } = reached('first_world_civilization');
+  const award = ragnarokAward(s);
+  assert.ok(award > 0 && Number.isInteger(award));
+  const fresh = createGame(20261009, { prestige: 0, cycles: 1, bonuses: {}, legacy: [{ n: 1, stage: 'x', people: 1, settlements: 1, minutes: 1 }] });
+  assert.equal(fresh.chronicle.entries.length, 0);
+  assert.equal(fresh.urban.enabled, false);
+  assert.equal(fresh.buildings.length, 0);
+  assert.equal(fresh.legacy.stones.length, 1);
+  assert.deepEqual(fresh.nodes.map((n) => [n.kind, n.x, n.y]), createGame(20261009).nodes.map((n) => [n.kind, n.x, n.y]), 'samme startverden');
+});

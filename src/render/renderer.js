@@ -89,7 +89,7 @@ export function createRenderer(canvas) {
     const nz = makeNoise(state.seed + 313), rnd = mulberry(state.seed + 317);
     R.wearNoise = new Float32Array(cols * WS * rows * WS);
     for (let j = 0; j < rows * WS; j++) for (let i = 0; i < cols * WS; i++) {
-      R.wearNoise[j * cols * WS + i] = 0.62 * fbm(nz, i / 9, j / 9, 3) + 0.38 * rnd();
+      R.wearNoise[j * cols * WS + i] = 0.8 * fbm(nz, i / 9, j / 9, 3) + 0.2 * rnd();
     }
     litterCache.clear();
     R.fx = createFx();
@@ -518,7 +518,9 @@ export function createRenderer(canvas) {
     }
 
     // Slitasje og bar jord rundt bosettingen.
+    ctx.imageSmoothingQuality = S > 1.8 ? 'high' : 'low'; // jevnere kanter på stier ved nærzoom
     ctx.drawImage(R.wearCanvas, 0, 0, W, H);
+    ctx.imageSmoothingQuality = S > 2.4 ? 'medium' : 'low';
 
     // Lysglimt på vannet.
     for (let i = 0; i < 16; i++) {

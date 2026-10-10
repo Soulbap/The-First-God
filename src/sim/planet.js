@@ -153,7 +153,7 @@ export function createPlanet(seed, regions) {
         }
         const g = 0.88 * gauss(d, f.F.r);
         let target = f.F.target;
-        if (f.F.rugged) target += 0.4 * Math.abs(fbm(nD, p, 24, 3));
+        if (f.F.rugged) target += 0.3 * Math.abs(fbm(nD, p, 14, 3));
         if (f.F.valley) target += 0.3 * (1 - gauss(d, f.F.r * 0.6)); // åsrygger rundt en lav dalbunn
         e = e * (1 - g) + target * g;
         moist = moist * (1 - g) + f.F.moist * g;

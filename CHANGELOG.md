@@ -119,6 +119,25 @@ Når en utgivelse opprettes, flyttes `Unreleased`-punkter til en datert versjons
 ## [Unreleased]
 
 ### Added
+- **OPUS-02 · Byplan** (`src/sim/urban.js`, `src/data/upgrades.js`): ny innsikt etter «Sivilisasjonens morgen». Folket bygger selv brønner, flere bolighus og varehus når en bosetting har overskudd (reservegrense for innsiktene); bygdene får flere hytter. Spilleren velger aldri tomt. Varehus gir større lager for foredlede varer.
+- **OPUS-02 · Takkoffer** (PP-sluk): seks avtagende nivåer reiser en helligdom (offerstein, varde, bautastein, ildskål, tretempel, stavkirke). Gir bare PrP ved Ragnarok (kvadratrot) — ingen spillbonus.
+- **OPUS-02 · Navn og kronikk** (`src/sim/chronicle.js`, `story.js`, `activity.js`): norske navn til alle innbyggere (egen generator, ingen rng), en Kronikk-fane med ekte hendelser (grunnleggelser, ruter, utposter, høstfester, trinn), hover viser navn og hva noen gjør.
+- **OPUS-02 · Døgnklokke** (`src/view/daylight.js`): felles klokke for planetens sol og nærbildet; varm skumring, lesbar natt, lysende vinduer, lykter og bål.
+- **OPUS-02 · Gatenett, gårdsplasser og dyrket mark** (`render/streets.js`, `yards.js`, `farmland.js`, `civic.js`): gater avledet av dørene, tømmerstuer i byen, bolighus med eget preg, klokketårn på hallen, rekvisitter etter faktisk produksjon, åkerteiger som følger høstesyklusen.
+- **OPUS-02 · Planet**: elver (`src/sim/hydrology.js`), fjellkjeder, skogtetthet fra landskapet, svake buede ruter, veier i overflaten og lys etter folketall.
+- **OPUS-02 · Lydbilde** (`src/audio/scene.js`, `ambience.js`): tjern, skogsus, sirisser/ugle, sag og meisel, torgmumling, byhumring. Ikke lyttet til av et menneske.
+- **OPUS-02 · verktøy**: `tools/snapshots.mjs`, `tools/capture-opus02.mjs`, `tools/sprites.html`, `tools/planetmap.mjs`; dokumenter under `docs/opus-02/`.
+
+### Changed
+- Tomtevalget er tettere (9 mellom bygg) og hus legger seg langs rutene mot andre bosettinger; folk rydder tomta i bygdene og skogen gror ikke inn over dem; matbygda får en ekstra åker.
+- Bakkelagets pikselpass fordeles over flere bilder (ingen enkeltstående pause); stikanter er jevnere. Planetteksturens alfa bærer nå skogtetthet (vann ≈ 64, land 160–255).
+- Hovedmenyen får en femte knapp (Kronikk) og løftes over kontrollene på smale vinduer.
+
+### Tests
+- `tests/opus02.test.js`: Byplan, byvekst uten overlapp, Takkoffer, kronikk/navn (determinisme, ingen duplikater, lagring), gatenett, elver, dagklokke, lydbilde, aktivitet, lagring midt i byvekst, Ragnarok-start.
+- `tests/planet.test.js` tilpasset ny alfakodning.
+
+### Added
 - **OPUS-01 · planeten** (`src/sim/planet.js`, `src/render/globe.js`, `src/render/planetTexture.js`, `src/render/planetWorker.js`, `src/view/globe.js`): Den rektangulære kortoversikten er erstattet av en deterministisk planet med kontinenter, hav, fjell, skyer, atmosfære, dag/natt og nattlys. Hjemmeregionen er en ekte flekk på kula med et levende øyeblikksbilde av den detaljerte verdenen; nabolandene ligger på ekte geografi i nøyaktig den retningen karavaner og ekspedisjoner bruker ved kartkanten. Zoom går sammenhengende Nær → Område → Region → Kontinent → Planet og tilbake uten hopp (samme fokus og bredde ved overgangen). Kjent land vises i farger, ukjent land dempet; utposter, ruter og ekspedisjoner vises på kloden. WebGL 1 uten avhengigheter; reserve uten WebGL er den gamle kartoversikten.
 - **OPUS-01 · planetavsløringen**: Ved «Et sammenhengende rike» og ved sluttmilepælen løfter kameraet seg selv fra byen til kontinentet og hele kloden. All input avbryter; redusert bevegelse gir kort overgang.
 - **OPUS-01 · velsignelser** (`src/data/upgrades.js`): PP får endelig en bruk. Fire varige velsignelser med tre nivåer og stigende pris — **Regnets velsignelse** (trevekst), **Steinens gave** (steinfornyelse), **Vandrerens letthet** (gangfart, også karavaner) og **Kunnskapens lys** (kunnskap). Hver gir et synlig svar i verden (regnskur og spirer, glimt i bruddene, medvind med løv, lys over verkstedene). Idle-vennlig: ingen aktive mirakler å klikke på.

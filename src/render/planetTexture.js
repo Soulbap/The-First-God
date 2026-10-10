@@ -74,18 +74,22 @@ function rasterRivers(rivers, w, h, toPix, scale) {
 
 // Felles maling: fyller RGBA ut fra et høydefelt og overflatedata. dirAt(i, j) → enhetsvektor.
 function paint(planet, w, h, dirAt, lightScale, rv = null) {
-  const n = w * h, E = new Float32Array(n), S = new Array(n);
+  // Felt i flate Float32Array (ikke ett objekt per piksel): 2 × 4 M piksler som objekter ga mange hundre MB og kunne velte lavminnemiljøer.
+  const n = w * h, E = new Float32Array(n), MO = new Float32Array(n), TE = new Float32Array(n);
   for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
-    const s = planet.surface(dirAt(i, j));
-    E[j * w + i] = s.e; S[j * w + i] = s;
+    const s = planet.surface(dirAt(i, j)), k = j * w + i;
+    E[k] = s.e; MO[k] = s.moist; TE[k] = s.temp;
   }
+  const s = { e: 0, moist: 0, temp: 0 };
   // Dalen langs elva senkes litt (bare for skyggen), slik at elver ligger i dalfører.
-  if (rv) for (let k = 0; k < n; k++) if (E[k] > 0) E[k] -= rv.band[k] * 0.03 + rv.core[k] * 0.02;
+  const E0 = Float32Array.from(E); // ubehandlet høyde (for farge/land-vann); E får elvedaler for skyggen
+  if (rv) for (let k = 0; k < n; k++) if (E[k] > 0) E[k] -= rv.band[k] * 0.009 + rv.core[k] * 0.004;
   const data = new Uint8ClampedArray(n * 4);
   let r = 0x9e3779b9 ^ planet.seed;
   const rnd = () => { r ^= r << 13; r ^= r >>> 17; r ^= r << 5; return ((r >>> 0) % 10000) / 10000; };
   for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
-    const k = j * w + i, s = S[k], e = s.e;
+    const k = j * w + i, e = E0[k];
+    s.e = e; s.moist = MO[k]; s.temp = TE[k];
     const ex = E[j * w + Math.min(w - 1, i + 1)] - E[j * w + Math.max(0, i - 1)];
     const ey = E[Math.min(h - 1, j + 1) * w + i] - E[Math.max(0, j - 1) * w + i];
     const hash = rnd();

@@ -218,6 +218,12 @@ button { font: inherit; color: inherit; }
 @media (max-width: 1100px) {
   #brand { display: none; }
 }
+/* Smale vinduer (OPUS-02: fem menyvalg): menyen løftes over kontrollene i stedet for å overlappe dem. */
+@media (max-width: 1000px) {
+  .nav { bottom: calc(var(--edge) + var(--bar-h) + var(--space-2)); }
+  .nav-btn { min-width: 70px; padding: var(--space-1) var(--space-2); }
+  .hint { bottom: calc(var(--edge) + 2 * var(--bar-h) + var(--space-4)); }
+}
 @media (prefers-reduced-motion: reduce) {
   .card.enter, .res.enter, .nav-btn.enter, .dialog-box { animation: none; }
   .toast { animation-name: toast-static; }

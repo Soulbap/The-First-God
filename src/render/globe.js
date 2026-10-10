@@ -72,7 +72,7 @@ void main(){
   float density = smoothstep(0.12, 0.8, forestD);
   float grove = density < 0.02 ? 0.0 : smoothstep(0.72 - density * 0.5, 0.8 - density * 0.42, fbm(p * 230.0 + 3.0) + density * 0.18);
   float crowns = vnoise(p * 5200.0) * 0.6 + vnoise(p * 1900.0) * 0.4;
-  vec3 forestC = col * vec3(0.66, 0.72, 0.64) * (0.8 + crowns * 0.4);
+  vec3 forestC = col * vec3(0.76, 0.82, 0.74) * (0.82 + crowns * 0.36);
   col = mix(col, mix(col * vec3(1.06, 1.04, 0.98), forestC, grove), green * near);
   col *= 1.0 + (fbm(p * 420.0) - 0.5) * 0.2 * near + (fbm(p * 120.0) - 0.5) * 0.12 * near;
   // Fjell: skarpe rygger og renner i stein og snø i stedet for myke, røykaktige flater.
@@ -103,9 +103,10 @@ void main(){
     float r = acos(clamp(local.z, -1.0, 1.0)); vec2 t = local.xy; vec2 loc = length(t) > 1e-8 ? normalize(t) * r : vec2(0.0);
     vec2 q = loc / uPatchHalf;
     // Landet rundt hjemmet glir mot hjemmeregionens egne farger, så det ikke leses som et kort på et kart.
-    float m = max(abs(q.x), abs(q.y));
-    float tone = (1.0 - smoothstep(0.9, 3.2, m)) * 0.9 * (1.0 - water);
-    col *= mix(vec3(1.0), clamp(uPatchAvg / max(uLandAvg, vec3(0.02)), 0.6, 1.8), tone * uPatchOn);
+    // OPUS-02: avstanden er rund og ujevn (støy), ikke et rektangel, og fargetilpasningen er svakere og utjevnet — ingen synlig «ramme» rundt hjemmet.
+    float m = length(q) * 0.92 + (fbm(p * 55.0) - 0.5) * 0.8;
+    float tone = (1.0 - smoothstep(0.6, 2.8, m)) * 0.6 * (1.0 - water);
+    col *= mix(vec3(1.0), clamp(uPatchAvg / max(uLandAvg, vec3(0.02)), 0.75, 1.45), tone * uPatchOn);
     if (abs(q.x) < 1.0 && abs(q.y) < 1.0) {
       float n = (fbm(p * 420.0) - 0.5) * 0.3;
       float a = (1.0 - smoothstep(0.66 + n, 0.97, abs(q.x))) * (1.0 - smoothstep(0.62 + n, 0.97, abs(q.y)));
@@ -144,8 +145,9 @@ void main(){
   // Lys: sol + myk himmel; nær overflaten blir lyset flatt (dag), så overgangen fra den detaljerte verdenen stemmer.
   float ndl = dot(p, uSun);
   float day = smoothstep(-0.12, 0.35, ndl);
-  float lightF = mix(0.07 + 1.05 * day * (0.55 + 0.45 * max(ndl, 0.0)), 1.0, uDayBlend);
-  vec3 lit = col * lightF;
+  float lightF = mix(0.16 + 1.0 * day * (0.55 + 0.45 * max(ndl, 0.0)), 1.0, uDayBlend);
+  // Natten er blå og dempet, ikke svart: månelys nok til at kontinentene kan leses (OPUS-02).
+  vec3 lit = col * lightF * mix(vec3(0.72, 0.84, 1.18), vec3(1.0), clamp(day + uDayBlend, 0.0, 1.0));
   // Havglans.
   if (water > 0.5) { vec3 hv = normalize(uSun - dir); lit += vec3(0.9, 0.85, 0.7) * pow(max(dot(p, hv), 0.0), 60.0) * 0.35 * day * (1.0 - uDayBlend); }
 
@@ -157,7 +159,7 @@ void main(){
       vec4 L = uLights[i];
       float d = acos(clamp(dot(p, L.xyz), -1.0, 1.0));
       float rr = 0.0016 + 0.0028 * L.w;
-      lit += vec3(1.0, 0.72, 0.38) * exp(-(d * d) / (rr * rr)) * (0.15 + L.w) * night * 1.3;
+      lit += vec3(1.0, 0.72, 0.38) * (exp(-(d * d) / (rr * rr)) * (0.15 + L.w) * 1.3 + exp(-(d * d) / (rr * rr * 14.0)) * L.w * 0.32) * night;
     }
   }
 
