@@ -3,7 +3,7 @@
 import { settlementById } from './settlements.js';
 
 const RES = { wood: 'trevirke', stone: 'stein', food: 'mat', planks: 'planker', cutstone: 'tilhugget stein', knowledge: 'kunnskap' };
-const BUILDING = { shelter: 'det første lyet', fire: 'bålet', hut: 'en hytte', storage: 'lageret', hearth: 'ildstedet', field: 'en åker', workshop: 'et verksted', sawmill: 'sagbruket', mason: 'steinhoggeriet', townhouse: 'et bolighus', market: 'torget', hall: 'kunnskapshallen', well: 'en brønn', warehouse: 'varehuset', sanctuary: 'helligdommen' };
+const BUILDING = { shelter: 'det første lyet', fire: 'bålet', hut: 'en hytte', storage: 'lageret', hearth: 'ildstedet', field: 'en åker', workshop: 'et verksted', sawmill: 'sagbruket', mason: 'steinhoggeriet', watermill: 'vannmøllen', windmill: 'vindmøllen', townhouse: 'et bolighus', market: 'torget', hall: 'kunnskapshallen', well: 'en brønn', warehouse: 'varehuset', sanctuary: 'helligdommen' };
 
 export function activityOf(state, h) {
   const carry = h.carry?.amount > 0 ? RES[h.carry.type] || '' : '';

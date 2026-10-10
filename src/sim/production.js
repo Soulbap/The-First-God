@@ -4,6 +4,7 @@
 import { BALANCE as B } from '../data/balance.js';
 import { recordAuto } from './stats.js';
 import { settlementById, roleEffect } from './settlements.js';
+import { mechanicalMultiplier } from './mechanical.js';
 
 const RECIPE_TYPES = ['sawmill', 'mason'];
 export const recipeOf = (type) => (RECIPE_TYPES.includes(type) ? B.production[type] : null);
@@ -36,7 +37,9 @@ function stepRecipe(state, b, S, dt) {
   if (!staffed(S)) { b.active = false; b.idle = 'folk'; return; }
   if (!enough && b.cycle <= 0) { b.active = false; b.idle = 'råvare'; return; }
   b.active = true; b.idle = null;
-  b.cycle += dt * craftSpeed(state, S);
+  // Bare lokale, virkende møller kan akselerere foredlingen. Uten kraft går
+  // verkstedet videre for hånd, med vanlig tempo.
+  b.cycle += dt * craftSpeed(state, S) * mechanicalMultiplier(state, S.id, b.type);
   if (b.cycle < recipe.seconds) return;
   // Sjekk igjen ved avslutning: aldri negativ beholdning, og råvaren trekkes først nå.
   if (!inputs.every(([k, n]) => state.resources[k] >= n)) { b.cycle = recipe.seconds; b.active = false; b.idle = 'råvare'; return; }

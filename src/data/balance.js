@@ -53,6 +53,8 @@ export const BALANCE = {
     smelter: { radius: 32, work: 42, minRing: 145 },
     dock: { radius: 30, work: 38, minRing: 135 },
     boatyard: { radius: 34, work: 44, minRing: 145 },
+    watermill: { radius: 38, work: 52, minRing: 150 },
+    windmill: { radius: 36, work: 50, minRing: 170 },
     // GAMEPLAY-07/08: byinfrastruktur og sivilt bygg.
     sawmill: { radius: 38, work: 40, minRing: 120 },
     mason: { radius: 34, work: 40, minRing: 120 },
@@ -95,6 +97,15 @@ export const BALANCE = {
   globe: { cols: 5, rows: 3, expeditionSecondsPerStep: 55, outpostSecondsPerStep: 70, caravanSeconds: 46, caravanSpeed: 46, maxCaravans: 4,
     expedition: { wood: 30, food: 8 }, outpost: { wood: 60, stone: 30, planks: 8, food: 8 }, outpostParty: 3, outpostGrowSeconds: 55, outpostCap: 8, establishedPop: 6 },
   navigation: { dock: { wood: 34, stone: 12, planks: 8 }, boat: { wood: 18, planks: 6 }, sail: { wood: 28, planks: 12 }, surveySeconds: 72, maxVessels: 3 },
+  // OPUS-06: kapasitet, ikke et globalt nett. Én mølle dekker sin egen bosettings
+  // tre lokale foredlingsspor; effekt og slitasje er aggregert og deterministisk.
+  mechanical: {
+    components: { wood: 4, metal: 1, out: 1, seconds: 16 },
+    watermill: { wood: 44, stone: 28, planks: 8, mechanicalComponents: 3 },
+    windmill: { wood: 38, stone: 20, planks: 10, mechanicalComponents: 3 },
+    minDemand: 2, power: 3, craftMultiplier: 1.65, foodMultiplier: 1.3,
+    wearPerSecond: 0.0012, repairAt: 0.42, repair: { wood: 2, mechanicalComponents: 1 },
+  },
   // OPUS-01 · Høstfest: overskuddsmat blir en samling ved ildstedet med dobbel bønn. Automatisk (idle), aldri tvunget.
   festival: { minFood: 30, base: 10, perPerson: 0.8, interval: 110, duration: 28, prayerMultiplier: 2, joinChance: 0.7 },
   settlement: { clearRadius: 150, localHomeCapacity: 2 },

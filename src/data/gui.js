@@ -15,6 +15,7 @@ export const RESOURCES = {
   copper: { name: 'Kobber', unit: 'kobber', icon: 'stone' },
   bronze: { name: 'Bronse', unit: 'bronse', icon: 'stone' },
   iron: { name: 'Jern', unit: 'jern', icon: 'stone' },
+  mechanicalComponents: { name: 'Maskindeler', unit: 'maskindeler', icon: 'sawmill' },
   knowledge: { name: 'Kunnskap', unit: 'kunnskap', icon: 'book' },
   pp: { name: 'Bønn (PP)', unit: 'PP', icon: 'pp' },
 };

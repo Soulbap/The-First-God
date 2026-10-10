@@ -7,6 +7,7 @@ import { activeSettlements, distinctRoles, civilizationStage } from './civstage.
 import { establishedRoutes } from './regional.js';
 import { discoveredRegions, outpostRegions } from './worldmap.js';
 import { enableMaterials } from './materials.js';
+import { enableMechanical } from './mechanical.js';
 
 export const upgradeCount = (state, id) => state.upgrades[id] || 0;
 
@@ -134,6 +135,8 @@ function applyAction(state, def, a) {
     state.unlocks.worldView = true;
   } else if (a.type === 'enableMaterials') {
     enableMaterials(state, a);
+  } else if (a.type === 'enableMechanical') {
+    enableMechanical(state);
   }
 }
 

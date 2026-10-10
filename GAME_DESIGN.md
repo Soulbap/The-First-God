@@ -281,6 +281,10 @@ En funksjon er ikke visuelt klar bare fordi den finnes i data/UI. Følgende port
 
 **Bekreftet:** Regioners vannadgang er seedet, fysisk geografi og endres ikke av kartlegging. Geografisk kunnskap er separat fra oppdagelse og besøksadgang: `ukjent → oppdaget → oppmålt → kartlagt`. Små båter blir først til når mennesker har valgt navigasjon, bygd en landingsplass ved den lokale vannkanten og brukt virkelige varer fra lageret. Vanntransport bruker samme reserverte last og leveringsøyeblikk som landtransport. Planetkameraet har ingen ny navigasjonsgate.
 
+## OPUS-06 · mekanisk kraft — implementert (minste vertikale skive)
+
+**Bekreftet:** Mekanisk kraft er lokal kapasitet, ikke et globalt nett. Etter «Elvens og vindens kraft» lager verkstedet maskindeler av tre og eksisterende bronse/jern. Når lokal etterspørsel og materialer finnes, velger folket selv en tørr tomt ved den faktiske dammen for vannmølle, eller et deterministisk vindegnet sted. Bare virkende møller løfter lokal saging, steinhogging og åkerutbytte; uten strøm går arbeidet videre manuelt. Slitasje og reparasjon er aggregert og autonom.
+
 ## 11. Prinsipp for videre utvikling
 
 Hver ny endring må kunne besvare: «Hva kan spilleren se i verden som følge av dette?» Hvis svaret bare er et større tall, må endringen få en synlig følge, kombineres med en annen effekt eller avvises. Den minste helhetlige iterasjonen er alltid foretrukket.

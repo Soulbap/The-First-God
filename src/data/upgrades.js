@@ -365,6 +365,14 @@ export const UPGRADES = [
     world: 'Smelteovnen brenner varmere, og mørke jernemner ligger ved smia.',
     actions: [{ type: 'enableMaterials', ironworking: true }],
   },
+  {
+    id: 'mechanical_power', name: 'Elvens og vindens kraft', category: 'kunnskap', icon: 'sawmill',
+    discover: [{ upgrade: 'iron_craft' }], cost: { knowledge: 78, planks: 12, iron: 2, bronze: 1 },
+    requires: [{ upgrade: 'iron_craft' }, { built: 'workshop' }], requireText: 'Krever Jernets ild og et verksted',
+    effect: 'Verkstedet former maskindeler av tre og metall. Når en bosetting har nok arbeid og en egnet elv eller vind, bygger folket selv en lokal mølle som løfter åker og foredling.',
+    world: 'Vannhjul og vindseil kommer bare der naturkraften finnes; sag og steinhoggeri arbeider raskere mens møllen går.',
+    actions: [{ type: 'enableMechanical' }],
+  },
 
   // ---------- OPUS-02: Takkoffer — langsiktig PP-sluk ----------
   {

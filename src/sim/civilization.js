@@ -3,6 +3,7 @@ import { BALANCE as B } from '../data/balance.js';
 import { spawnHumans } from './population.js';
 import { completedHomesOf, housingCapacity, roleEffect } from './settlements.js';
 import { storyFestival } from './story.js';
+import { mechanicalFoodMultiplier } from './mechanical.js';
 
 const fields = (state) => state.buildings.filter((b) => b.complete && b.type === 'field');
 
@@ -33,7 +34,7 @@ export function stepCivilization(state) {
       let made = 0;
       for (const field of activeFields) {
         const settlement = state.settlements.find((s) => s.id === field.settlementId);
-        made += B.human.foodPerHarvest + state.modifiers.foodBonus + roleEffect(settlement?.role, 'foodPerField', 0);
+        made += (B.human.foodPerHarvest + state.modifiers.foodBonus + roleEffect(settlement?.role, 'foodPerField', 0)) * mechanicalFoodMultiplier(state, settlement?.id || 'first');
       }
       state.resources.food += made; state.totals.food += made; C.foodHarvests++;
       for (const field of activeFields) state.events.push({ type: 'foodHarvest', x: field.x, y: field.y, amount: made });

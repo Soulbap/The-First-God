@@ -1,5 +1,14 @@
 # Spilltest — Genesis-01
 
+## OPUS-06 · den mekaniske revolusjonen
+
+- [ ] Etter **Elvens og vindens kraft**: se at verkstedet bruker tre og metall til maskindeler; beholdningen må gå ned når delene lages.
+- [ ] Se at møllen først blir påbegynt når bosettingen faktisk har åker og foredlingsarbeid, og at materialene trekkes ved byggestart.
+- [ ] Bekreft at vannmøllen står på tørt land ved dammens kant, eller at en vindmølle står fritt utenfor boligklyngen.
+- [ ] Se at vannhjul/vindseil beveger seg bare når møllen er virksom, og at sagbruk/steinhoggeri fortsatt kan arbeide manuelt uten kraft.
+- [ ] La møllen gå lenge: bekreft at den ikke skaper råvarer, og at reparasjon skjer automatisk uten negativ beholdning.
+- [ ] Lagre mens en mølle går, last igjen og kontroller at maskindeler, slitasje og produksjon fortsetter riktig. Ragnarok skal starte uten møller.
+
 ## OPUS-05 · navigasjon og oppdagelse
 
 - [ ] Spill frem til «Hinsides de kjente landene», og bekreft at utforskere åpner regioner uten at spilleren velger målet.

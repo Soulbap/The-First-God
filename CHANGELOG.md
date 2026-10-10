@@ -32,6 +32,19 @@ Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på ve
 ## [Unreleased]
 
 ### Added
+- **OPUS-06 · mekanisk kraft**: Vann- og vindmøller bygges autonomt når lokalt arbeid, maskindeler, materialer og egnet naturkraft møtes. Kraften er lokal for bosettingen og akselererer bare sagbruk, steinhoggeri og åkerutbytte mens møllen faktisk går.
+- Verkstedet lager den grupperte mellomvaren **maskindeler** av tre og bronse eller jern. Møller betaler reelle byggevarer, slites deterministisk og repareres automatisk med begrensede materialer.
+
+### Changed
+- Save-formatet er v6; v2–v5 får trygt OPUS-06-felter ved lasting. Ragnarok får fortsatt en ren syklus uten mekanisk infrastruktur.
+
+### Tests
+- La til OPUS-06-regresjoner for seed-deterministisk vann/vind, materialbetalt bootstrap, lokal kraft uten universell bonus, vedlikehold og v5-migrering. OPUS-04/05/06-segmentet besto 10/10; full kjøring er dokumentert med en eksisterende, urelatert planettestfeil.
+
+### Docs
+- La til OPUS-06-rapport og spilltestsjekkpunkter for mekanisk kraft.
+
+### Added
 - **OPUS-05 · navigasjon og oppdagelse**: Seedet vannadgang, kartkunnskap fra oppdaget til kartlagt, autonome landingsplasser/båter og sjølast som bruker OPUS-04s autoritative vareflyt.
 
 ### Changed

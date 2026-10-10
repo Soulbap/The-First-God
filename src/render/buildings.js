@@ -462,6 +462,19 @@ function paintWorkshop(seed, p) {
   });
 }
 
+function paintMill(seed, p, wind = false) {
+  return paintSprite(90, 82, 45, 62, (ctx) => {
+    const rnd = mulberry(seed), a = smooth(0, .2, p);
+    ctx.save(); ctx.globalAlpha = a;
+    dab(ctx, 0, 8, 31, 10, 0, 'rgba(34,25,16,.36)');
+    ctx.fillStyle = 'rgb(111,88,57)'; ctx.fillRect(-17, -25, 34, 32);
+    ctx.fillStyle = 'rgb(78,60,43)'; ctx.beginPath(); ctx.moveTo(-23,-25); ctx.lineTo(0,-43); ctx.lineTo(23,-25); ctx.closePath(); ctx.fill();
+    if (wind) { taper(ctx, 0, -25, 0, -48, 2.5, 1.7, 'rgb(80,63,44)'); for (let i=0;i<4;i++) { const q=i*Math.PI/2; taper(ctx, 0, -47, Math.cos(q)*19, -47+Math.sin(q)*19, 2, 5, 'rgb(157,139,102)'); } }
+    else { taper(ctx, -24, 1, 24, 1, 2, 2, 'rgb(77,58,39)'); ctx.strokeStyle='rgb(126,105,73)'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(-23, 1, 17, 0, Math.PI*2); ctx.stroke(); for(let i=0;i<8;i++){const q=i*Math.PI/4;taper(ctx,-23,1,-23+Math.cos(q)*16,1+Math.sin(q)*16,1.2,1,'rgb(110,88,59)');} }
+    ctx.restore();
+  });
+}
+
 const cache = new Map();
 // `variant`: hytte → 1 når byen har vokst fra halmhytter til tømmerstuer; helligdom → stykkets nummer (0–5).
 export function buildingSprite(b, variant = 0) {
@@ -478,6 +491,8 @@ export function buildingSprite(b, variant = 0) {
       : b.type === 'storage' ? paintStorage(seed, p)
       : b.type === 'hearth' ? paintHearth(seed, p)
         : b.type === 'field' ? paintField(seed, p)
+          : b.type === 'watermill' ? paintMill(seed, p)
+          : b.type === 'windmill' ? paintMill(seed, p, true)
           : (b.type === 'workshop' || b.type === 'mine' || b.type === 'smelter' || b.type === 'dock' || b.type === 'boatyard') ? paintWorkshop(seed, p)
             : b.type === 'charcoal_kiln' ? paintFirePit(seed, p)
             : b.type === 'sawmill' ? paintSawmill(seed, p)

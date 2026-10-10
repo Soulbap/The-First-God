@@ -954,6 +954,10 @@ export function createRenderer(canvas) {
         const off = Math.sin(renderTime * 8 + b.id) * 2.6;
         taper(ctx, b.x - 10, b.y - 7 + off, b.x - 6.2, b.y - 22 + off, 0.9, 0.9, 'rgb(170,172,168)');
       }
+      if (b.type === 'windmill' && b.complete && b.active) {
+        const a = renderTime * 1.8; ctx.save(); ctx.translate(b.x, b.y - 47); ctx.rotate(a);
+        for (let i = 0; i < 4; i++) { ctx.rotate(Math.PI / 2); taper(ctx, 0, 0, 0, -18, 1.6, 5, 'rgba(202,184,137,.9)'); } ctx.restore();
+      }
     }
     function drawMemorial(x, y, n) {
       // En reist stein med lav, mose og innhugne tegn — én for hver syklus som er levd.
