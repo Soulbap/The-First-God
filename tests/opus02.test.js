@@ -189,3 +189,29 @@ test('Dagklokka: døgnet går rundt, natten er aldri svartere enn at verden kan 
   assert.ok(night.shadowAlpha < 0.2);
   for (let i = 0; i < 200; i++) { const t = tintAt(lightAt(i / 200)); for (const c of t) assert.ok(c >= 100 && c <= 255, `lesbar: ${t}`); }
 });
+
+// ---------- Lydbilde og aktivitet ----------
+import { audioScene } from '../src/audio/scene.js';
+import { activityOf } from '../src/sim/activity.js';
+
+test('Lydbildet følger utsnittet: tjern, verksted, torg, natt og planetvisning', () => {
+  const { s } = reached('first_world_civilization');
+  const pond = s.world.pond, C = s.settlement.center;
+  const cam = (x, y, w) => ({ x, y, w, screenW: 1280, screenH: 720 });
+  const atPond = audioScene(s, cam(pond.x, pond.y, 600), 0.5), far = audioScene(s, cam(2200, 200, 600), 0.5);
+  assert.ok(atPond.water > 0.6 && far.water < 0.05, `vann ${atPond.water} / ${far.water}`);
+  const town = audioScene(s, cam(C.x, C.y, 900), 0.5);
+  assert.ok(town.town > 0.5 && town.market > 0);
+  assert.ok(audioScene(s, cam(C.x, C.y, 900), 0).night > 0.9 && town.night === 0);
+  assert.equal(audioScene(s, cam(C.x, C.y, 900), 0.5, { globe: true }).near, 0, 'ingen nærlyd i planetvisning');
+  for (const v of Object.values(town)) assert.ok(Number.isFinite(v) && v >= 0 && v <= 8);
+});
+
+test('Aktivitet: hvert menneske har en lesbar, norsk beskrivelse uansett tilstand', () => {
+  const { s } = reached('first_world_civilization');
+  const states = new Set();
+  for (const h of s.humans) { const t = activityOf(s, h); assert.ok(typeof t === 'string' && t.length > 3 && /^[A-ZÆØÅ]/.test(t), t); states.add(t); }
+  const tmpl = { ...s.humans[0] };
+  for (const st of ['idle', 'gather', 'toStore', 'build', 'rest', 'maintain', 'toDeliver', 'toExplore', 'toFound', 'away', 'ukjent']) assert.ok(activityOf(s, { ...tmpl, state: st }).length > 3, st);
+  assert.ok(states.size >= 1);
+});

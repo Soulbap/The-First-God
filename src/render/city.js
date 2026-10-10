@@ -85,33 +85,69 @@ export const stoneBlocks = (ctx, rnd, x, y, w, rows, perRow, bh, tone) => {
 };
 
 // ---------- Bolighus ----------
+// Hvert hus får sitt eget preg ut fra bygg-id (seed): taktype, veggmateriale, bredde, skodder, skorstein og noen ganger en markise.
+// Byen leses dermed som mange hus, ikke ett hus gjentatt (OPUS-02).
+const ROOFS = [
+  ['rgb(112,74,54)', 'rgb(94,66,48)', 'rgb(148,102,72)'],   // teglrød
+  ['rgb(90,96,102)', 'rgb(68,74,80)', 'rgb(128,136,142)'],  // skifer
+  ['rgb(88,66,48)', 'rgb(68,50,36)', 'rgb(120,92,66)'],     // mørk spon
+  ['rgb(126,70,54)', 'rgb(102,56,44)', 'rgb(162,96,74)'],   // lys tegl
+];
+const WALLS = [
+  ['rgb(150,118,78)', 'rgb(100,76,50)'],   // tømmer
+  ['rgb(198,186,158)', 'rgb(140,130,108)'], // pusset og kalket
+  ['rgb(128,98,66)', 'rgb(88,66,44)'],     // mørkt tømmer
+  ['rgb(170,134,92)', 'rgb(118,90,60)'],   // lyst tømmer
+];
+const SHUTTERS = ['rgb(84,104,72)', 'rgb(124,54,46)', 'rgb(62,86,112)', 'rgb(176,150,98)'];
+const AWNINGS = ['#a85a48', '#6e7f5a', '#b09050', '#5a7090'];
+
 export function paintTownhouse(seed, p) {
   return paintSprite(100, 96, 46, 78, (ctx) => {
     const rnd = mulberry(seed);
+    const vr = mulberry(seed * 7 + 3), pick = (arr) => arr[Math.floor(vr() * arr.length)];
+    const roofC = pick(ROOFS), wallC = pick(WALLS), shut = pick(SHUTTERS), awning = pick(AWNINGS);
+    const wide = 40 + Math.floor(vr() * 5) * 3, tall = vr() < 0.3 ? 4 : 0, chimLeft = vr() < 0.5, withAwning = vr() < 0.4, jetty = vr() < 0.4 ? 2 : 0;
     groundPatch(ctx, rnd, 34, 11, p);
-    const W = 46, D = 22, baseH = 13, upH = 20, x = -W / 2 - 4;
+    const W = wide, D = 22, baseH = 13, upH = 20 + tall, x = -W / 2 - 4;
     const walls = stage(p, 0.1, 0.62), roof = stage(p, 0.6, 0.98);
     ctx.save();
     ctx.beginPath(); ctx.rect(-70, -(baseH + upH) * walls - 40, 160, (baseH + upH) * walls + 60); ctx.clip();
     contact(ctx, W, D, smooth(0.1, 0.4, p));
-    // Steinmur (første etasje) og plankevegg (andre).
+    // Steinmur (første etasje) og vegg i annen etasje; øvre etasje kan krage ut over muren (svalgang).
     box(ctx, rnd, x, 0, W, D, baseH, 'rgb(120,114,102)', 'rgb(86,82,74)', null, { courses: 3, mortar: 'rgba(40,36,30,0.4)' });
-    stoneBlocks(ctx, rnd, x, 0, W, 3, 6, baseH / 3, [124, 118, 106]);
-    box(ctx, rnd, x, -baseH, W, D, upH, 'rgb(150,118,78)', 'rgb(100,76,50)', null, { courses: 6 });
+    stoneBlocks(ctx, rnd, x, 0, W, 3, Math.round(W / 8), baseH / 3, [124, 118, 106]);
+    box(ctx, rnd, x - jetty, -baseH, W + jetty * 2, D, upH, wallC[0], wallC[1], null, { courses: wallC[0] === 'rgb(198,186,158)' ? 0 : 6 });
+    if (wallC[0] === 'rgb(198,186,158)') { // bindingsverk i pusset vegg
+      ctx.strokeStyle = 'rgba(70,50,32,0.7)'; ctx.lineWidth = 0.8;
+      for (let i = 0; i <= 4; i++) { const bx = x - jetty + i * ((W + jetty * 2) / 4); ctx.beginPath(); ctx.moveTo(bx, -baseH); ctx.lineTo(bx, -baseH - upH); ctx.stroke(); }
+      ctx.beginPath(); ctx.moveTo(x - jetty, -baseH - upH * 0.5); ctx.lineTo(x + W + jetty, -baseH - upH * 0.5); ctx.stroke();
+    }
     // Bjelkelag mellom etasjene.
-    taper(ctx, x, -baseH, x + W, -baseH, 1.8, 1.8, 'rgb(70,50,32)');
-    // Vinduer og dør.
-    for (const wx of [x + 8, x + W - 16]) { ctx.fillStyle = 'rgb(34,28,22)'; ctx.fillRect(wx, -baseH - 14, 8, 9); ctx.fillStyle = 'rgba(236,196,120,0.38)'; ctx.fillRect(wx + 1, -baseH - 13, 6, 3); taper(ctx, wx - 0.5, -baseH - 14.5, wx + 8.5, -baseH - 14.5, 1, 1, 'rgb(212,196,160)'); }
+    taper(ctx, x - jetty, -baseH, x + W + jetty, -baseH, 1.8, 1.8, 'rgb(70,50,32)');
+    // Vinduer (to eller tre) med skodder, og dør.
+    const nWin = W >= 46 ? 3 : 2;
+    for (let i = 0; i < nWin; i++) {
+      const wx = x + 6 + i * ((W - 12 - 8) / (nWin - 1));
+      ctx.fillStyle = 'rgb(34,28,22)'; ctx.fillRect(wx, -baseH - 14, 8, 9); ctx.fillStyle = 'rgba(236,196,120,0.38)'; ctx.fillRect(wx + 1, -baseH - 13, 6, 3);
+      ctx.fillStyle = shut; ctx.fillRect(wx - 2, -baseH - 14, 1.8, 9); ctx.fillRect(wx + 8.2, -baseH - 14, 1.8, 9);
+      taper(ctx, wx - 0.5, -baseH - 14.5, wx + 8.5, -baseH - 14.5, 1, 1, 'rgb(212,196,160)');
+    }
     ctx.fillStyle = 'rgb(46,34,22)'; ctx.fillRect(x + W / 2 - 4, -11, 8, 11);
     taper(ctx, x + W / 2 - 4, -11, x + W / 2 + 4, -11, 1.1, 1.1, 'rgb(196,170,130)');
     ctx.fillStyle = 'rgba(236,196,120,0.18)'; ctx.fillRect(x + 6, -9, 7, 6);
+    if (withAwning && p > 0.8) { // markise over døra (nede i by-strøket)
+      ctx.fillStyle = awning; ctx.beginPath(); ctx.moveTo(x + W / 2 - 8, -13); ctx.lineTo(x + W / 2 + 8, -13); ctx.lineTo(x + W / 2 + 10, -8); ctx.lineTo(x + W / 2 - 10, -8); ctx.closePath(); ctx.fill();
+      for (let k = 0; k < 4; k++) { ctx.fillStyle = 'rgba(236,222,190,0.5)'; ctx.fillRect(x + W / 2 - 8 + k * 4.2, -13, 2, 5); }
+    }
     ctx.restore();
     if (roof > 0) {
       ctx.save(); ctx.globalAlpha = smooth(0, 0.35, roof);
-      ctx.beginPath(); ctx.rect(-70, -100, 160, 100); ctx.clip();
-      gableRoof(ctx, rnd, x, -(baseH + upH), W, D, 20 * roof, 3, 'rgb(112,74,54)', 'rgb(94,66,48)', 'rgb(148,102,72)');
-      // Skorstein med svak røyk.
-      ctx.fillStyle = 'rgb(106,100,90)'; ctx.fillRect(x + W - 12, -(baseH + upH) - 24 * roof, 5, 12);
+      ctx.beginPath(); ctx.rect(-70, -110, 160, 110); ctx.clip();
+      gableRoof(ctx, rnd, x - jetty, -(baseH + upH), W + jetty * 2, D, 20 * roof, 3, roofC[0], roofC[1], roofC[2]);
+      // Skorstein (venstre eller høyre).
+      ctx.fillStyle = 'rgb(106,100,90)'; const cx = chimLeft ? x + 6 : x + W - 12;
+      ctx.fillRect(cx, -(baseH + upH) - 24 * roof, 5, 12);
       ctx.restore();
     }
   });
@@ -258,6 +294,18 @@ export function paintHall(seed, p) {
     if (roof > 0) {
       ctx.save(); ctx.globalAlpha = smooth(0, 0.35, roof);
       gableRoof(ctx, rnd, x, -H, W, D, 26 * roof, 5, 'rgb(84,86,76)', 'rgb(66,66,58)', 'rgb(116,120,104)');
+      // Klokketårn (byens landemerke): firkantet tårn på mønet med klokkeåpning, grønn kobberspir og vimpel.
+      const tx = x + W * 0.5 + D * DX * 0.5, ty = -H - 23 * roof - D * DY * 0.5 + 3, th = 22 * roof;
+      ctx.fillStyle = 'rgb(152,116,80)'; ctx.fillRect(tx - 6.5, ty - th, 13, th + 2);
+      ctx.fillStyle = 'rgb(100,74,50)'; ctx.beginPath(); ctx.moveTo(tx + 6.5, ty + 2); ctx.lineTo(tx + 11, ty - 1.4); ctx.lineTo(tx + 11, ty - th - 1.4); ctx.lineTo(tx + 6.5, ty - th); ctx.closePath(); ctx.fill();
+      if (roof > 0.7) {
+        ctx.fillStyle = 'rgb(34,24,16)'; ctx.fillRect(tx - 3, ty - th + 4.4, 6, 9); dab(ctx, tx, ty - th + 11, 2, 1.7, 0, 'rgb(190,150,70)');
+        ctx.fillStyle = 'rgb(214,196,150)'; ctx.fillRect(tx - 6.5, ty - th - 0.6, 13, 1.4);
+      }
+      ctx.fillStyle = 'rgb(78,124,108)'; ctx.beginPath(); ctx.moveTo(tx - 8.4, ty - th); ctx.lineTo(tx + 0.6, ty - th - 19 * roof); ctx.lineTo(tx + 12, ty - th - 1.4); ctx.lineTo(tx + 6.5, ty - th + 0.4); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = 'rgba(190,226,206,0.35)'; ctx.beginPath(); ctx.moveTo(tx - 8.4, ty - th); ctx.lineTo(tx + 0.6, ty - th - 19 * roof); ctx.lineTo(tx - 1.6, ty - th + 0.2); ctx.closePath(); ctx.fill();
+      taper(ctx, tx + 0.6, ty - th - 19 * roof, tx + 0.6, ty - th - 26 * roof, 0.8, 0.5, 'rgb(60,44,30)');
+      if (roof > 0.8) { ctx.fillStyle = 'rgb(176,58,48)'; ctx.beginPath(); ctx.moveTo(tx + 1, ty - th - 26 * roof); ctx.lineTo(tx + 8, ty - th - 24 * roof); ctx.lineTo(tx + 1, ty - th - 21.6 * roof); ctx.closePath(); ctx.fill(); }
       // Drageskulpterte gavltopper og en liten bjelle-/lysåpning.
       const rx = x + W + 5;
       taper(ctx, rx, -H, rx + 4, -H - 12 * roof, 1.2, 0.5, 'rgb(64,46,30)');

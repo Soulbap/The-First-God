@@ -4,6 +4,7 @@ import { dist, inBounds, inPond } from './world.js';
 import { spawnHumans } from './population.js';
 import { stampWear } from './wear.js';
 import { storyBuilt } from './story.js';
+import { clearTrees } from './nature.js';
 
 export function siteIsValid(state, type, x, y) {
   const r = B.building[type].radius;
@@ -141,6 +142,7 @@ export function startConstruction(state, type, { onComplete = null, source = nul
   };
   if (B.production[type]) { b.cycle = 0; b.active = false; b.idle = null; b.made = 0; }
   state.buildings.push(b);
+  if (settlementId !== 'first') clearTrees(state, b.x, b.y, def.radius + 52);
   state.events.push({ type: 'constructionStarted', id: b.id, buildingType: type, x: b.x, y: b.y });
   return b;
 }

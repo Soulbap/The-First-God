@@ -119,6 +119,7 @@ function goMaintenance(state, h) {
   if (!choices.length) return false;
   const target = choices[(h.id + h.deliveries) % choices.length];
   h.targetId = target.id || null;
+  h.at = target.type || null; // hva de skal gjøre der (vises som bæring/holdning; påvirker ingen regler)
   h.tx = target.x + range(state.rng, -target.radius * 0.45, target.radius * 0.45);
   h.ty = target.y + target.radius * 0.52 + range(state.rng, 3, 10);
   h.state = 'toMaintain';
@@ -324,7 +325,7 @@ export function stepHuman(state, h, dt) {
       break;
     case 'maintain':
       h.timer -= dt;
-      if (h.timer <= 0) { release(state, h); goIdle(state, h, [0.3, 0.9]); }
+      if (h.timer <= 0) { release(state, h); h.at = null; goIdle(state, h, [0.3, 0.9]); }
       break;
     case 'toExplore':
       if (moveTo(state, h, dt)) { h.state = 'explore'; h.timer = range(state.rng, B.human.explorationSeconds[0], B.human.explorationSeconds[1]); }

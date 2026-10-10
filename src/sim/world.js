@@ -27,7 +27,10 @@ export function isFreeForTree(state, x, y) {
     const need = n.kind === 'tree' ? B.tree.minSpacing : n.radius + 16;
     if (dist(x, y, n.x, n.y) < need) return false;
   }
-  for (const b of state.buildings) if (dist(x, y, b.x, b.y) < b.radius + 26) return false;
+  // OPUS-02: folk holder bygdene åpne — skogen vokser ikke tilbake over hjem og åkre. Bygdens kjerne holdes åpen, og rundt hvert hus
+  // i en bygd er det litt mer luft enn ellers.
+  for (const s of state.settlements || []) if (s.id !== 'first' && dist(x, y, s.x, s.y) < 118) return false;
+  for (const b of state.buildings) if (dist(x, y, b.x, b.y) < b.radius + ((b.settlementId || 'first') === 'first' ? 26 : 58)) return false;
   return true;
 }
 

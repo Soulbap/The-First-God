@@ -17,6 +17,8 @@ import { plankPileSprite, blockPileSprite } from './city.js';
 import { drawOverview } from './overview.js';
 import { stageRank } from '../sim/settlements.js';
 import { buildStreets, lampPosts } from './streets.js';
+import { farmPlots, paintFarm } from './farmland.js';
+import { BALANCE as B } from '../data/balance.js';
 import { propsFor, lantern } from './yards.js';
 import { activityOf, homeOf } from '../sim/activity.js';
 import { dayPhase, lightAt, tintAt } from '../view/daylight.js';
@@ -52,7 +54,7 @@ const lowerBound = (arr, y) => {
 export function createRenderer(canvas) {
   const mainCtx = canvas.getContext('2d');
   let ctx = mainCtx; // byttes midlertidig når hjemmeregionen males til planetens øyeblikksbilde
-  const R = { tiers: new Map(), ctx, weather: { rain: 0, wind: 0 }, view: null, terrain: null, decor: null, env: null, ecologyOverlay: null, ecologyRevision: -1, grain: null, wearCanvas: null, wearImg: null, exposure: null, wearBox: null, fx: createFx(), emitTimers: new Map(), stats: { frameMs: 0, ecologyRefreshMs: 0 } };
+  const R = { tiers: new Map(), ctx, weather: { rain: 0, wind: 0 }, view: null, terrain: null, decor: null, env: null, ecologyOverlay: null, ecologyRevision: -1, grain: null, wearCanvas: null, wearImg: null, exposure: null, wearBox: null, fx: createFx(), emitTimers: new Map(), stats: { frameMs: 0, ecologyRefreshMs: 0, wearMs: 0 } };
   const litterCache = new Map();
 
   R.reset = (state) => {
@@ -81,7 +83,7 @@ export function createRenderer(canvas) {
     R.exposure = new Float32Array(cols * rows);
     R.pave = new Float32Array(cols * rows); // brolagt torg i byen (presentasjon)
     R.lane = new Float32Array(cols * rows); // grusgater i tidlige byer (presentasjon)
-    R.streetSig = ''; R.streets = []; R.lamps = []; R.yards = new Map();
+    R.streetSig = ''; R.streets = []; R.lamps = []; R.yards = new Map(); R.farmSig = ''; R.plots = [];
     R.wearBox = null;
     // Fast kornmønster som gir slitt jord en ujevn kant (deterministisk fra seed).
     const nz = makeNoise(state.seed + 313), rnd = mulberry(state.seed + 317);
@@ -327,7 +329,8 @@ export function createRenderer(canvas) {
     // Ytelse: maks(slitasje, eksponering) per celle beregnes én gang; interpolasjonen er skrevet ut uten funksjonskall.
     const M = R.wearMax || (R.wearMax = new Float32Array(cols * rows));
     for (let j = box.j0; j <= box.j1; j++) for (let i = box.i0; i <= box.i1; i++) { const k = j * cols + i; M[k] = data[k] > ex[k] ? data[k] : ex[k]; }
-    for (let py = box.j0 * WS; py < (box.j1 + 1) * WS; py++) {
+    // Pikselpasset deles opp: selve kartleggingen er rask, men fargeleggingen (~200 000 piksler) fordeles over flere bilder (R.stepWear).
+    const rowBody = (py) => {
       const fy = (py + 0.5) / WS - 0.5, jf = Math.floor(fy), v = fy - jf;
       const j0 = jf < 0 ? 0 : jf >= rows ? rows - 1 : jf, j1 = jf + 1 >= rows ? rows - 1 : jf + 1 < 0 ? 0 : jf + 1;
       const r0 = j0 * cols, r1 = j1 * cols;
@@ -370,10 +373,33 @@ export function createRenderer(canvas) {
         }
         px[o] = r; px[o + 1] = g; px[o + 2] = b; px[o + 3] = a * 215;
       }
-    }
-    R.wearCanvas.getContext('2d').putImageData(R.wearImg, 0, 0);
+    };
+    R.wearJob = { py: box.j0 * WS, end: (box.j1 + 1) * WS, rowBody, state, px, Wp, rows };
   };
 
+  // Fullfører (eller fortsetter) pikselpasset innen et tidsbudsjett i ms. Kalles hvert bilde; billig når det ikke er noe å gjøre.
+  R.stepWear = (budgetMs = 3) => {
+    const J = R.wearJob;
+    if (!J) return false;
+    const t0 = performance.now();
+    while (J.py < J.end) {
+      J.rowBody(J.py++);
+      if (((J.py & 3) === 0) && performance.now() - t0 > budgetMs) return true;
+    }
+    const { state, px, Wp, rows } = J;
+    // Dyrket mark (OPUS-02): teiger rundt hver åker; avlingen følger innhøstingssyklusen.
+    const fsig = state.buildings.reduce((n, b) => n + (b.type === 'field' && b.complete ? 1 : 0) + (b.complete ? 0.001 : 0), 0) + '|' + Math.floor((state.civilization?.foodHarvests || 0) / 12);
+    if (fsig !== R.farmSig) { R.farmSig = fsig; R.plots = farmPlots(state); }
+    if (R.plots.length) {
+      const C = state.civilization, cycle = B.human.foodHarvestSeconds;
+      const crop = C?.foodUnlocked ? clamp(1 - (C.nextFoodAt - state.time) / cycle) : 0.5;
+      paintFarm(px, Wp, rows * WS, state.world.width / Wp, R.plots, crop);
+    }
+    R.wearCanvas.getContext('2d').putImageData(R.wearImg, 0, 0);
+    R.wearJob = null;
+    R.stats.wearMs += (performance.now() - t0 - R.stats.wearMs) * 0.05;
+    return false;
+  };
   // Verdensoversikt: en egen visning av samme tilstand (se render/overview.js).
   R.renderOverview = (state, cam, renderTime, hoverRegionId) => {
     const t0 = performance.now();
@@ -561,7 +587,7 @@ export function createRenderer(canvas) {
     // Dybdesorterte objekter.
     const rankOf = new Map(state.settlements.map((q) => [q.id, stageRank(q.stage)]));
     const sanctIdx = new Map(state.buildings.filter((q) => q.type === 'sanctuary').sort((a, b) => a.id - b.id).map((q, i) => [q.id, i]));
-    const variantOf = (b) => (b.type === 'hut' ? ((rankOf.get(b.settlementId || 'first') ?? 0) >= 4 ? 1 : 0) : b.type === 'sanctuary' ? sanctIdx.get(b.id) : 0);
+    const variantOf = (b) => (b.type === 'hut' ? ((rankOf.get(b.settlementId || 'first') ?? 0) >= 5 ? 1 : 0) : b.type === 'sanctuary' ? sanctIdx.get(b.id) : 0);
     const list = [];
     for (const n of state.nodes) {
       if (!inView(n.x, n.y)) continue;

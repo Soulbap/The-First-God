@@ -28,6 +28,23 @@ function limb(ctx, x0, y0, x1, y1, x2, y2, w, color, foot = 0) {
   }
 }
 
+// Små rekvisitter for hverdagslivet i bygda (OPUS-02): bøtte, kurv og bok. Brukes når noen faktisk er på vei til eller står ved brønn, torg eller hall.
+function bucket(ctx, x, y) {
+  ctx.fillStyle = '#6a4c32'; ctx.beginPath(); ctx.moveTo(x - 1.5, y); ctx.lineTo(x + 1.5, y); ctx.lineTo(x + 1.2, y + 2.5); ctx.lineTo(x - 1.2, y + 2.5); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(120,160,176,0.7)'; ctx.fillRect(x - 1.2, y + 0.1, 2.4, 0.5);
+  ctx.strokeStyle = '#3a2c20'; ctx.lineWidth = 0.28; ctx.beginPath(); ctx.moveTo(x - 1.4, y + 0.9); ctx.lineTo(x + 1.4, y + 0.9); ctx.stroke();
+}
+function basket(ctx, x, y, goods = 0) {
+  ctx.fillStyle = '#8a6a3c'; ctx.beginPath(); ctx.ellipse(x, y + 1.3, 2.1, 1.5, 0, 0, Math.PI); ctx.fill();
+  ctx.fillStyle = ['#a8513e', '#7a8c4a', '#c8a85a'][goods % 3]; ctx.beginPath(); ctx.ellipse(x - 0.6, y + 0.7, 0.8, 0.6, 0, 0, Math.PI * 2); ctx.ellipse(x + 0.8, y + 0.8, 0.8, 0.6, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#5a4428'; ctx.lineWidth = 0.3; ctx.beginPath(); ctx.arc(x, y + 0.9, 2, Math.PI, 0); ctx.stroke();
+}
+function book(ctx, x, y) {
+  ctx.fillStyle = '#5a3a2a'; ctx.fillRect(x - 1.6, y - 1.2, 3.2, 2.4);
+  ctx.fillStyle = '#d8ccae'; ctx.fillRect(x - 1.3, y - 1.0, 2.6, 2.0);
+  ctx.strokeStyle = 'rgba(40,28,18,0.6)'; ctx.lineWidth = 0.2; ctx.beginPath(); ctx.moveTo(x, y - 1); ctx.lineTo(x, y + 1); ctx.stroke();
+}
+
 // Vinkel → håndposisjon for en arm fra skulderen.
 const handAt = (sx, sy, a, len) => ({ x: sx + Math.sin(a) * len, y: sy + Math.cos(a) * len });
 
@@ -223,6 +240,20 @@ export function drawHuman(ctx, h, ctxInfo) {
     arm(0.5, 5.0, far);
     const hnd = arm(ang, 5.0, armCol);
     tool(ctx, hnd.x, hnd.y, ang, 'hammer');
+  } else if ((h.state === 'maintain' || h.state === 'toMaintain') && h.at) {
+    const t = renderTime * 2.1 + h.id * 0.9, walking = h.state === 'toMaintain';
+    if (h.at === 'well') {
+      if (walking) { arm(-0.2 + Math.sin(phase) * 0.3, 5.4, far); const hd = arm(0.9, 5.0, armCol); bucket(ctx, hd.x, hd.y); }
+      else { arm(2.2 + Math.sin(t) * 0.35, 5.2, far); const hd = arm(2.0 + Math.sin(t + 1) * 0.35, 5.2, armCol); ctx.strokeStyle = '#a69268'; ctx.lineWidth = 0.3; ctx.beginPath(); ctx.moveTo(hd.x, hd.y); ctx.lineTo(hd.x + 1.4, hd.y + 4); ctx.stroke(); bucket(ctx, hd.x + 1.4, hd.y + 4); }
+    } else if (h.at === 'market') {
+      arm(-0.2 + (walking ? Math.sin(phase) * 0.3 : 0), 5.4, far);
+      const hd = arm(1.0, 4.8, armCol); basket(ctx, hd.x, hd.y, h.id);
+      if (!walking) arm(1.7 + Math.sin(t) * 0.7, 5.0, armCol);
+    } else if (h.at === 'hall') {
+      const a = arm(1.0, 4.4, far), b = arm(0.9, 4.4, armCol); book(ctx, (a.x + b.x) / 2 + 0.6, (a.y + b.y) / 2 - 0.2);
+    } else if (h.at === 'sanctuary' && !walking) { arm(2.5, 5.4, armCol); arm(2.8, 5.4, far); }
+    else if ((h.at === 'hearth' || h.at === 'fire') && !walking) { arm(-0.05, 5.6, far); arm(1.4 + Math.sin(t * 0.8) * 0.9, 5.2, armCol); }
+    else { const sw = walking ? Math.sin(phase) * 0.5 : 0.05; arm(-sw, 5.6, far); arm(sw, 5.6, armCol); }
   } else if (sitting) {
     const praying = h.timer < 1.6;
     if (praying) { arm(2.5, 5.4, armCol); arm(2.8, 5.4, far); } else { arm(0.9, 5.0, armCol); arm(0.6, 5.0, far); }

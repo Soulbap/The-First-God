@@ -15,6 +15,7 @@ import { PRESTIGE, prestigeCost } from './data/prestige.js';
 import { createAmbience } from './audio/ambience.js';
 import { icon } from './ui/icons.js';
 import { dayPhase } from './view/daylight.js';
+import { audioScene } from './audio/scene.js';
 
 const SEED = 20261009; // samme grunnverden i hver syklus
 const MAX_STEPS_PER_FRAME = 240;
@@ -158,6 +159,7 @@ function resize() {
 function newCycle(loaded = null) {
   state = loaded || createGame(SEED, meta);
   renderer.reset(state);
+  renderer.updateWear(state); renderer.stepWear(1e6); // første bilde skal ha bakken ferdig (lastet verden har allerede spor)
   if (!planet) planet = createPlanet(SEED, state.globe.regions); // geografien er den samme i hver syklus
   if (!planetReady) startPlanetBake(state.globe.regions);
   const C = state.settlement.center;
@@ -347,6 +349,7 @@ function tick(realDt) {
 
   wearTimer -= realDt;
   if (wearTimer <= 0) { wearTimer = 0.5; renderer.updateWear(state); }
+  renderer.stepWear(3); // pikselpasset fordeles over flere bilder (ingen enkeltstående pause)
   saveTimer -= realDt;
   if (saveTimer <= 0) { saveTimer = 20; saveNow(); }
 
@@ -360,12 +363,7 @@ function tick(realDt) {
     const view = currentView();
     hud.update(state, { speed, view: globeMode ? 'world' : view, areaUnlocked: state.unlocks.zoomArea, scale: SCALE_NAMES[view] });
     updateHint();
-    const near = globeMode || overview ? 0 : 1 - Math.min(1, Math.max(0, (cam.w - 650) / 1500));
-    ambience.update({
-      near, globe: globeMode ? 1 : 0, active: speed > 0 ? 1 : 0.25,
-      fires: state.buildings.filter((b) => b.complete && (b.type === 'fire' || b.type === 'hearth')).length,
-      builders: state.humans.filter((h) => h.state === 'build').length,
-    });
+    ambience.update({ ...audioScene(state, cam, renderer.dayOverride ?? dayPhase(state.time), { globe: globeMode || overview }), globe: globeMode ? 1 : 0, active: speed > 0 ? 1 : 0.25 });
   }
 }
 

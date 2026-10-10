@@ -16,13 +16,14 @@ const projectDefs = [
   { id: 'second_hearth', type: 'hearth', cost: { wood: 12, stone: 16 } },
   { id: 'second_field', type: 'field', cost: { wood: 18, stone: 6 } },
   { id: 'second_workshop', type: 'workshop', cost: { wood: 22, stone: 18 } },
+  { id: 'second_field2', type: 'field', cost: { wood: 18, stone: 6 } }, // OPUS-02: Lysningen er en matbygd — flere åkre
 ];
 
 // Planer for senere bosettinger: samme byggeflyt, men tilpasset stedets art.
 const KIND_PLANS = {
   forest: [['storage', { wood: 14, stone: 8 }], ['hut', { wood: 20, stone: 12 }], ['sawmill', { wood: 30, stone: 18, planks: 4 }], ['hut', { wood: 20, stone: 12 }]],
   stone: [['storage', { wood: 14, stone: 8 }], ['hut', { wood: 20, stone: 12 }], ['mason', { wood: 24, stone: 30, planks: 3 }], ['hut', { wood: 20, stone: 12 }]],
-  farm: [['storage', { wood: 14, stone: 8 }], ['hut', { wood: 20, stone: 12 }], ['field', { wood: 18, stone: 6 }], ['hut', { wood: 20, stone: 12 }]],
+  farm: [['storage', { wood: 14, stone: 8 }], ['hut', { wood: 20, stone: 12 }], ['field', { wood: 18, stone: 6 }], ['hut', { wood: 20, stone: 12 }], ['field', { wood: 18, stone: 6 }]],
 };
 export const planFor = (id, kind) => (KIND_PLANS[kind] || KIND_PLANS.farm).map(([type, cost], i) => ({ id: `${id}_${type}_${i}`, type, cost: { ...cost } }));
 

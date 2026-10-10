@@ -18,6 +18,19 @@ export function fellTree(state, t) {
   t.chopped = 0;
 }
 
+// Folk rydder tomta før de bygger i en bygd: trær rundt det nye bygget felles og blir ikke stående som stubber som gror igjen.
+// (Bare presentasjon og plass — ryddingen gir ikke trevirke, så økonomien er uendret.)
+export function clearTrees(state, x, y, r) {
+  let n = 0;
+  for (const t of state.nodes) {
+    if (t.kind !== 'tree' || t.state !== 'alive' || Math.hypot(t.x - x, (t.y - y) * 1.2) > r) continue;
+    fellTree(state, t);
+    t.cleared = true; t.timer = 3 + (t.id % 7); // blir liggende et øyeblikk, så fjernes stubben
+    n++;
+  }
+  return n;
+}
+
 export function harvestTree(state, t, amount) {
   const take = Math.min(amount, treeAvailable(t));
   if (take <= 0) return 0;
@@ -42,6 +55,7 @@ export function stepNature(state, dt) {
         if (n.stump && n.growth > 0.45) n.stump = false;
       } else {
         n.timer -= dt;
+        if (n.timer <= 0 && n.cleared) { n.removed = true; continue; }
         if (n.timer <= 0) {
           n.state = 'alive';
           n.growth = T.saplingStartGrowth;
@@ -56,6 +70,7 @@ export function stepNature(state, dt) {
       n.regenTimer = 0;
     }
   }
+  if (state.nodes.some((n) => n.removed)) state.nodes = state.nodes.filter((n) => !n.removed);
   state.timers.seed -= dt;
   if (state.timers.seed <= 0) {
     state.timers.seed = T.seedIntervalSeconds;
