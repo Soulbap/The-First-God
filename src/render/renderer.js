@@ -24,6 +24,7 @@ import { activityOf, homeOf } from '../sim/activity.js';
 import { dayPhase, lightAt, tintAt } from '../view/daylight.js';
 import { WINDOWS, windowKey, ELECTRIC_LIT } from './civic.js';
 import { tierOf } from '../sim/renovation.js';
+import { landLink } from '../sim/regional.js';
 import { nameOf } from '../sim/chronicle.js';
 
 export const wind = (x, t) => 0.6 * Math.sin(t * 0.9 + x * 0.003) + 0.4 * Math.sin(t * 2.1 + x * 0.009 + 1.3);
@@ -600,13 +601,46 @@ export function createRenderer(canvas) {
     for (const h of state.humans) if (!h.away && inView(h.x, h.y)) drawHumanShadow(ctx, h);
     for (const c of state.globe.caravans) if (inView(c.x, c.y)) drawHumanShadow(ctx, caravanFigure(c));
 
+    // OPUS-11: veier for lastebiler (grusveier mellom hovedstaden og bosettinger innen rekkevidde, først når motorvogner finnes) og
+    // selve lastebilene, som bare kjører mens et ekte lasteoppdrag pågår (se industrial.js).
+    const I11 = state.industrial;
+    if (I11?.roads && (state.resources.truck > 0 || I11.roadDeliveries > 0 || I11.shipments.some((q) => q.mode === 'road'))) {
+      const first = state.settlements[0];
+      for (const S of state.settlements) {
+        if (S.id === 'first' || S.state !== 'active' || !landLink(state, 'first', S.id, B.combustion.road.maxDistance)) continue;
+        taper(ctx, first.x, first.y + 12, S.x, S.y + 12, 6.5, 6.5, 'rgba(96,82,60,.5)');
+        taper(ctx, first.x, first.y + 12, S.x, S.y + 12, 4.2, 4.2, 'rgba(164,148,112,.55)');
+        taper(ctx, first.x, first.y + 12, S.x, S.y + 12, 0.7, 0.7, 'rgba(120,108,84,.5)');
+      }
+      for (const q of I11.shipments) {
+        if (q.mode !== 'road' || q.status !== 'traveling') continue;
+        const A = state.settlements.find((z) => z.id === q.from), D = state.settlements.find((z) => z.id === q.to);
+        if (!A || !D) continue;
+        const t = Math.max(0, Math.min(1, (state.time - q.departAt) / (q.arriveAt - q.departAt))), x = A.x + (D.x - A.x) * t, y = A.y + (D.y - A.y) * t + 12, dir = D.x >= A.x ? 1 : -1;
+        if (!inView(x, y, 40, 40)) continue;
+        dab(ctx, x, y + 3, 11, 2.6, 0, 'rgba(18,14,10,.4)');
+        ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
+        ctx.fillStyle = 'rgb(122,96,62)'; ctx.fillRect(-9, -7, 10, 5);           // lasteflate med last
+        ctx.fillStyle = q.type === 'stone' || q.type === 'cutstone' ? 'rgb(150,148,140)' : 'rgb(176,140,92)'; ctx.fillRect(-8, -9.5, 8, 3);
+        ctx.fillStyle = 'rgb(138,62,48)'; ctx.fillRect(2, -8, 6, 6.4);             // førerhus
+        ctx.fillStyle = 'rgba(176,200,214,.7)'; ctx.fillRect(4.6, -7, 3, 2.6);
+        dab(ctx, -5, -1.2, 1.9, 1.9, 0, 'rgb(28,28,30)'); dab(ctx, 5, -1.2, 1.9, 1.9, 0, 'rgb(28,28,30)');
+        ctx.restore();
+        if (!snapshot && Math.sin(renderTime * 9 + q.id) > 0.8) emit(fx, 'dust', x - dir * 8, y, 1, { spread: 6, spreadY: 3, z: 2 });
+      }
+    }
+
     // OPUS-07: regionale jernbaner er enkle korridorer, men bare når den
     // autoritative industrimodellen faktisk har bygget forbindelsen.
     for (const rail of state.industrial?.rails || []) {
       const a = state.settlements.find((q) => q.id === rail.a), b = state.settlements.find((q) => q.id === rail.b);
       if (!a || !b) continue;
-      taper(ctx, a.x, a.y + 4, b.x, b.y + 4, 2.2, 2.2, 'rgba(48,42,36,.72)');
-      taper(ctx, a.x, a.y + 8, b.x, b.y + 8, 1.1, 1.1, 'rgba(150,132,100,.72)');
+      // Trasé med sviller og to skinner (OPUS-11): leses som jernbane også uten tog.
+      const rl = Math.hypot(b.x - a.x, b.y - a.y), ux = (b.x - a.x) / rl, uy = (b.y - a.y) / rl;
+      taper(ctx, a.x, a.y + 6, b.x, b.y + 6, 5, 5, 'rgba(70,58,44,.35)');
+      for (let d = 0; d < rl; d += 9) { const sx = a.x + ux * d, sy = a.y + 6 + uy * d; if (inView(sx, sy, 20, 20)) taper(ctx, sx - uy * 3.4, sy + ux * 3.4, sx + uy * 3.4, sy - ux * 3.4, 1.4, 1.4, 'rgba(92,70,48,.9)'); }
+      taper(ctx, a.x - uy * 1.9, a.y + 6 + ux * 1.9, b.x - uy * 1.9, b.y + 6 + ux * 1.9, 0.8, 0.8, 'rgba(176,176,172,.85)');
+      taper(ctx, a.x + uy * 1.9, a.y + 6 - ux * 1.9, b.x + uy * 1.9, b.y + 6 - ux * 1.9, 0.8, 0.8, 'rgba(176,176,172,.85)');
       const shipment = state.industrial.shipments.find((q) => q.rail === rail.id && q.status === 'traveling');
       if (shipment) {
         const t = Math.max(0, Math.min(1, (state.time - shipment.departAt) / (shipment.arriveAt - shipment.departAt)));

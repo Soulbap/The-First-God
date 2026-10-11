@@ -134,7 +134,7 @@ export const BALANCE = {
   city: { minPopulation: 12, minFoodStock: 4, minFields: 2, minDeliveries: 6, minInfrastructure: 5 },
   // OPUS-11 · Boligtrinn (se src/sim/renovation.js): krav per trinn (bosettingens trinn og kunnskap), kostnad og tid, og plassbehov.
   renovation: {
-    requires: { 2: { rank: 3 }, 3: { rank: 4, upgrade: 'construction_methods' }, 4: { rank: 5, upgrade: 'factory_manufacture' }, 5: { rank: 5, upgrade: 'electric_power' } },
+    requires: { 2: { rank: 3 }, 3: { rank: 4, upgrade: 'construction_methods' }, 4: { rank: 4, upgrade: 'factory_manufacture' }, 5: { rank: 5, upgrade: 'electric_power' } },
     tiers: {
       2: { cost: { wood: 18, stone: 10, planks: 2 }, seconds: 30 },
       3: { cost: { wood: 24, stone: 30, planks: 6, cutstone: 8 }, seconds: 50 },
@@ -160,10 +160,10 @@ export const BALANCE = {
   // OPUS-06: kapasitet, ikke et globalt nett. Én mølle dekker sin egen bosettings
   // tre lokale foredlingsspor; effekt og slitasje er aggregert og deterministisk.
   mechanical: {
-    components: { wood: 4, metal: 1, out: 1, seconds: 16 },
+    components: { wood: 4, metal: 1, out: 2, seconds: 16 },
     watermill: { wood: 44, stone: 28, planks: 8, mechanicalComponents: 3 },
     windmill: { wood: 38, stone: 20, planks: 10, mechanicalComponents: 3 },
-    minDemand: 2, power: 3, craftMultiplier: 1.65, foodMultiplier: 1.3, ironReserve: 24,
+    minDemand: 2, power: 3, craftMultiplier: 1.65, foodMultiplier: 1.3, ironReserve: 12,
     wearPerSecond: 0.0012, repairAt: 0.42, repair: { wood: 2, mechanicalComponents: 1 },
   },
   industrial: {
@@ -205,7 +205,7 @@ export const BALANCE = {
   // OPUS-08: forbrenningsmotor er kraftkilde som bruker raffinert drivstoff; lastebiler frakter planker på land.
   combustion: {
     engine: { cost: { wood: 20, iron: 6, industrialMachinery: 2, mechanicalComponents: 2 }, power: 4, fuelPerSecond: 0.02, standbyFuelPerSecond: 0.0015, wearPerSecond: 0.0012, repairAt: 0.44, repair: { iron: 1, planks: 2 } },
-    road: { maxDistance: 700, load: 4, cargo: 'planks', reserve: 40, fuelPerTrip: 1, travelSeconds: 20, tripsBeforeService: 3, service: { iron: 1, planks: 2 } },
+    road: { maxDistance: 1100, load: 4, cargo: 'planks', reserve: 40, fuelPerTrip: 1, travelSeconds: 20, tripsBeforeService: 3, service: { iron: 1, planks: 2 } },
   },
   // OPUS-09: fly er lokale oppdrag, ikke et globalt flysystem. Hver flyvning bruker drivstoff og tid,
   // har begrenset rekkevidde og gir kartkunnskap bare over steder som allerede er kjent.

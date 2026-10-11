@@ -6,6 +6,7 @@
 // Hver bosetting ombygger ett hjem om gangen, minst utviklede først, aldri det utvalgte minnestedet.
 import { BALANCE as B } from '../data/balance.js';
 import { stageRank, isHome } from './settlements.js';
+import { landLink } from './regional.js';
 
 export const MAX_TIER = 5;
 
@@ -25,7 +26,10 @@ export function maxTierFor(state, S) {
   let t = 1;
   if (rank >= R[2].rank) t = 2;
   if (rank >= R[3].rank && state.upgrades[R[3].upgrade]) t = 3;
-  if (rank >= R[4].rank && state.upgrades[R[4].upgrade] && state.industrial?.enabled) t = 4;
+  // Bygård i en satellitt krever tunge materialer (tegl, hugget stein, jern) over land: først når lastebiler faktisk finnes (OPUS-11).
+  const hauled = S.id === 'first' || (state.industrial?.roads && ((state.resources.truck || 0) >= 1 || (state.industrial.roadDeliveries || 0) > 0) && landLink(state, 'first', S.id, B.combustion.road.maxDistance))
+    || (state.industrial?.rails || []).some((r) => r.a === S.id || r.b === S.id);
+  if (rank >= R[4].rank && state.upgrades[R[4].upgrade] && state.industrial?.enabled && hauled) t = 4;
   if (rank >= R[5].rank && state.upgrades[R[5].upgrade] && litIds(state).includes(S.id)) t = 5;
   return t;
 }
@@ -49,7 +53,13 @@ function growRadius(state, b, tier) {
   if (clear) b.radius = want;
 }
 
-// Returnerer true når en ny ombygging ble startet i dette steget.
+// Starter selve ombyggingen (materialene er allerede betalt). Brukes av hovedstaden direkte og av regionale prosjekter i satellitter.
+export function beginRenovation(state, b, to) {
+  b.renovation = { to, left: B.renovation.tiers[to].seconds, startedAt: state.time };
+  state.events.push({ type: 'renovationStarted', id: b.id, tier: to, x: b.x, y: b.y });
+}
+
+// Returnerer true når en ny ombygging ble startet (eller bestilt) i dette steget.
 export function stepRenovation(state, dt) {
   let started = false;
   for (const S of state.settlements) {
@@ -76,10 +86,24 @@ export function stepRenovation(state, dt) {
     const candidate = homes.filter((b) => !b.heritage && tierOf(b) >= 1 && tierOf(b) < cap).sort((a, b) => tierOf(a) - tierOf(b) || a.id - b.id)[0];
     if (!candidate) continue;
     const to = tierOf(candidate) + 1, spec = B.renovation.tiers[to];
-    if (!affordable(state, spec.cost)) continue;
-    for (const [k, n] of Object.entries(spec.cost)) state.resources[k] -= n;
-    candidate.renovation = { to, left: spec.seconds, startedAt: state.time };
-    state.events.push({ type: 'renovationStarted', id: candidate.id, tier: to, x: candidate.x, y: candidate.y });
+    if (S.id === 'first') {
+      if (!affordable(state, spec.cost)) continue;
+      for (const [k, n] of Object.entries(spec.cost)) state.resources[k] -= n;
+      beginRenovation(state, candidate, to);
+      started = true;
+      continue;
+    }
+    // En satellitt bruker bare sitt eget lager (OPUS-11): mangler det materialer, bestilles de som et regionalt prosjekt som bærere
+    // eller lastebil leverer, og ombyggingen starter når lageret har alt.
+    const R = state.region;
+    if (!R?.enabled || R.projects[S.id]) continue;
+    S.stock ??= {};
+    if (Object.entries(spec.cost).every(([k, n]) => (S.stock[k] || 0) >= n)) {
+      for (const [k, n] of Object.entries(spec.cost)) S.stock[k] -= n;
+      beginRenovation(state, candidate, to);
+    } else {
+      R.projects[S.id] = { id: `renov:${candidate.id}:${to}`, type: 'renovation', cost: { ...spec.cost }, settlementId: S.id, renovation: { buildingId: candidate.id, to }, urban: true, startedAt: state.time };
+    }
     started = true;
   }
   return started;

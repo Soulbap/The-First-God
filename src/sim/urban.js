@@ -53,7 +53,17 @@ export function stepUrban(state) {
     // Ett prosjekt om gangen i hver bosetting, og aldri mens noe annet ufullført står der.
     if (state.buildings.some((b) => !b.complete && (b.settlementId || 'first') === S.id)) continue;
     const item = nextUrban(state, S);
-    if (!item || !affordable(state, item.cost)) continue;
+    if (!item) continue;
+    // Satellittbosettinger får ikke varer ved trylling (OPUS-11): byvekst der er et regionalt prosjekt som må leveres (bærere eller
+    // lastebil) til bosettingens eget lager, og bygges først når lageret har alt. Bare hovedstaden betaler direkte fra hjemmelageret.
+    if (S.id !== 'first') {
+      const R = state.region;
+      if (!R?.enabled || R.projects[S.id]) continue;
+      R.projects[S.id] = { id: `urban:${item.type}:${S.id}:${U.built || 0}`, type: item.type, cost: { ...item.cost }, settlementId: S.id, startedAt: state.time, urban: true };
+      U.built = (U.built || 0) + 1;
+      return;
+    }
+    if (!affordable(state, item.cost)) continue;
     const site = findBuildSite(state, item.type, S.id);
     if (!site) continue;
     // Kostnaden betales bare når byggingen faktisk starter (tidligere kunne varene trekkes uten at noe ble bygget).

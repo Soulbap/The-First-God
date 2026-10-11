@@ -33,6 +33,13 @@ Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på ve
 
 ### OPUS-11 · integrasjon, verdensutvikling og kvalitet (pågår)
 
+#### Fixed / Changed (fase D · transport uten teleportering, motorisering som synes)
+- **Satellittene får ikke varer ved trylling**: byvekst (brønn, hytte, bolighus) og ombygging av hjem i en satellitt var tidligere betalt direkte fra hovedstadens lager. De er nå regionale prosjekter som leveres til bosettingens eget lager (bærere eller lastebil) og bygges først når lageret har alt. Bare hovedstaden betaler direkte fra hjemmelageret.
+- **Lastebiler tar over transporten** til en bosetting når motorvogner, drivstoff og landforbindelse finnes (landforbindelsen deles av vei og jernbane, `landLink`); da bestilles ingen bærere. Veiens rekkevidde er 1100 (kartet er større). Frø 701: 35–70 lastebilturer i en seks-timers kjøring (tidligere 0).
+- **Veier og lastebiler tegnes** (grusvei mellom hovedstaden og bosettinger innen rekkevidde etter at motorvogner finnes; lastebil med last som følger det ekte oppdraget), og jernbanen har sviller og to skinner.
+- **Bygård i en satellitt** krever at tung last kan fraktes dit (lastebil innen rekkevidde eller jernbane); satellittene når trinn 4 etter det.
+- **Vedlikeholdet av møller og dampmaskiner** (maskindeler) gir 2 deler per metall i stedet for 1: det halverer jern- og kobberforbruket til reparasjoner. Kobber var flaskehalsen for forskningsinstituttet i frø 909. Alle fire testede frø når instituttet nå etter ca. 4,0 timer (tidligere ca. 4,6).
+
 #### Changed (fase E · naturlig fremdrift og skogvern)
 - **Lagertak for tre og stein** (`B.human.stockCap`: 700/600 + 12 per innbygger): folk sanker ikke videre når lageret er rikelig fylt. Tidligere hogg de skogen ned til tom slette mens tre og stein hopet seg opp til titusener uten bruk. Malm og kull hentes som før etter behov. Frø 701: tre ved seks timer ned fra ca. 50 000 til noen tusen.
 - Flyplass, raffineri og flyverk legges lenger ut fra bykjernen (`minRing` 420/240/240), slik at luftfart og tung industri ikke havner midt i tett bebyggelse.

@@ -8,6 +8,7 @@ import { startConstruction, siteIsValid } from './construction.js';
 import { spawnHumans } from './population.js';
 import { settlementById, completedHomesOf, housingCapacity } from './settlements.js';
 import { storyRoute } from './story.js';
+import { beginRenovation } from './renovation.js';
 
 export { settlementStage, settlementRole, localCapacity } from './settlements.js';
 
@@ -27,6 +28,19 @@ const KIND_PLANS = {
   farm: [['storage', { wood: 14, stone: 8 }], ['hut', { wood: 20, stone: 12 }], ['field', { wood: 18, stone: 6 }], ['hut', { wood: 20, stone: 12 }], ['field', { wood: 18, stone: 6 }]],
 };
 export const planFor = (id, kind) => (KIND_PLANS[kind] || KIND_PLANS.farm).map(([type, cost], i) => ({ id: `${id}_${type}_${i}`, type, cost: { ...cost } }));
+
+// Landforbindelse mellom to bosettinger innen en rekkevidde: ikke over vann (tjernet/innsjøer). Brukes av lastebiler og veier.
+export function landLink(s, a, b, maxDistance) {
+  const A = settlementById(s, a), C = settlementById(s, b); if (!A || !C || a === b) return false;
+  const d = Math.hypot(A.x - C.x, A.y - C.y);
+  return d <= maxDistance && !((A.x - s.world.pond.x) * (C.x - s.world.pond.x) < 0 && Math.abs((A.y + C.y) / 2 - s.world.pond.y) < s.world.pond.ry);
+}
+// Lastebil overtar transporten til en bosetting når den kan: motorvogner finnes, drivstoff er der og landforbindelsen holder.
+// Da bestilles ingen bærere (folk bruker tiden på annet arbeid), og lastebilen henter det prosjektet mangler.
+const trucksServe = (state, id) => {
+  const I = state.industrial, R = B.combustion.road;
+  return !!I?.roads && (state.resources.truck || 0) >= 1 && (state.resources.fuel || 0) >= R.fuelPerTrip && landLink(state, 'first', id, R.maxDistance);
+};
 
 const planOf = (state, S) => (S.id === 'second' ? projectDefs : S.plan || []);
 
@@ -106,7 +120,7 @@ function queueNeed(state, p) {
   const amountMax = deliveryAmount(state), S = settlementById(state, p.settlementId);
   for (const [type, need] of Object.entries(p.cost)) {
     const missing = need - stockOf(state, S, type) - carrierTransit(state, p.settlementId, type) - truckTransit(state, p.settlementId, type);
-    if (missing > 0 && state.resources[type] >= Math.min(missing, amountMax)) {
+    if (missing > 0 && !trucksServe(state, p.settlementId) && state.resources[type] >= Math.min(missing, amountMax)) {
       state.region.deliveries.push({ id: state.nextId++, project: p.id, type, amount: Math.min(missing, amountMax), status: 'queued', source: 'first', destination: p.settlementId, createdAt: state.time, carrierId: null });
     }
   }
@@ -115,10 +129,17 @@ function queueNeed(state, p) {
 function finishProject(state, p) {
   const S = settlementById(state, p.settlementId);
   if (!S || Object.entries(p.cost).some(([k, n]) => stockOf(state, S, k) < n)) return;
+  if (p.renovation) { // ombygging av et eksisterende hjem: materialene brukes fra bosettingens lager, ingen ny tomt
+    const b = state.buildings.find((q) => q.id === p.renovation.buildingId);
+    for (const [k, n] of Object.entries(p.cost)) S.stock[k] -= n;
+    if (b && !b.renovation) beginRenovation(state, b, p.renovation.to); else for (const [k, n] of Object.entries(p.cost)) S.stock[k] += n; // bygget er borte: varene blir liggende
+    delete state.region.projects[S.id];
+    return;
+  }
   const site = localSite(state, p.type, S, S.projectsDone || 0);
   if (!site) return;
   const b = startConstruction(state, p.type, { source: p.id, site, settlementId: S.id, onComplete: p.type === 'hut' ? { regionalPopulation: 1 } : null });
-  if (b) { for (const [k, n] of Object.entries(p.cost)) S.stock[k] -= n; state.region.completedProjects++; S.projectsDone = (S.projectsDone || 0) + 1; delete state.region.projects[S.id]; }
+  if (b) { for (const [k, n] of Object.entries(p.cost)) S.stock[k] -= n; state.region.completedProjects++; if (!p.urban) S.projectsDone = (S.projectsDone || 0) + 1; delete state.region.projects[S.id]; }
 }
 
 export function beginDelivery(state, h) {

@@ -3,7 +3,7 @@
 import { BALANCE as B } from '../data/balance.js';
 import { startConstruction, findBuildSite } from './construction.js';
 import { settlementById } from './settlements.js';
-import { projectNeeds, stockAdd } from './regional.js';
+import { projectNeeds, stockAdd, landLink } from './regional.js';
 import { chronicle } from './chronicle.js';
 import { factoryPower, stepPower } from './power.js';
 import { stepPetroleum } from './petroleum.js';
@@ -93,11 +93,7 @@ function dispatchRail(s) {
 }
 
 // OPUS-08: landforbindelse for lastebiler. Samme regler som jernbanen, men kortere rekkevidde (ingen havkryssing).
-function landLink(s, a, b, maxDistance) {
-  const A = settlementById(s, a), C = settlementById(s, b); if (!A || !C || a === b) return false;
-  const d = Math.hypot(A.x - C.x, A.y - C.y);
-  return d <= maxDistance && !((A.x - s.world.pond.x) * (C.x - s.world.pond.x) < 0 && Math.abs((A.y + C.y) / 2 - s.world.pond.y) < s.world.pond.ry);
-}
+export { landLink };
 function roadPair(s) {
   const active = s.settlements.filter((q) => q.state === 'active');
   for (const a of active) for (const b of active) if (a.id < b.id && landLink(s, a.id, b.id, B.combustion.road.maxDistance)) return { a: a.id, b: b.id };
