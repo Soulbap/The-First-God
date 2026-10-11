@@ -220,7 +220,12 @@ function chooseTask(state, h) {
   // fordi nærmere malm alltid vinner og damp/elektrisitet aldri får brensel.
   // OPUS-11: i stedet for «nærmeste mineral» velges det mineralet som mangler mest i forhold til sitt lagermål.
   const wanted = wantedMineral(state);
-  const n = (wanted && findNode(state, h, 'mineral', wanted)) || findNode(state, h, kind) || findNode(state, h, kind === 'tree' ? 'rock' : 'tree');
+  // Folk sanker ikke videre når lageret er rikelig fylt (OPUS-11): ellers hogges skogen ned til tom slette mens tre og stein hoper seg opp
+  // til titusener uten bruk. Taket vokser med folketallet, og som før hentes malm og kull etter behov.
+  const cap = B.human.stockCap, pop = state.humans.length;
+  const wantsTree = state.resources.wood < cap.wood + cap.perPerson * pop, wantsRock = state.resources.stone < cap.stone + cap.perPerson * pop;
+  const first = kind === 'tree' ? (wantsTree ? 'tree' : null) : (wantsRock ? 'rock' : null), other = kind === 'tree' ? (wantsRock ? 'rock' : null) : (wantsTree ? 'tree' : null);
+  const n = (wanted && findNode(state, h, 'mineral', wanted)) || (first && findNode(state, h, first)) || (other && findNode(state, h, other));
   if (n) {
     n.reservedBy.push(h.id);
     h.targetId = n.id;

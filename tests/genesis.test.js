@@ -190,7 +190,7 @@ test('felles lager, ordnet arbeid og landsbyildsted bygges autonomt og utløser 
 
 test('landsbyen får korte vedlikeholdsbesøk og Utforskertrang sender én innbygger ut og hjem', () => {
   const s = settledGame();
-  s.resources.wood = 1200; s.resources.stone = 1200;
+  s.resources.wood = 600; s.resources.stone = 600; // under lagertaket (B.human.stockCap): folk sanker videre
   assert.equal(purchase(s, 'common_fire').ok, true);
   assert.ok(runUntil(s, () => s.buildings.some((b) => b.type === 'fire' && b.complete), 60));
   for (let i = 0; i < 3; i++) {

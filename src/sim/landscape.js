@@ -125,7 +125,7 @@ export function populateLandscape(state, rng, biome, ctx) {
   const centers = [];
   for (const z of zones.filter((q) => q.kind === 'forest')) for (let i = 0; i < 4; i++) centers.push({ x: z.x + range(rng, -0.6, 0.6) * z.rx, y: z.y + range(rng, -0.6, 0.6) * z.ry, big: true });
   for (let g = 0; g < Math.round(prof.groves * B.landscape.areaScale); g++) {
-    const near = g % 3 === 0, a = rand(rng) * Math.PI * 2, d = near ? range(rng, 260, 620) : range(rng, 300, 1500); // hver tredje lund nær leiren
+    const near = g % 2 === 0, a = rand(rng) * Math.PI * 2, d = near ? range(rng, 280, 820) : range(rng, 300, 1500); // hver andre lund nær leiren
     centers.push({ x: C.x + Math.cos(a) * d, y: C.y + Math.sin(a) * d * 0.7, big: false });
   }
   for (const c of centers) {

@@ -814,10 +814,13 @@ export function createRenderer(canvas) {
         if (!b.complete || !inView(b.x, b.y, 80, 80)) continue;
         const key = windowKey(b, variantOf(b));
         const wins = WINDOWS[key];
-        if (wins) for (const [wx, wy, ww, wh] of wins) {
-          ctx.fillStyle = `rgba(255,200,118,${(0.8 * k).toFixed(3)})`; ctx.fillRect(b.x + wx, b.y + wy, ww, wh);
-          warm(b.x + wx + ww / 2, b.y + wy + wh / 2 + 2, 11, 0.32);
-        }
+        if (wins) wins.forEach(([wx, wy, ww, wh], wi) => {
+          // I høye hus lyser ikke alle vinduer samtidig (deterministisk per bygg og vindu), og lyset er dempet.
+          const many = wins.length > 8;
+          if (many && ((b.id * 7 + wi * 13) % 5 === 0)) return;
+          ctx.fillStyle = `rgba(255,200,118,${((many ? 0.62 : 0.8) * k).toFixed(3)})`; ctx.fillRect(b.x + wx, b.y + wy, ww, wh);
+          warm(b.x + wx + ww / 2, b.y + wy + wh / 2 + 2, many ? 9 : 11, many ? 0.18 : 0.32);
+        });
         // Strøm (OPUS-11): industri og institutt lyses bare i bosettinger der generator og nett faktisk leverer. Uten strøm er de mørke.
         const powered = litSet.has(b.settlementId || 'first');
         if (ELECTRIC_LIT[b.type] && powered && (b.active || b.type === 'generator' || b.type === 'research_institute')) for (const [wx, wy, ww, wh] of WINDOWS[ELECTRIC_LIT[b.type]]) {

@@ -204,3 +204,36 @@ test('Ragnarok: en ny syklus har ingen regionlager, bosettingslager eller boligt
   assert.ok(fresh.settlements.every((q) => Object.keys(q.stock || {}).length === 0));
   assert.equal(fresh.renovation.done, 0); assert.deepEqual(fresh.siteMisses, {});
 });
+
+test('utforsking: kameraet kan bytte mellom regioner uten å endre simuleringen, og fjerne land utvikler seg utenfor skjermen', () => {
+  const run = (switching) => {
+    const s = createGame(1112); s.materials.enabled = true;
+    const r = outpost(s, 'dal');
+    const ids = s.globe.regions.filter((q) => !q.home).map((q) => q.id);
+    for (let i = 0; i < 10; i++) {
+      advance(s, 30);
+      if (switching) { s.globe.activeRegionId = ids[i % ids.length]; visitRegionIfAllowed(s, ids[(i * 3) % ids.length]); }
+    }
+    s.globe.activeRegionId = s.globe.regions.find((q) => q.home).id;
+    return { s, r };
+  };
+  const a = run(false), b = run(true);
+  assert.equal(fingerprint(a.s), fingerprint(b.s), 'kameraet er ren presentasjon');
+  assert.ok(a.r.extracted > 5 && Object.values(a.r.stock).some((v) => v > 1), 'regionen utvinner og lagrer mens ingen ser på');
+});
+
+function visitRegionIfAllowed(s, id) { const r = s.globe.regions.find((q) => q.id === id); if (r && (r.home || r.state !== 'ukjent')) s.globe.activeRegionId = id; }
+
+test('lagring: en v10-lagring uten OPUS-11-felt migreres uten tap og spillet fortsetter uten negative eller ugyldige verdier', () => {
+  const s = createGame(1113); advance(s, 400);
+  const raw = JSON.parse(serialize(s)); raw.v = 10;
+  for (const r of raw.state.globe.regions) { delete r.stock; delete r.homes; delete r.building; delete r.extracted; delete r.aerial; }
+  for (const q of raw.state.settlements) delete q.stock;
+  delete raw.state.renovation; delete raw.state.siteMisses; delete raw.state.world.streams; delete raw.state.world.waters; delete raw.state.world.zones;
+  const old = deserialize(JSON.stringify(raw));
+  assert.ok(old, 'lagringen leses');
+  assert.ok(old.globe.regions.every((r) => r.stock && r.homes != null) && old.settlements.every((q) => q.stock));
+  assert.equal(old.renovation.done, 0); assert.deepEqual(old.world.streams, []);
+  advance(old, 600);
+  assert.ok(Object.values(old.resources).every((n) => Number.isFinite(n) && n >= 0), 'ingen negative eller ugyldige ressurser');
+});

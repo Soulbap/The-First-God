@@ -33,6 +33,17 @@ Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på ve
 
 ### OPUS-11 · integrasjon, verdensutvikling og kvalitet (pågår)
 
+#### Changed (fase E · naturlig fremdrift og skogvern)
+- **Lagertak for tre og stein** (`B.human.stockCap`: 700/600 + 12 per innbygger): folk sanker ikke videre når lageret er rikelig fylt. Tidligere hogg de skogen ned til tom slette mens tre og stein hopet seg opp til titusener uten bruk. Malm og kull hentes som før etter behov. Frø 701: tre ved seks timer ned fra ca. 50 000 til noen tusen.
+- Flyplass, raffineri og flyverk legges lenger ut fra bykjernen (`minRing` 420/240/240), slik at luftfart og tung industri ikke havner midt i tett bebyggelse.
+- Nattlys i høye hus: ikke alle vinduer lyser samtidig (deterministisk per bygg), og lyset er dempet.
+
+#### Added
+- `tools/progression-report.mjs`: fremdriftsrapport per frø (milepæler, folk, boligtrinn, ressurser, årer, regionlager, transport, flaskehals) i markdown eller JSON; `tools/capture-gui.mjs` har et OPUS_11-sett med 16 faste scener (`OPUS_11=1`).
+
+#### Tests
+- To nye tester (kamerabytte mellom regioner endrer ikke simuleringen og fjerne land utvikler seg utenfor skjermen; v10-lagring migreres uten tap). Genesis-testen for vedlikeholdsrytme gir nå lageret under lagertaket. 202 tester består.
+
 #### Added (fase C/D · bygg som utvikler seg, industriens utseende, regionale besøk)
 - **Boligtrinn** (`src/sim/renovation.js`): 1 halmhytte → 2 tømmerstue → 3 steinhus → 4 bygård (flere etasjer, krever Fabrikkhåndverk og industri, bosetting «By») → 5 moderne blokk (krever Elektrisk kraft og at bosettingen faktisk har strøm). Ombygging er en ekte hendelse: kostnad trekkes ved start (ingen dobbel betaling), arbeid tar tid og krever folk i bosettingen, stillas vises mens det pågår, og boligplassen øker (2/2/3/4/6/8 per trinn). Én ombygging om gangen per bosetting, minst utviklede først. Det eldste halmhuset og det første lyet bevares som minnesteder (`heritage`) og bygges aldri om. Folketallet følger boligplassen (frø 701: 78 → 169 innen seks timer).
 - **Nye sprites**: `src/render/housing.js` (bygård, moderne blokk) og `src/render/industry.js` (oljebrønn med tårn, raffineri med tanker og fakkel, generator, nettstasjon, flyplass med rullebane/hangar/vindpølse, forskningsinstitutt, telegrafmast, gruvehode, dampmaskinhus, jernbanestasjon, garasje, rent verksted med sagtak). Tidligere gjenbrukte OPUS-08..10 verksted/fabrikk for alt dette.

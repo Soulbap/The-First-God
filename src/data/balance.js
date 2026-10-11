@@ -38,6 +38,8 @@ export const BALANCE = {
     foundingParty: 3,
     regionalDelivery: 4,
     regionalPopulationSeconds: 34,
+    // OPUS-11: lagertak for tre og stein (grunnnivå + per innbygger). Over taket sanker ikke folk den varen.
+    stockCap: { wood: 700, stone: 600, perPerson: 12 },
     foodHarvestSeconds: 16,
     foodPerHarvest: 3,
     foodForGrowth: 2,
@@ -77,13 +79,13 @@ export const BALANCE = {
     generator: { radius: 36, work: 58, minRing: 150 },
     grid_station: { radius: 24, work: 30, minRing: 150 },
     oil_well: { radius: 30, work: 44, minRing: 170 },
-    refinery: { radius: 46, work: 70, minRing: 170 },
+    refinery: { radius: 46, work: 70, minRing: 240 },
     combustion_engine: { radius: 34, work: 50, minRing: 150 },
     motor_depot: { radius: 44, work: 60, minRing: 165 },
     // OPUS-09: presisjon, flyverksted og flyplass.
     precision_works: { radius: 40, work: 62, minRing: 150 },
-    aircraft_works: { radius: 50, work: 80, minRing: 175 },
-    airfield: { radius: 60, work: 96, minRing: 230 },
+    aircraft_works: { radius: 50, work: 80, minRing: 240 },
+    airfield: { radius: 60, work: 96, minRing: 420 },
     // OPUS-10: elektronikk, kommunikasjon og vitenskap.
     electronics_works: { radius: 38, work: 66, minRing: 160 },
     telegraph: { radius: 22, work: 34, minRing: 150 },

@@ -143,7 +143,29 @@ const OPUS_01_SIZES = [[1366, 768], [1280, 720]].flatMap(([w, h]) => [
   { name: `s-${w}x${h}-continent`, w, h, js: `${BOT} ${PLANET} to('first_world_civilization'); T.advance(30); calm(); close(); await planet(0.6); settle(1);` },
   { name: `s-${w}x${h}-ragnarok`, w, h, js: `${BOT} to('city_rises'); T.cancelGlide(); T.state.events.length = 0; T.hud.reset(); T.tick(0.4); close(); T.view(C.x, C.y + 10, 900); document.querySelector('[data-nav="ragnarok"]').click(); settle(0.4);` },
 ]);
-const SCENES = process.env.OPUS_01 === 'sizes' ? OPUS_01_SIZES : process.env.OPUS_01 === '1' ? OPUS_01_SCENES : process.env.OPUS_01 === 'transition' ? OPUS_01_TRANSITION : process.env.GAMEPLAY_07_10 === '1' ? GAMEPLAY_07_10_SCENES : process.env.GAMEPLAY_06 === '1' ? GAMEPLAY_06_SCENES : process.env.GAMEPLAY_05 === '1' ? GAMEPLAY_05_SCENES : process.env.GAMEPLAY_04 === '1' ? GAMEPLAY_04_SCENES : process.env.GAMEPLAY_03 === '1' ? GAMEPLAY_03_SCENES : process.env.GAMEPLAY_02 === '1' ? GAMEPLAY_02_SCENES : DEFAULT_SCENES;
+// OPUS-11: visuell kvalitetssikring. Alle bildene er ekte spill (boten, ingen snarveier); bare kameraet og klokkeslettet settes.
+// Boten kjører med større tidsgrense, siden kjeden til planetkameraet tar ca. 3 timer spilltid.
+const BOT11 = BOT.replace('14400', '21600') + ' T.state.unlocks.zoomArea = true;';
+const day = (p = 0.5) => `T.setDay(${p});`;
+const OPUS_11_SCENES = [
+  { name: '01-landscape-fresh-world', w: 1920, h: 1080, js: `${BOT11} T.view(C.x, C.y, 1700); ${day()} calm(); settle(1);` },
+  { name: '02-resource-rich-early', w: 1920, h: 1080, js: `${BOT11} to('settlement'); T.advance(40); ${day()} calm(); T.view(C.x - 10, C.y - 10, 1400); close(); settle(1.5);` },
+  { name: '03-early-camp-spacing', w: 1920, h: 1080, js: `${BOT11} to('first_village'); T.advance(90); ${day()} calm(); T.view(C.x - 10, C.y - 10, 820); close(); settle(1.5);` },
+  { name: '04-two-settlements-separated', w: 1920, h: 1080, js: `${BOT11} to((s) => s.settlements.length >= 3); T.advance(240); ${day()} calm(); const A = T.state.settlements[0], Bb = T.state.settlements[1]; T.view((A.x + Bb.x) / 2, (A.y + Bb.y) / 2, 2300); close(); settle(2);` },
+  { name: '05-architecture-village-to-city', w: 1920, h: 1080, js: `${BOT11} to('city_rises'); T.advance(60); ${day()} calm(); T.view(C.x, C.y + 10, 820); close(); settle(1.5);` },
+  { name: '06-industrial-town', w: 1920, h: 1080, js: `${BOT11} to((s) => s.buildings.some((b) => b.type === 'metalworks' && b.complete)); T.advance(400); ${day()} calm(); T.view(C.x, C.y + 10, 1000); close(); settle(1.5);` },
+  { name: '07-industrial-close-oil-refinery', w: 1920, h: 1080, js: `${BOT11} to((s) => s.buildings.some((b) => b.type === 'refinery' && b.complete)); T.advance(60); ${day()} calm(); const r = first('refinery'); T.view(r.x, r.y - 10, 520); close(); settle(1.5);` },
+  { name: '08-electrified-city-night', w: 1920, h: 1080, js: `${BOT11} to((s) => s.industrial.litSettlements.length > 0 && s.buildings.some((b) => b.type === 'grid_station' && b.complete)); T.advance(1500); ${day(0.02)} calm(); T.view(C.x, C.y + 10, 900); close(); settle(1.5);` },
+  { name: '09-electrified-city-day-modern-homes', w: 1920, h: 1080, js: `${BOT11} to((s) => s.industrial.litSettlements.length > 0); T.advance(2500); ${day()} calm(); T.view(C.x, C.y + 10, 760); close(); settle(1.5);` },
+  { name: '10-airfield-and-science', w: 1920, h: 1080, js: `${BOT11} to((s) => s.buildings.some((b) => b.type === 'research_institute' && b.complete)); T.advance(120); ${day()} calm(); const a = first('airfield'); T.view(a ? a.x : C.x, a ? a.y : C.y, 900); close(); settle(1.5);` },
+  { name: '11-mature-settlement-roads-districts', w: 1920, h: 1080, js: `${BOT11} to((s) => s.buildings.some((b) => b.type === 'research_institute' && b.complete)); T.advance(300); ${day()} calm(); T.view(C.x, C.y + 10, 1250); close(); settle(1.5);` },
+  { name: '12-normal-zoom-readable-buildings', w: 1920, h: 1080, js: `${BOT11} to((s) => s.buildings.some((b) => b.type === 'research_institute' && b.complete)); T.advance(300); ${day()} calm(); T.view(C.x - 40, C.y + 20, 520); close(); settle(1.5);` },
+  { name: '13-remote-region-local-zoom', w: 1920, h: 1080, js: `${BOT11} to((s) => s.globe.regions.filter((r) => r.state === 'etablert').length >= 2); T.advance(200); const r = T.state.globe.regions.find((q) => q.state === 'etablert' && q.homes >= 2) || T.state.globe.regions.find((q) => q.state === 'etablert'); T.visitRegion(r.id); ${day()} calm(); T.tick(0.5); settle(1.5);` },
+  { name: '14-regional-map-continent', w: 1920, h: 1080, js: `${BOT11} ${PLANET} to('planetary_survey'); T.advance(30); calm(); close(); await planet(0.6); settle(1.5);` },
+  { name: '15-planet-view', w: 1920, h: 1080, js: `${BOT11} ${PLANET} to('planetary_survey'); T.advance(30); calm(); close(); await planet(3.1); settle(1.5);` },
+  { name: '16-settlement-clearing-no-regrowth', w: 1920, h: 1080, js: `${BOT11} to('city_rises'); T.advance(1800); ${day()} calm(); T.view(C.x, C.y + 10, 1500); close(); settle(1.5);` },
+];
+const SCENES = process.env.OPUS_11 === '1' ? OPUS_11_SCENES : process.env.OPUS_01 === 'sizes' ? OPUS_01_SIZES : process.env.OPUS_01 === '1' ? OPUS_01_SCENES : process.env.OPUS_01 === 'transition' ? OPUS_01_TRANSITION : process.env.GAMEPLAY_07_10 === '1' ? GAMEPLAY_07_10_SCENES : process.env.GAMEPLAY_06 === '1' ? GAMEPLAY_06_SCENES : process.env.GAMEPLAY_05 === '1' ? GAMEPLAY_05_SCENES : process.env.GAMEPLAY_04 === '1' ? GAMEPLAY_04_SCENES : process.env.GAMEPLAY_03 === '1' ? GAMEPLAY_03_SCENES : process.env.GAMEPLAY_02 === '1' ? GAMEPLAY_02_SCENES : DEFAULT_SCENES;
 const ACTIVE_SCENES = process.env.CAPTURE_SCENES
   ? SCENES.filter((s) => process.env.CAPTURE_SCENES.split(',').some((name) => s.name.startsWith(name.trim())))
   : SCENES;
