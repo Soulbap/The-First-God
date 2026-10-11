@@ -5,6 +5,7 @@ import { NAMES } from '../data/names.js';
 import { mulberry } from '../core/rng.js';
 
 const MAX_ENTRIES = 90;
+const FREQUENT = new Set(['explore', 'route', 'festival', 'work']);
 
 export const createChronicle = () => ({ entries: [], keys: {}, nameN: 0 });
 
@@ -51,7 +52,12 @@ export function chronicle(state, key, kind, text, at = null) {
   if (C.keys[key]) return false;
   C.keys[key] = 1;
   C.entries.push({ t: state.time, kind, text, x: at?.x ?? null, y: at?.y ?? null });
-  if (C.entries.length > MAX_ENTRIES) C.entries.splice(0, C.entries.length - MAX_ENTRIES);
+  // Er kronikken full, forsvinner de eldste hyppige postene (kartlegging, ruter, fester, arbeid) først. Grunnleggelser, byer og milepæler
+  // er historiens ankerpunkter og blir stående (OPUS-11: 14 land gir mange kartleggingsposter som ellers presset dem ut).
+  while (C.entries.length > MAX_ENTRIES) {
+    const i = C.entries.findIndex((e) => FREQUENT.has(e.kind));
+    C.entries.splice(i >= 0 ? i : 0, 1);
+  }
   state.events.push({ type: 'chronicle', kind, text, x: at?.x ?? null, y: at?.y ?? null });
   return true;
 }

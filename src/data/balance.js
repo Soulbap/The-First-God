@@ -13,7 +13,7 @@ export const BALANCE = {
     saplingStartGrowth: 0.04,
     seedIntervalSeconds: 12,
     seedChance: 0.75,
-    maxTrees: 380,
+    maxTrees: 520,
     minSpacing: 32,
   },
   // Løse steiner bærer den første byggingen; større forekomster er fortsatt verdifulle senere.

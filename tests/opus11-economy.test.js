@@ -151,7 +151,7 @@ test('avstand: bosettinger ligger minst en bosettingsavstand fra hverandre, og l
   assert.ok(s.settlements.length >= 3, 'flere bosettinger oppstod');
   for (const a of s.settlements) for (const b of s.settlements) if (a.id < b.id) assert.ok(Math.hypot(a.x - b.x, a.y - b.y) >= B.realm.minSiteSpacing - 1, `${a.id}–${b.id}`);
   // Luft: samme avstand er ugyldig i en leir, men gyldig i en by.
-  const w = createGame(1109), C = w.settlement.center;
+  const w = createGame(1109), C = w.settlement.center; w.nodes = []; // ingen trær i veien for prøvepunktet
   addBuilding(w, 'hut', 'first', C.x + 300, C.y + 100);
   const r = B.building.hut.radius, d = r + 30 + 16 + 4; // rett utenfor vanlig klarering, innenfor leirens ekstra luft
   w.settlements[0].stage = 'Leir'; assert.equal(siteIsValid(w, 'hut', C.x + 300 + d, C.y + 100, 'first'), false);

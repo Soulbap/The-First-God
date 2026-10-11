@@ -111,7 +111,7 @@ export function generateGeography(state, rng, biome) {
   const k = L.areaScale; // kartet er større enn før: flere soner, i samme størrelse
   place('rocky', Math.round(prof.outcrops * k), [110, 190], L.outcropClear);
   place('meadow', Math.round(prof.meadows * k), [170, 280], 260);
-  place('forest', Math.max(3, Math.round(prof.groves * k / 4)), [200, 330], 300);
+  place('forest', Math.max(3, Math.round(prof.groves * k / 8)), [200, 330], 300);
 }
 
 export const zoneAt = (state, x, y, kind) => (state.world.zones || []).some((z) => z.kind === kind && ell(x, y, z.x, z.y, z.rx, z.ry) < 1);
@@ -122,19 +122,34 @@ export function populateLandscape(state, rng, biome, ctx) {
   const prof = PROFILES[biome] || PROFILES.skog, C = state.settlement.center, W = state.world.width, H = state.world.height;
   const zones = state.world.zones, treeCount = () => state.nodes.reduce((n, q) => n + (q.kind === 'tree' ? 1 : 0), 0);
   // Lunder: sentre i skogsoner trekkes først, så vilkårlig. Hver lund har en hovedart; kanten blandes.
-  const centers = [];
-  for (const z of zones.filter((q) => q.kind === 'forest')) for (let i = 0; i < 4; i++) centers.push({ x: z.x + range(rng, -0.6, 0.6) * z.rx, y: z.y + range(rng, -0.6, 0.6) * z.ry, big: true });
+  // Tidlig stein (plasseres FØR trærne, slik at tette skoger aldri tar plassen til de første steinene):
+  // løse steiner i rimelig gangavstand fra leiren, slik at de første byggene aldri står og venter på stein.
+  let rocks = 0;
+  for (let tries = 0; tries < 400 && rocks < B.rock.earlyDeposits; tries++) {
+    const a = rand(rng) * Math.PI * 2, d = range(rng, 150, rocks < B.rock.earlyNear ? B.rock.earlyRadius : 820);
+    const x = C.x + Math.cos(a) * d, y = C.y + Math.sin(a) * d * 0.7;
+    const r = range(rng, 14, 28);
+    if (x < 60 || y < 60 || x > W - 60 || y > H - 60 || inAnyWater(state, x, y, 40)) continue;
+    if (state.nodes.some((n) => Math.hypot(x - n.x, y - n.y) < (n.kind === 'rock' ? n.radius + r + 40 : r + 24))) continue;
+    addRock(state, x, y, r);
+    rocks++;
+  }
+  // Rekkefølgen styrer hvem som rammes av treantallstaket: lunder nær leiren først (leiren ligger ved skogen, og nærskogen er det
+  // folk hogger i), så skogsonene, så de fjerne lundene (OPUS-11). Uten dette ble tretaket brukt opp i fjerne soner.
+  const nearC = [], farC = [], zoneC = [];
+  for (const z of zones.filter((q) => q.kind === 'forest')) for (let i = 0; i < 2; i++) zoneC.push({ x: z.x + range(rng, -0.6, 0.6) * z.rx, y: z.y + range(rng, -0.6, 0.6) * z.ry, big: true });
   for (let g = 0; g < Math.round(prof.groves * B.landscape.areaScale); g++) {
     const near = g % 5 < 3, a = rand(rng) * Math.PI * 2, d = near ? range(rng, 260, 780) : range(rng, 300, 1500); // tre av fem lunder nær leiren
-    centers.push({ x: C.x + Math.cos(a) * d, y: C.y + Math.sin(a) * d * 0.7, big: false });
+    (near ? nearC : farC).push({ x: C.x + Math.cos(a) * d, y: C.y + Math.sin(a) * d * 0.7, big: false });
   }
+  const centers = [...nearC, ...zoneC, ...farC];
   for (const c of centers) {
     if (c.x < 60 || c.y < 60 || c.x > W - 60 || c.y > H - 60 || inAnyWater(state, c.x, c.y, 60)) continue;
     if (zoneAt(state, c.x, c.y, 'meadow')) continue;
     const species = rand(rng) < prof.spruce ? 'spruce' : 'birch';
-    const count = Math.round(range(rng, prof.grove[0], prof.grove[1]) * (c.big ? 1.8 : 1));
+    const count = Math.round(range(rng, prof.grove[0], prof.grove[1]) * (c.big ? 1.5 : 1));
     for (let i = 0; i < count; i++) {
-      if (treeCount() >= B.tree.maxTrees - 24) break; // plass til frøspredning og gjenvekst
+      if (treeCount() >= B.tree.maxTrees - 60) break; // plass til frøspredning og gjenvekst
       for (let tries = 0; tries < 8; tries++) {
         const x = c.x + (rand(rng) + rand(rng) - 1) * 138, y = c.y + (rand(rng) + rand(rng) - 1) * 102;
         if (!isFreeForTree(state, x, y) || zoneAt(state, x, y, 'meadow') || zoneAt(state, x, y, 'rocky') && rand(rng) < 0.7) continue;
@@ -170,15 +185,5 @@ export function populateLandscape(state, rng, biome, ctx) {
       }
     }
   }
-  // Tidlig stein: løse steiner i rimelig gangavstand fra leiren, slik at de første byggene aldri står og venter på stein.
-  let rocks = 0;
-  for (let tries = 0; tries < 400 && rocks < B.rock.earlyDeposits; tries++) {
-    const a = rand(rng) * Math.PI * 2, d = range(rng, 150, rocks < B.rock.earlyNear ? B.rock.earlyRadius : 820);
-    const x = C.x + Math.cos(a) * d, y = C.y + Math.sin(a) * d * 0.7;
-    const r = range(rng, 14, 28);
-    if (x < 60 || y < 60 || x > W - 60 || y > H - 60 || inAnyWater(state, x, y, 40)) continue;
-    if (state.nodes.some((n) => Math.hypot(x - n.x, y - n.y) < (n.kind === 'rock' ? n.radius + r + 40 : r + 24))) continue;
-    addRock(state, x, y, r);
-    rocks++;
-  }
+
 }
