@@ -16,6 +16,7 @@ import { stepProduction } from './production.js';
 import { stepRealm } from './realm.js';
 import { stepWorld } from './worldmap.js';
 import { refreshRoles } from './settlements.js';
+import { stepStreets } from './streets.js';
 import { applyLegacy } from './legacy.js';
 import { storyMilestone } from './story.js';
 import { stepUrban } from './urban.js';
@@ -55,7 +56,7 @@ export function step(state, dt = DT) {
   stepUrban(state, dt);
   stepWorld(state, dt);
   state.timers.roles += dt;
-  if (state.timers.roles >= 1) { state.timers.roles = 0; refreshRoles(state); }
+  if (state.timers.roles >= 1) { state.timers.roles = 0; refreshRoles(state); stepStreets(state); }
   stepWear(state, dt);
   stepEcology(state, dt);
   checkMilestones(state);

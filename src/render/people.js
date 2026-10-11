@@ -2,6 +2,7 @@
 // Proporsjoner: ca. 7,5 hodelengder; 16 verdensenheter ≈ 1,7 m.
 // Variasjon (hårfasong, kappe, belte, holdning) avledes av id — simuleringens tilfeldighet er urørt.
 import { clamp } from './paint.js';
+import { WORK_TYPES } from '../sim/community.js';
 
 const TUNICS = ['#9a8a6a', '#7a5c3e', '#a07c48', '#6e6e54', '#8e5a42'];
 const SKINS = ['#c49a7c', '#a8795a', '#d3ab8e', '#8f6347'];
@@ -119,14 +120,14 @@ export function drawHuman(ctx, h, ctxInfo) {
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
-  const moving = h.state === 'toNode' || h.state === 'toStore' || h.state === 'toSite' || h.state === 'toFire' || h.state === 'toMaintain' || h.state === 'toExplore' || h.state === 'returning' || h.state === 'wander' || h.state === 'arriving' || h.state === 'toDeliver' || h.state === 'toDeliveryPickup' || h.state === 'toFound' || h.state === 'toSettle' || h.state === 'toEdge' || h.state === 'expReturn';
+  const moving = h.state === 'toNode' || h.state === 'toStore' || h.state === 'toSite' || h.state === 'toFire' || h.state === 'toRoad' || h.state === 'toMaintain' || h.state === 'toExplore' || h.state === 'returning' || h.state === 'wander' || h.state === 'arriving' || h.state === 'toDeliver' || h.state === 'toDeliveryPickup' || h.state === 'toFound' || h.state === 'toSettle' || h.state === 'toEdge' || h.state === 'expReturn';
   const sitting = h.state === 'rest';
   const tunic = TUNICS[L.tunic % TUNICS.length], skin = SKINS[L.skin % SKINS.length], hair = HAIRS[L.hair % HAIRS.length];
   const phase = h.walk * 0.42;
   const bob = moving ? Math.abs(Math.sin(phase)) * 0.55 : Math.sin(renderTime * 1.6 + h.id) * 0.12;
   let hipY = -8 - bob, shoulderY = -13.2 - bob, lean = moving ? 0.5 : stoop + Math.sin(renderTime * 0.5 + h.id) * 0.25;
   if (sitting) { hipY = -3.2; shoulderY = -8.4; lean = 0.2; }
-  if (h.state === 'build') { hipY = -6.2; shoulderY = -11.2; lean = 1.0; }
+  if (h.state === 'build' || h.state === 'roadwork') { hipY = -6.2; shoulderY = -11.2; lean = 1.0; }
   if (h.state === 'gather' && h.gatherKind === 'stone') { lean = 1.3; shoulderY += 0.6; }
   if (h.carry.amount > 0 && h.carry.type === 'stone' && !sitting) lean += 0.6;
   const idleShift = !moving && !sitting && h.state !== 'gather' && h.state !== 'build' ? Math.sin(renderTime * 0.35 + h.id * 1.7) * 0.5 : 0;
@@ -140,7 +141,7 @@ export function drawHuman(ctx, h, ctxInfo) {
     limb(ctx, 0, hipY, s * 1.6, -4 + Math.max(0, -c) * 0.9, s * 2.9, -Math.max(0, c) * 1.0, 1.7, LEGS_FAR, 1);
     limb(ctx, 0, hipY, -s * 1.6, -4 + Math.max(0, c) * 0.9, -s * 2.9, -Math.max(0, -c) * 1.0, 1.7, LEGS, 1);
   } else {
-    const kneel = h.state === 'build' ? 1.5 : 0;
+    const kneel = h.state === 'build' || h.state === 'roadwork' ? 1.5 : 0;
     limb(ctx, -0.6, hipY, -1 + kneel - idleShift * 0.3, -4 + kneel * 0.5, -1.5 - idleShift * 0.4, 0, 1.7, LEGS_FAR, 1);
     limb(ctx, 0.6, hipY, 1 + kneel * 1.6 + idleShift * 0.2, -4 + kneel, 1.3 + kneel + idleShift * 0.3, 0, 1.7, LEGS, 1);
   }
@@ -234,13 +235,13 @@ export function drawHuman(ctx, h, ctxInfo) {
     arm(ang - 0.15, 5.0, far);
     const hnd = arm(ang, 5.2, armCol);
     tool(ctx, hnd.x, hnd.y, ang, h.gatherKind === 'wood' ? 'axe' : 'hammer');
-  } else if (h.state === 'build') {
+  } else if (h.state === 'build' || h.state === 'roadwork') {
     const u = (renderTime * 1.7 + h.id * 0.37) % 1;
     const ang = 0.9 + (u < 0.7 ? u / 0.7 : 1 - (u - 0.7) / 0.3) * 1.5;
     arm(0.5, 5.0, far);
     const hnd = arm(ang, 5.0, armCol);
     tool(ctx, hnd.x, hnd.y, ang, 'hammer');
-  } else if ((h.state === 'maintain' || h.state === 'toMaintain') && h.at) {
+  } else if ((h.state === 'maintain' || h.state === 'toMaintain' || h.state === 'linger') && h.at) {
     const t = renderTime * 2.1 + h.id * 0.9, walking = h.state === 'toMaintain';
     if (h.at === 'well') {
       if (walking) { arm(-0.2 + Math.sin(phase) * 0.3, 5.4, far); const hd = arm(0.9, 5.0, armCol); bucket(ctx, hd.x, hd.y); }
@@ -253,6 +254,11 @@ export function drawHuman(ctx, h, ctxInfo) {
       const a = arm(1.0, 4.4, far), b = arm(0.9, 4.4, armCol); book(ctx, (a.x + b.x) / 2 + 0.6, (a.y + b.y) / 2 - 0.2);
     } else if (h.at === 'sanctuary' && !walking) { arm(2.5, 5.4, armCol); arm(2.8, 5.4, far); }
     else if ((h.at === 'hearth' || h.at === 'fire') && !walking) { arm(-0.05, 5.6, far); arm(1.4 + Math.sin(t * 0.8) * 0.9, 5.2, armCol); }
+    else if (!walking && WORK_TYPES.has(h.at)) {
+      // Arbeid ved et verksted, en maskin eller en åker: jevne, rolige bevegelser (ingen tilfeldig hamring).
+      const u = (renderTime * 1.2 + h.id * 0.37) % 1, ang = 0.7 + (u < 0.6 ? u / 0.6 : 1 - (u - 0.6) / 0.4) * 1.1;
+      arm(0.4, 5.1, far); arm(ang, 5.0, armCol);
+    }
     else { const sw = walking ? Math.sin(phase) * 0.5 : 0.05; arm(-sw, 5.6, far); arm(sw, 5.6, armCol); }
   } else if (sitting) {
     const praying = h.timer < 1.6;

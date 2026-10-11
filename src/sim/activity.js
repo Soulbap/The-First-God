@@ -3,7 +3,21 @@
 import { settlementById } from './settlements.js';
 
 const RES = { wood: 'trevirke', stone: 'stein', food: 'mat', planks: 'planker', cutstone: 'tilhugget stein', knowledge: 'kunnskap' };
-const BUILDING = { shelter: 'det første lyet', fire: 'bålet', hut: 'en hytte', storage: 'lageret', hearth: 'ildstedet', field: 'en åker', workshop: 'et verksted', sawmill: 'sagbruket', mason: 'steinhoggeriet', watermill: 'vannmøllen', windmill: 'vindmøllen', townhouse: 'et bolighus', market: 'torget', hall: 'kunnskapshallen', well: 'en brønn', warehouse: 'varehuset', sanctuary: 'helligdommen' };
+const BUILDING = { shelter: 'det første lyet', fire: 'bålet', hut: 'en hytte', storage: 'lageret', hearth: 'ildstedet', field: 'en åker', workshop: 'et verksted', sawmill: 'sagbruket', mason: 'steinhoggeriet', watermill: 'vannmøllen', windmill: 'vindmøllen', townhouse: 'et bolighus', market: 'torget', hall: 'kunnskapshallen', well: 'en brønn', warehouse: 'varehuset', sanctuary: 'helligdommen', commons: 'allmenningen', park: 'parken', bungalow: 'et hus' };
+const HOMEISH = new Set(['hut', 'townhouse', 'shelter']);
+const WORKISH = new Set(['sawmill', 'mason', 'workshop', 'mine', 'coal_mine', 'smelter', 'watermill', 'windmill', 'steam_engine', 'metalworks', 'locomotive_workshop', 'rail_terminal', 'generator', 'oil_well', 'refinery', 'motor_depot', 'precision_works', 'electronics_works', 'aircraft_works', 'airfield', 'research_institute', 'telegraph', 'dock', 'boatyard', 'charcoal_kiln', 'field', 'combustion_engine']);
+const placeText = (t, going) => {
+  if (!t) return going ? 'Går en tur i bygda' : 'Hviler et øyeblikk';
+  if (t === 'market') return going ? 'Går til torget' : 'Handler og prater på torget';
+  if (t === 'well') return going ? 'Går til brønnen' : 'Henter vann og prater';
+  if (t === 'hall') return going ? 'Går til hallen' : 'Lærer i hallen';
+  if (t === 'commons' || t === 'park') return going ? `Går til ${BUILDING[t]}` : `Slår av en prat på ${BUILDING[t]}`;
+  if (t === 'hearth' || t === 'fire') return going ? 'Går til ilden' : 'Sitter ved ilden';
+  if (t === 'sanctuary') return going ? 'Går til helligdommen' : 'Står stille ved helligdommen';
+  if (HOMEISH.has(t)) return going ? 'Går hjem' : 'Er hjemme en stund';
+  if (WORKISH.has(t)) return going ? `Går til ${BUILDING[t] || 'arbeidsplassen'}` : `Ser etter ${BUILDING[t] || 'arbeidsplassen'}`;
+  return going ? 'Går til lageret' : 'Tar seg av lageret';
+};
 
 export function activityOf(state, h) {
   const carry = h.carry?.amount > 0 ? RES[h.carry.type] || '' : '';
@@ -11,14 +25,15 @@ export function activityOf(state, h) {
   switch (h.state) {
     case 'idle': return 'Tar en pause';
     case 'arriving': return 'Kommer til leiren';
-    case 'wander': return 'Går en tur i bygda';
+    case 'wander': return placeText(h.at, true);
+    case 'linger': return placeText(h.at, false);
     case 'toNode': return h.gatherKind === 'wood' ? 'Går mot skogen' : 'Går mot bruddet';
     case 'gather': return h.gatherKind === 'wood' ? 'Feller trær' : 'Bryter stein';
     case 'toStore': return carry ? `Bærer ${carry} til lageret` : 'Går til lageret';
     case 'toSite': return `Går for å bygge ${BUILDING[state.buildings.find((b) => b.id === h.targetId)?.type] || ''}`.trim();
     case 'build': return `Bygger ${BUILDING[target?.type] || ''}`.trim();
-    case 'toFire': return 'Går til ilden';
-    case 'rest': return 'Ber ved ilden';
+    case 'toFire': return h.at && h.at !== 'fire' && h.at !== 'hearth' ? placeText(h.at, true) : 'Går til ilden';
+    case 'rest': return h.at && h.at !== 'fire' && h.at !== 'hearth' ? `Hviler: ${placeText(h.at, false).toLowerCase()}` : 'Ber ved ilden';
     case 'toMaintain': case 'maintain': {
       const t = target?.type;
       const verb = h.state === 'maintain';
@@ -34,6 +49,8 @@ export function activityOf(state, h) {
       const to = carry ? ` med ${carry}` : '';
       return `Bærer varer${to} til en annen bygd`;
     }
+    case 'toRoad': return 'Går for å utbedre en gate';
+    case 'roadwork': return 'Utbedrer gaten';
     case 'toExplore': return 'Speider etter nytt land';
     case 'explore': return 'Speider';
     case 'returning': return 'Vender hjem fra speiding';

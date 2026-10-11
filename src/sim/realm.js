@@ -56,7 +56,7 @@ export function findSettlementSite(state, { ignore = [] } = {}) {
   return best;
 }
 
-const idleMembers = (state) => state.humans.filter((h) => h.settlementId === 'first' && (h.state === 'idle' || h.state === 'wander') && !h.carry.amount && !h.away && h.partyId == null);
+const idleMembers = (state) => state.humans.filter((h) => h.settlementId === 'first' && (h.state === 'idle' || h.state === 'wander' || h.state === 'linger') && !h.carry.amount && !h.away && h.partyId == null);
 
 // Tomtesøk er ikke gratis; resultatet gjenbrukes noen sekunder (panelet spør ofte, simuleringen sjelden).
 function cachedSite(state) {

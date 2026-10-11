@@ -15,6 +15,8 @@ import { partyArrive, partyTick } from './realm.js';
 import { missionAtEdge, missionHome } from './worldmap.js';
 import { festivalActive } from './civilization.js';
 import { storyFounded } from './story.js';
+import { pickPlace, releasePlace, lingerSeconds } from './community.js';
+import { routeAlong, roadJobPoint, workRoad } from './streets.js';
 
 const H = B.human;
 
@@ -102,8 +104,16 @@ function findNode(state, h, kind, mineral = null) {
 }
 
 function goIdle(state, h, [a, b] = [0.3, 0.9]) {
+  releasePlace(h);
   h.state = 'idle';
   h.timer = range(state.rng, a, b);
+}
+
+// OPUS-12: korte turer innen bosettingen følger gatenettet når det finnes (ellers rett fram). Slitasjen langs gatene er dermed et resultat av trafikken.
+function routeTo(state, h) {
+  const S = settlementById(state, h.settlementId);
+  const wp = S && routeAlong(state, S, h.x, h.y, h.tx, h.ty);
+  h.waypoints = wp ? wp.slice() : null;
 }
 
 function goStore(state, h) {
@@ -111,6 +121,7 @@ function goStore(state, h) {
   h.state = 'toStore';
   h.tx = store.x + range(state.rng, -14, 14);
   h.ty = store.y + (store.type === 'storage' ? store.radius * 0.52 : 10) + range(state.rng, 2, 12);
+  routeTo(state, h);
 }
 
 function completedHomes(state) {
@@ -118,17 +129,18 @@ function completedHomes(state) {
 }
 
 function goMaintenance(state, h) {
-  const homes = completedHomes(state).filter((b) => (b.settlementId || 'first') === h.settlementId);
-  // Torget og hallen blir møteplasser: folk handler, prater og lærer der mellom arbeidsøktene.
-  const civic = state.buildings.filter((b) => b.complete && (b.type === 'market' || b.type === 'hall' || b.type === 'well' || b.type === 'sanctuary') && (b.settlementId || 'first') === h.settlementId);
-  const choices = [deliveryPoint(state), ...homes, hearthOf(state) || fireOf(state), ...civic, ...civic].filter(Boolean);
-  if (!choices.length) return false;
-  const target = choices[(h.id + h.deliveries) % choices.length];
-  h.targetId = target.id || null;
-  h.at = target.type || null; // hva de skal gjøre der (vises som bæring/holdning; påvirker ingen regler)
-  h.tx = target.x + range(state.rng, -target.radius * 0.45, target.radius * 0.45);
-  h.ty = target.y + target.radius * 0.52 + range(state.rng, 3, 10);
+  // OPUS-12: vedlikehold, handel og arbeid skjer ved bosettingens egne steder (torg, hall, brønn, arbeidssted, hjem, lager) med begrenset plass.
+  const pick = pickPlace(state, h, 'maintain');
+  if (!pick) {
+    const store = deliveryPoint(state);
+    if (!store) return false;
+    h.targetId = store.id || null; h.at = store.type || null; h.tx = store.x; h.ty = store.y + (store.radius || 10) * 0.52 + 6; h.state = 'toMaintain';
+    return true;
+  }
+  h.targetId = pick.b.id; h.at = pick.b.type;
+  h.tx = pick.x; h.ty = pick.y;
   h.state = 'toMaintain';
+  routeTo(state, h);
   return true;
 }
 
@@ -198,20 +210,21 @@ function chooseTask(state, h) {
     h.state = 'toSite';
     return;
   }
-  // Høstfest: folk i hovedstaden som ikke bygger, samles ved ildstedet (bønnen der teller dobbelt).
+  // 1b) Veiarbeid (OPUS-12): en gate som får bedre dekke trenger hender, på samme måte som en byggeplass.
+  const RS = settlementById(state, h.settlementId);
+  if (RS?.roadJob) {
+    const job = RS.roadJob;
+    job.workers = job.workers.filter((id) => state.humans.some((q) => q.id === id && (q.state === 'toRoad' || q.state === 'roadwork')));
+    const p = job.workers.length < 2 && roadJobPoint(state, RS);
+    if (p) { job.workers.push(h.id); h.state = 'toRoad'; h.tx = p.x + range(state.rng, -7, 7); h.ty = p.y + range(state.rng, -4, 6); routeTo(state, h); return; }
+  }
+  // Høstfest: folk i hovedstaden som ikke bygger, samles ved ildstedet (bønnen der teller dobbelt). Plassene fordeles i ringer rundt ilden.
   if (h.settlementId === 'first' && festivalActive(state) && rand(state.rng) < B.festival.joinChance) {
-    const fire = hearthOf(state) || fireOf(state);
-    if (fire) {
-      const a = rand(state.rng) * Math.PI * 2, r = 22 + rand(state.rng) * 26;
-      h.state = 'toFire'; h.tx = fire.x + Math.cos(a) * r; h.ty = fire.y + Math.sin(a) * r * 0.55 + 2;
-      return;
-    }
+    const pick = pickPlace(state, h, 'rest', { festival: true });
+    if (pick) { h.state = 'toFire'; h.tx = pick.x; h.ty = pick.y; return; }
   }
-  // Folk i en ung bosetting bruker annenhver runde på livet rundt ildstedet i stedet for å sanke.
-  if (h.settlementId !== 'first' && state.expansion.founded && h.deliveries % 2 === 0) {
-    const S = settlementById(state, h.settlementId);
-    if (S) { const w = wanderPoint(state, 95, 60); h.tx = S.x + w.x; h.ty = S.y + 5 + w.y; h.state = 'wander'; return; }
-  }
+  // Folk i en ung bosetting bruker annenhver runde på livet i bygda i stedet for å sanke (OPUS-12: ved bosettingens egne steder).
+  if (h.settlementId !== 'first' && state.expansion.founded && h.deliveries % 2 === 0 && goLeisure(state, h)) return;
   if (maybeExplore(state, h)) return;
   // 2) Sanking.
   const kind = chooseResourceKind(state);
@@ -236,12 +249,23 @@ function chooseTask(state, h) {
     h.state = 'toNode';
     return;
   }
-  // 3) Ingen gyldig oppgave: rusle litt i leiren og prøv igjen (ingen vranglås).
-  const C = state.settlement.center;
+  // 3) Ingen gyldig oppgave: møt andre ved et av bosettingens steder og prøv igjen (ingen vranglås).
+  if (goLeisure(state, h)) return;
+  const C = settlementById(state, h.settlementId)?.id === 'first' || !settlementById(state, h.settlementId) ? state.settlement.center : settlementById(state, h.settlementId);
   const w = wanderPoint(state, 90, 52);
   h.tx = C.x + w.x;
   h.ty = C.y + 10 + w.y;
   h.state = 'wander';
+}
+
+// OPUS-12: fritid ved et sted med plass (torg, brønn, allmenning, hjem, arbeidssted, bål) etter trinn og tid på døgnet.
+function goLeisure(state, h) {
+  const pick = pickPlace(state, h, 'leisure');
+  if (!pick) return false;
+  h.at = pick.b.type; h.targetId = null;
+  h.tx = pick.x; h.ty = pick.y; h.state = 'wander';
+  routeTo(state, h);
+  return true;
 }
 
 function deliver(state, h) {
@@ -260,10 +284,11 @@ function deliver(state, h) {
   const fire = hearthOf(state) || fireOf(state);
   const every = hearthOf(state) ? H.villageRestEveryDeliveries : H.restEveryDeliveries;
   if (fire && h.deliveries > 0 && h.deliveries % every === 0) {
-    const a = (h.id * 2.399) % (Math.PI * 2);
+    // OPUS-12: hvilen foregår ved et sted med ledig plass i egen bosetting (hjem om kvelden, torg og allmenning om dagen), ikke alltid ved ilden.
+    const pick = pickPlace(state, h, 'rest');
     h.state = 'toFire';
-    h.tx = fire.x + Math.cos(a) * 24;
-    h.ty = fire.y + Math.sin(a) * 13 + 2;
+    if (pick) { h.at = pick.b.type; h.tx = pick.x; h.ty = pick.y; routeTo(state, h); }
+    else { const a = (h.id * 2.399) % (Math.PI * 2); h.tx = fire.x + Math.cos(a) * 24; h.ty = fire.y + Math.sin(a) * 13 + 2; }
   } else {
     goIdle(state, h, [0.2, 0.8]);
   }
@@ -283,7 +308,15 @@ export function stepHuman(state, h, dt) {
       break;
     case 'arriving':
     case 'wander':
-      if (moveTo(state, h, dt)) goIdle(state, h, h.state === 'arriving' ? [0.4, 1.2] : H.idleSeconds);
+      if (moveTo(state, h, dt)) {
+        const place = h.state === 'wander' && h.destId != null ? state.buildings.find((b) => b.id === h.destId) : null;
+        if (place) { h.state = 'linger'; h.timer = lingerSeconds(state, place); h.dir = place.x > h.x ? 1 : -1; }
+        else goIdle(state, h, h.state === 'arriving' ? [0.4, 1.2] : H.idleSeconds);
+      }
+      break;
+    case 'linger':
+      h.timer -= dt;
+      if (h.timer <= 0) { h.at = null; goIdle(state, h, [0.3, 0.9]); }
       break;
     case 'toNode': {
       const n = nodeById(state, h.targetId);
@@ -335,13 +368,24 @@ export function stepHuman(state, h, dt) {
       break;
     }
     case 'toFire': {
-      const fire = hearthOf(state) || fireOf(state);
-      if (!fire) { goIdle(state, h); break; }
+      const spot = h.destId != null ? state.buildings.find((b) => b.id === h.destId) : (hearthOf(state) || fireOf(state));
+      if (!spot) { goIdle(state, h); break; }
       if (moveTo(state, h, dt)) {
         h.state = 'rest';
         h.timer = range(state.rng, H.restSeconds[0], H.restSeconds[1]);
-        h.dir = fire.x > h.x ? 1 : -1;
+        h.dir = spot.x > h.x ? 1 : -1;
       }
+      break;
+    }
+    case 'toRoad':
+      if (!settlementById(state, h.settlementId)?.roadJob) { goIdle(state, h); break; }
+      if (moveTo(state, h, dt)) { h.state = 'roadwork'; h.anim = 0; }
+      break;
+    case 'roadwork': {
+      const RS = settlementById(state, h.settlementId);
+      if (!RS?.roadJob) { goIdle(state, h, [0.4, 1.0]); break; }
+      h.anim += dt;
+      workRoad(state, RS, dt);
       break;
     }
     case 'toMaintain':

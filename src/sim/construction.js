@@ -6,6 +6,7 @@ import { stampWear } from './wear.js';
 import { storyBuilt } from './story.js';
 import { clearTrees } from './nature.js';
 import { stageRank } from './settlements.js';
+import { streetSegments, distToStreet } from './streets.js';
 
 // Luft mellom bygg etter bosettingens trinn (OPUS-11): leirer og grender har rom mellom skur, stier og felles plasser;
 // tettere by først når bosettingen er blitt en by. Gjelder bare bygg i samme bosetting; kollisjon er alltid forbudt.
@@ -31,6 +32,15 @@ export function siteIsValid(state, type, x, y, settlementId = null) {
   for (const n of state.nodes) {
     const need = n.kind === 'tree' ? r + 22 : r + n.radius + 10, dx = x - n.x, dy = y - n.y;
     if (dx * dx + dy * dy < need * need) return false;
+  }
+  // OPUS-12: bygg står ved gaten, ikke oppå den. Eksisterende gater (bosettingens nett) holdes åpne.
+  if (settlementId && type !== 'fire' && type !== 'well') {
+    const segs = streetSegments(state, state.settlements.find((q) => q.id === settlementId));
+    const lim = r * 0.55 + 4;
+    for (const sg of segs) {
+      if (x < Math.min(sg[0], sg[2]) - lim || x > Math.max(sg[0], sg[2]) + lim || y < Math.min(sg[1], sg[3]) - lim || y > Math.max(sg[1], sg[3]) + lim) continue;
+      if (distToStreet([sg], x, y) < lim) return false;
+    }
   }
   return true;
 }
@@ -100,12 +110,16 @@ function siteScore(state, type, x, y, ring, anchor, ctx) {
     if (d < 120 && z === 'core') coreNear++;
   }
   const dx = (x - anchor.x) / (ring || 1), dy = (y - anchor.y) / (ring || 1);
-  if (zone === 'home') score += Math.min(3, homesNear) * 9 + Math.min(2, coreNear) * 4 - workNear * 7 - fieldsNear * 6 + streetBonus(ctx, x, y, anchor);
+  // OPUS-12: nærhet til en eksisterende gate gir inngang (hus med gateadgang, verksteder med fraktadgang).
+  const dStreet = ctx.segs?.length ? distToStreet(ctx.segs, x, y) : Infinity;
+  const frontage = dStreet < 14 ? 0 : dStreet < 46 ? 1 - (dStreet - 14) / 32 : 0;
+  if (zone === 'home') score += Math.min(3, homesNear) * 9 + Math.min(2, coreNear) * 4 - workNear * 7 - fieldsNear * 6 + streetBonus(ctx, x, y, anchor) + frontage * 10;
   else if (zone === 'core') score += coreNear * 5 - ring * 0.3; // torg og hall vil helt inn mot sentrum
   else if (zone === 'work') {
     const dir = ctx.dir;
     if (dir) score += (dx * dir.x + dy * dir.y) * 34;
-    score += Math.min(2, workNear) * 10 - homesNear * 4;
+    score += Math.min(2, workNear) * 10 - homesNear * 4 + frontage * 6;
+    for (const t of ctx.transport || []) if (Math.hypot(t.x - x, t.y - y) < 150) { score += 8; break; } // fraktadgang
   } else if (zone === 'field') {
     let trees = 0;
     for (const n of state.nodes) if (n.kind === 'tree' && n.state === 'alive' && Math.hypot(n.x - x, n.y - y) < 140) trees++;
@@ -166,7 +180,8 @@ function searchBuildSite(state, type, settlementId, maxRing) {
     else { const a = state.settlement.angleOffset + 2.4; anchor = { x: C.x + Math.cos(a) * 250, y: C.y + Math.sin(a) * 180 }; minRing = 0; }
   }
   const zone = zoneOf(type);
-  const ctx = { settlementId, rays: zone === 'home' ? streetRays(state, settlementId) : null, dir: type === 'sawmill' ? resourceDir(state, anchor, 'tree') : type === 'mason' ? resourceDir(state, anchor, 'rock') : type === 'mine' ? resourceDir(state, anchor, 'mineral') : null };
+  const Sx = state.settlements.find((q) => q.id === settlementId);
+  const ctx = { settlementId, segs: streetSegments(state, Sx), transport: state.buildings.filter((b) => b.complete && (b.settlementId || 'first') === settlementId && (b.type === 'rail_terminal' || b.type === 'motor_depot' || b.type === 'dock' || b.type === 'airfield')), rays: zone === 'home' ? streetRays(state, settlementId) : null, dir: type === 'sawmill' ? resourceDir(state, anchor, 'tree') : type === 'mason' ? resourceDir(state, anchor, 'rock') : type === 'mine' ? resourceDir(state, anchor, 'mineral') : null };
   // Hvor langt utover første ledige ring vi vurderer. Verksteder med en råvareretning (sagbruk mot skog, steinhoggeri mot stein, gruve mot malm)
   // ser lenger, slik at de når kanten av en tett skog i stedet for å stoppe ved første ledige plass på feil side (OPUS-11).
   const reach = ctx.dir ? 280 : zone === 'field' ? 150 : zone === 'work' ? 120 : 70;

@@ -303,7 +303,7 @@ export function createRenderer(canvas) {
       }
     }
     // Gatenett (OPUS-02): grus i tidlige byer, stein i kjernen av byer og overalt i storbyer. Beregnes bare på nytt når bygg eller trinn endres.
-    const sig = state.settlements.map((S) => S.stage).join(',') + '|' + state.buildings.reduce((n, b) => n + (b.complete ? 1 : 0), 0);
+    const sig = state.settlements.map((S) => `${S.stage}:${(S.net?.edges.length || 0)}:${(S.net?.edges.reduce((n, e) => n + e.lv, 0) || 0)}`).join(',') + '|' + state.buildings.reduce((n, b) => n + (b.complete ? 1 : 0), 0);
     if (sig !== R.streetSig) { R.streetSig = sig; R.streets = buildStreets(state); R.lamps = lampPosts(R.streets); }
     R.lane.fill(0);
     const lay = (arr, x, y, r, v) => {
@@ -314,9 +314,11 @@ export function createRenderer(canvas) {
         if (a > arr[j * cols + i]) arr[j * cols + i] = a;
       }
     };
+    // Dekket følger utført veiarbeid (lv 1 jordvei, 2 grusvei, 3 brolagt). Stier (lv 0) tegnes av slitasjen alene.
     for (const net of R.streets) for (const e of net.edges) {
-      const paved = net.rank >= 6 || (net.rank >= 5 && e.core);
-      for (const q of e.pts) { lay(R.lane, q.x, q.y, 9, 0.78); if (paved) lay(R.pave, q.x, q.y, 9, 0.95); }
+      if (e.lv < 1) continue;
+      const laneV = e.lv === 1 ? 0.5 : 0.78;
+      for (const q of e.pts) { lay(R.lane, q.x, q.y, e.lv === 1 ? 7 : 9, laneV); if (e.lv >= 3) lay(R.pave, q.x, q.y, 9, 0.95); }
     }
     // Skriv bare der noe er slitt (nå eller forrige gang).
     let minI = cols, maxI = -1, minJ = rows, maxJ = -1;

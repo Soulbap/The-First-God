@@ -1,0 +1,151 @@
+{
+ "seed": 20261009,
+ "seconds": 7200,
+ "avgClusteredShare": 0.047,
+ "avgAtFireShare": 0.313,
+ "maxCluster": 9,
+ "stackedTotal": 948,
+ "samples": 1380,
+ "rows": [
+  {
+   "t": 900,
+   "pop": 8,
+   "stage": "first:Voksende landsby",
+   "maxCluster": 1,
+   "clustered": 0,
+   "atFire": 0.25,
+   "stacked": 0,
+   "states": {
+    "toFound": 3,
+    "rest": 1,
+    "toExplore": 1,
+    "toStore": 2,
+    "toFire": 1
+   }
+  },
+  {
+   "t": 1800,
+   "pop": 10,
+   "stage": "first:Voksende landsby,second:Landsby",
+   "maxCluster": 4,
+   "clustered": 0.2,
+   "atFire": 0.5,
+   "stacked": 0,
+   "states": {
+    "wander": 2,
+    "linger": 2,
+    "toStore": 2,
+    "toDeliver": 2,
+    "toNode": 1,
+    "explore": 1
+   }
+  },
+  {
+   "t": 2700,
+   "pop": 12,
+   "stage": "first:Tidlig by,second:Landsby",
+   "maxCluster": 2,
+   "clustered": 0,
+   "atFire": 0.25,
+   "stacked": 0,
+   "states": {
+    "wander": 2,
+    "linger": 2,
+    "toFire": 2,
+    "rest": 4,
+    "toNode": 1,
+    "explore": 1
+   }
+  },
+  {
+   "t": 3600,
+   "pop": 37,
+   "stage": "first:Storby,second:Tidlig by",
+   "maxCluster": 2,
+   "clustered": 0,
+   "atFire": 0.27,
+   "stacked": 0,
+   "states": {
+    "wander": 6,
+    "linger": 7,
+    "toStore": 7,
+    "toDeliveryPickup": 2,
+    "maintain": 2,
+    "idle": 2,
+    "toFire": 2,
+    "rest": 5,
+    "toNode": 2,
+    "toMaintain": 1,
+    "returning": 1
+   }
+  },
+  {
+   "t": 4500,
+   "pop": 53,
+   "stage": "first:Storby,second:Tidlig by,third:Landsby",
+   "maxCluster": 3,
+   "clustered": 0,
+   "atFire": 0.3,
+   "stacked": 0,
+   "states": {
+    "linger": 13,
+    "wander": 14,
+    "rest": 2,
+    "toDeliver": 4,
+    "toSite": 2,
+    "toFire": 6,
+    "toStore": 4,
+    "toNode": 2,
+    "toMaintain": 2,
+    "returning": 1,
+    "idle": 3
+   }
+  },
+  {
+   "t": 5400,
+   "pop": 81,
+   "stage": "first:Storby,second:Tidlig by,third:Tidlig by,fourth:Tidlig by",
+   "maxCluster": 5,
+   "clustered": 0.09,
+   "atFire": 0.3,
+   "stacked": 1,
+   "states": {
+    "linger": 38,
+    "wander": 15,
+    "toStore": 7,
+    "toNode": 2,
+    "roadwork": 1,
+    "toMaintain": 1,
+    "toDeliver": 3,
+    "toRoad": 1,
+    "maintain": 1,
+    "toEdge": 2,
+    "toFire": 4,
+    "idle": 4,
+    "gather": 1,
+    "toDeliveryPickup": 1
+   }
+  },
+  {
+   "t": 6300,
+   "pop": 112,
+   "stage": "first:Storby,second:Tidlig by,third:Tidlig by,fourth:Tidlig by",
+   "maxCluster": 5,
+   "clustered": 0.09,
+   "atFire": 0.21,
+   "stacked": 1,
+   "states": {
+    "wander": 32,
+    "linger": 51,
+    "toStore": 10,
+    "gather": 2,
+    "toNode": 6,
+    "toFire": 1,
+    "toMaintain": 3,
+    "toEdge": 3,
+    "rest": 1,
+    "idle": 3
+   }
+  }
+ ]
+}

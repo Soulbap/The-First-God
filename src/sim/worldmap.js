@@ -99,7 +99,7 @@ export function edgePoint(state, region) {
   return { x: Math.min(W - m, Math.max(m, C.x + dx * t - dy * off)), y: Math.min(Ht - m, Math.max(m, C.y + dy * t + dx * off)) };
 }
 
-const capitalIdle = (state) => state.humans.filter((h) => h.settlementId === 'first' && (h.state === 'idle' || h.state === 'wander') && !h.carry.amount && !h.away && h.partyId == null && h.missionId == null);
+const capitalIdle = (state) => state.humans.filter((h) => h.settlementId === 'first' && (h.state === 'idle' || h.state === 'wander' || h.state === 'linger') && !h.carry.amount && !h.away && h.partyId == null && h.missionId == null);
 
 export function worldReadiness(state, kind) {
   const G = state.globe, W = B.globe;

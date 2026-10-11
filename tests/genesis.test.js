@@ -132,7 +132,7 @@ test('mennesker uten gyldige ressurser rusler og prøver igjen', () => {
   const s = settledGame();
   for (const n of s.nodes) { if (n.kind === 'tree') n.growth = 0.1; else n.stone = 0; }
   advance(s, 5);
-  assert.ok(s.humans.every((h) => ['idle', 'wander', 'toStore'].includes(h.state)));
+  assert.ok(s.humans.every((h) => ['idle', 'wander', 'linger', 'toStore', 'toFire', 'rest', 'toMaintain', 'maintain'].includes(h.state)));
   s.nodes.find((n) => n.kind === 'rock').stone = 10;
   assert.ok(runUntil(s, () => s.humans.some((h) => h.state === 'gather'), 30));
 });
