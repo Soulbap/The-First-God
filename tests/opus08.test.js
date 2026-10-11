@@ -1,3 +1,4 @@
+import { queueProjectNeeds } from '../src/sim/regional.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGame, advance } from '../src/sim/game.js';
@@ -96,6 +97,7 @@ test('OPUS-08: lastebil frakter planker mellom gyldige bosettinger uten teleport
   s.resources.truck = 1; s.resources.fuel = 5; s.resources.planks = 100;
   // OPUS-11: lastebilen kjører bare med varer en bosetting faktisk trenger (prosjekt), og lasten havner i bosettingens eget lager.
   s.region.projects.second = { id: 'second_test', type: 'sawmill', cost: { planks: 8 }, settlementId: 'second' };
+  queueProjectNeeds(s); queueProjectNeeds(s);
   const second = s.settlements.find((q) => q.id === 'second');
   const total = () => s.resources.planks + (second.stock?.planks || 0) + s.industrial.shipments.filter((q) => q.status === 'traveling').reduce((n, q) => n + q.amount, 0);
   const start = total();

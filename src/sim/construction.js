@@ -22,7 +22,7 @@ export function siteIsValid(state, type, x, y, settlementId = null) {
   if (type !== 'field' && dist(x, y, state.stockpile.x, state.stockpile.y) < r + 34) return false;
   // Kollisjon, arbeidsrom og visuell klarering er ulike ting. Små hus kan fortsatt danne gater,
   // mens verksteder og offentlige bygg trenger plass til aktivitet og inngang.
-  const space = (t) => ({ field: 18, well: 24, market: 34, hall: 32, warehouse: 30, sawmill: 28, mason: 28, sanctuary: 26 }[t] ?? 16);
+  const space = (t) => ({ field: 18, well: 24, market: 34, hall: 32, warehouse: 30, commons: 22, park: 26, sawmill: 28, mason: 28, sanctuary: 26 }[t] ?? 16);
   const sp = space(type), extra = settlementId ? stageGap(state, settlementId) : 0;
   for (const b of state.buildings) {
     const same = settlementId && (b.settlementId || 'first') === settlementId;
@@ -52,7 +52,7 @@ const ZONE = {
   fire: 'core', hearth: 'core', storage: 'core', market: 'core', hall: 'core',
   sawmill: 'work', mason: 'work', workshop: 'work', mine: 'work', coal_mine: 'work', charcoal_kiln: 'work', smelter: 'work', dock: 'work', boatyard: 'work', watermill: 'work', windmill: 'work', steam_engine: 'work', metalworks: 'work', locomotive_workshop: 'work', rail_terminal: 'work', generator: 'work', grid_station: 'work', oil_well: 'work', refinery: 'work', combustion_engine: 'work', motor_depot: 'work', precision_works: 'work', aircraft_works: 'work', airfield: 'work', electronics_works: 'work', telegraph: 'work', research_institute: 'work',
   field: 'field',
-  well: 'core', warehouse: 'core', sanctuary: 'sanct',
+  well: 'core', warehouse: 'core', sanctuary: 'sanct', commons: 'core', park: 'core',
 };
 export const zoneOf = (type) => ZONE[type] || 'core';
 

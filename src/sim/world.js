@@ -142,6 +142,8 @@ export function createWorld(seed = 20261009, biome = 'skog', { remote = false } 
     region: { enabled: false, populationUnlocked: false, deliveries: [], reserved: { wood: 0, stone: 0, food: 0, planks: 0, cutstone: 0 }, completedDeliveries: 0, completedProjects: 0, projects: {}, nextPopulationAt: Infinity },
     realm: { autoFounding: false, limit: 2, party: null, lastFoundedAt: -Infinity, nextCheckAt: Infinity, foundedCount: 0, siteCache: null },
     network: { routes: {}, trips: 0 },
+    trade: { orders: {}, flows: {}, modes: {} }, // OPUS-12: handelsregnskap (statistikk)
+    migration: { done: 0, byRoute: {}, nextAt: 0 }, // OPUS-12: flytting mellom bosettinger
     urban: { enabled: false, nextAt: 0, built: 0 }, // OPUS-02: Byplan
     renovation: { done: 0 }, // OPUS-11: ombygde boliger (se renovation.js)
     chronicle: createChronicle(),

@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGame, advance, step } from '../src/sim/game.js';
 import { regionState, demandOf, housingCap, stockCap } from '../src/sim/worldmap.js';
-import { stockOf, stockAdd, projectNeeds } from '../src/sim/regional.js';
+import { stockOf, stockAdd, projectNeeds, queueProjectNeeds } from '../src/sim/regional.js';
 import { stepIndustry, enableIndustry } from '../src/sim/industrial.js';
 import { findBuildSite, siteIsValid, siteStats } from '../src/sim/construction.js';
 import { tierOf, maxTierFor, stepRenovation } from '../src/sim/renovation.js';
@@ -88,6 +88,7 @@ test('lastebil: kjører bare med varer et prosjekt mangler, lasten finnes bare i
   stepIndustry(s, 0.1);
   assert.equal(s.industrial.shipments.filter((q) => q.mode === 'road').length, 0, 'uten prosjekt kjører ingen lastebil (ingen bortkastet drivstoff)');
   s.region.projects.second = { id: 'p1', type: 'storage', cost: { wood: 14, stone: 8 }, settlementId: 'second' };
+  queueProjectNeeds(s);
   const total = () => s.resources.stone + stockOf(s, S, 'stone') + s.industrial.shipments.filter((q) => q.status === 'traveling' && q.type === 'stone').reduce((n, q) => n + q.amount, 0);
   const start = total();
   stepIndustry(s, 0.1);

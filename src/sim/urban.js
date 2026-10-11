@@ -6,10 +6,15 @@ import { BALANCE as B } from '../data/balance.js';
 import { startConstruction, findBuildSite } from './construction.js';
 import { stageRank } from './settlements.js';
 import { stepRenovation } from './renovation.js';
+import { nextGrowth } from './growth.js';
+import { stepMigration } from './migration.js';
 
 // Hver post: «mål» for antall bygg av typen per bosetting ved et gitt utviklingstrinn. Postene prøves i rekkefølge.
 export const URBAN_PLAN = [
   { type: 'well', scope: 'all', targets: [['Landsby', 1], ['By', 2]], cost: { wood: 14, stone: 22 } },
+  // OPUS-12: allmenningen (Landsby) og parken (By) er åpne møteplasser som fordeler folk bort fra bålet.
+  { type: 'commons', scope: 'capital', targets: [['Landsby', 1]], cost: { wood: 10, stone: 12 } },
+  { type: 'park', scope: 'capital', targets: [['By', 1], ['Storby', 2]], cost: { wood: 24, stone: 18, planks: 4 } },
   // Bygdene vokser også (mer enn fire folk): flere hytter etter hvert som bygda når nye trinn.
   { type: 'hut', scope: 'satellite', targets: [['Landsby', 3], ['Voksende landsby', 4], ['Tidlig by', 5]], cost: { wood: 20, stone: 12 } },
   { type: 'townhouse', scope: 'capital', targets: [['Tidlig by', 4], ['By', 6], ['Storby', 8]], cost: { wood: 40, stone: 30, planks: 8, cutstone: 4 } },
@@ -47,19 +52,21 @@ export function stepUrban(state) {
     if (shelter && !shelter.heritage) { shelter.heritage = true; state.events.push({ type: 'heritage', id: shelter.id, x: shelter.x, y: shelter.y }); }
   }
   // Gamle hus blir ikke magisk nye: ombygging krever kunnskap, materialer, folk og tid (src/sim/renovation.js).
+  stepMigration(state, B.urban.checkSeconds);
   if (stepRenovation(state, B.urban.checkSeconds)) return; // en ny ombygging teller som kontrollens ene prosjekt
   for (const S of state.settlements) {
     if (S.state !== 'active' || S.population.length < 2) continue;
     // Ett prosjekt om gangen i hver bosetting, og aldri mens noe annet ufullført står der.
     if (state.buildings.some((b) => !b.complete && (b.settlementId || 'first') === S.id)) continue;
-    const item = nextUrban(state, S);
+    // OPUS-12: satellitter vokser etter sine egne behov og sitt sted (growth.js); hovedstaden følger byplanen.
+    const item = S.id === 'first' ? nextUrban(state, S) : nextGrowth(state, S);
     if (!item) continue;
     // Satellittbosettinger får ikke varer ved trylling (OPUS-11): byvekst der er et regionalt prosjekt som må leveres (bærere eller
     // lastebil) til bosettingens eget lager, og bygges først når lageret har alt. Bare hovedstaden betaler direkte fra hjemmelageret.
     if (S.id !== 'first') {
       const R = state.region;
       if (!R?.enabled || R.projects[S.id]) continue;
-      R.projects[S.id] = { id: `urban:${item.type}:${S.id}:${U.built || 0}`, type: item.type, cost: { ...item.cost }, settlementId: S.id, startedAt: state.time, urban: true };
+      R.projects[S.id] = { id: `urban:${item.type}:${S.id}:${U.built || 0}`, type: item.type, cost: { ...item.cost }, settlementId: S.id, startedAt: state.time, urban: true, growth: true };
       U.built = (U.built || 0) + 1;
       return;
     }

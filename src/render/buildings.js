@@ -1,7 +1,7 @@
 // Bygg som males i byggetrinn: grunn → stenger/stolper → vegger → tak/dekke → dør.
 import { mulberry, paintSprite, dab, taper, jitter, rgba, clamp, smooth, lerp } from './paint.js';
 import { paintTownhouse, paintSawmill, paintMason, paintMarket, paintHall } from './city.js';
-import { paintWell, paintWarehouse, paintCottage, paintSanctuary } from './civic.js';
+import { paintWell, paintWarehouse, paintCottage, paintSanctuary, paintCommons, paintPark } from './civic.js';
 import { paintTenement, paintModern } from './housing.js';
 import { paintDerrick, paintRefinery, paintGenerator, paintGridStation, paintAirfield, paintInstitute, paintTelegraph, paintMineHead, paintEngineHouse, paintStation, paintGarage, paintCleanWorks } from './industry.js';
 
@@ -508,6 +508,8 @@ export function buildingSprite(b, variant = 0) {
   const sprite = b.type === 'shelter' ? (b.heritage ? paintCottage(seed + 701, p) : paintShelter(seed, p))
     : (b.type === 'hut' || b.type === 'townhouse') ? homeSprite(b.type, variant, seed, p)
       : b.type === 'well' ? paintWell(seed, p)
+      : b.type === 'commons' ? paintCommons(seed, p)
+      : b.type === 'park' ? paintPark(seed, p)
       : b.type === 'warehouse' ? paintWarehouse(seed, p)
       : b.type === 'sanctuary' ? paintSanctuary(seed, p, variant)
       : b.type === 'storage' ? paintStorage(seed, p)

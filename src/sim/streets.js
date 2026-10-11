@@ -5,6 +5,7 @@
 import { BALANCE as B } from '../data/balance.js';
 import { stageRank, isHome, settlementById } from './settlements.js';
 import { invGet, invTake } from './inventory.js';
+import { refreshDistricts } from './districts.js';
 
 export const NODE_TYPES = new Set(['hut', 'townhouse', 'shelter', 'market', 'hall', 'hearth', 'fire', 'well', 'warehouse', 'sawmill', 'mason', 'workshop', 'storage', 'sanctuary', 'commons', 'park', 'mine', 'coal_mine', 'smelter', 'charcoal_kiln', 'watermill', 'windmill', 'steam_engine', 'metalworks', 'locomotive_workshop', 'rail_terminal', 'generator', 'grid_station', 'oil_well', 'refinery', 'combustion_engine', 'motor_depot', 'precision_works', 'electronics_works', 'aircraft_works', 'research_institute', 'telegraph', 'dock', 'boatyard', 'field', 'airfield']);
 export const doorOf = (b) => ({ x: b.x, y: b.y + Math.max(3, b.radius * 0.18) });
@@ -228,6 +229,7 @@ export const roadStats = (S) => {
 };
 
 export function stepStreets(state) {
+  refreshDistricts(state);
   for (const S of state.settlements) {
     if (S.state !== 'active') continue;
     growStreets(state, S);

@@ -120,7 +120,7 @@ export function drawHuman(ctx, h, ctxInfo) {
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
-  const moving = h.state === 'toNode' || h.state === 'toStore' || h.state === 'toSite' || h.state === 'toFire' || h.state === 'toRoad' || h.state === 'toMaintain' || h.state === 'toExplore' || h.state === 'returning' || h.state === 'wander' || h.state === 'arriving' || h.state === 'toDeliver' || h.state === 'toDeliveryPickup' || h.state === 'toFound' || h.state === 'toSettle' || h.state === 'toEdge' || h.state === 'expReturn';
+  const moving = h.state === 'toNode' || h.state === 'toStore' || h.state === 'toSite' || h.state === 'toFire' || h.state === 'toRoad' || h.state === 'toMigrate' || h.state === 'toMaintain' || h.state === 'toExplore' || h.state === 'returning' || h.state === 'wander' || h.state === 'arriving' || h.state === 'toDeliver' || h.state === 'toDeliveryPickup' || h.state === 'toFound' || h.state === 'toSettle' || h.state === 'toEdge' || h.state === 'expReturn';
   const sitting = h.state === 'rest';
   const tunic = TUNICS[L.tunic % TUNICS.length], skin = SKINS[L.skin % SKINS.length], hair = HAIRS[L.hair % HAIRS.length];
   const phase = h.walk * 0.42;

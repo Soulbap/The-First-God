@@ -39,10 +39,13 @@ export const BALANCE = {
     regionalDelivery: 4,
     regionalPopulationSeconds: 34,
     // OPUS-11: lagertak for tre og stein (grunnnivå + per innbygger). Over taket sanker ikke folk den varen.
-    stockCap: { wood: 700, stone: 600, perPerson: 12 },
+    stockCap: { wood: 700, stone: 600, perPerson: 12, satelliteShare: 0.45, satelliteMineral: 36, mineralReach: 520 },
     foodHarvestSeconds: 16,
     foodPerHarvest: 3,
     foodForGrowth: 2,
+    foodPerPersonSecond: 0.0014, // OPUS-12: folk spiser; en bosetting uten mat stagnerer
+    eatSeconds: 8,
+    foodStore: { base: 80, perPerson: 14 }, // maksimalt matlager i en bosetting (base + per innbygger)
     civilizationPopulationSeconds: 42,
   },
   building: {
@@ -75,6 +78,9 @@ export const BALANCE = {
     well: { radius: 15, work: 18, minRing: 44 },
     warehouse: { radius: 40, work: 50, minRing: 100 },
     sanctuary: { radius: 22, work: 36, minRing: 40 },
+    // OPUS-12: allmenning (landsby) og park (by) er åpne møteplasser — folk samles der i stedet for alltid ved bålet.
+    commons: { radius: 30, work: 14, minRing: 50 },
+    park: { radius: 36, work: 26, minRing: 80 },
     // OPUS-08: elektrisitet, petroleum og motorisering.
     generator: { radius: 36, work: 58, minRing: 150 },
     grid_station: { radius: 24, work: 30, minRing: 150 },
@@ -186,7 +192,7 @@ export const BALANCE = {
       electronics_works: { cost: { wood: 40, stone: 26, planks: 14, copper: 10, iron: 6, industrialMachinery: 2 }, inputs: { precisionComponents: 1, copper: 1, industrialMachinery: 1 }, outputs: { electronics: 1 }, seconds: 30, power: 0, electricOnly: true, electric: 1.5, cap: { electronics: 6 } },
       aircraft_works: { cost: { wood: 60, stone: 40, planks: 22, iron: 10, precisionComponents: 4, industrialMachinery: 2 }, inputs: { precisionComponents: 3, planks: 6, iron: 2 }, outputs: { aircraft: 1 }, seconds: 40, power: 1, electric: 1.5, cap: { aircraft: 2 } },
     },
-    rail: { cost: { wood: 70, planks: 24, iron: 8, railwayComponents: 2 }, maxDistance: 1700, travelSeconds: 28, load: 3 },
+    rail: { cost: { wood: 70, planks: 24, iron: 8, railwayComponents: 2 }, maxDistance: 1700, travelSeconds: 28, load: 12 },
     locomotive: { wood: 20, iron: 6, industrialMachinery: 2, railwayComponents: 2 },
   },
   // OPUS-08: elektrisk kraft er kapasitet, ikke lager. Generatoren krever damp eller
@@ -224,6 +230,11 @@ export const BALANCE = {
   // OPUS-01 · Høstfest: overskuddsmat blir en samling ved ildstedet med dobbel bønn. Automatisk (idle), aldri tvunget.
   festival: { minFood: 30, base: 10, perPerson: 0.8, interval: 110, duration: 28, prayerMultiplier: 2, joinChance: 0.7 },
   settlement: { clearRadius: 150, localHomeCapacity: 2 },
+  // OPUS-12 · Flytting: sjekkes jevnlig; bare ledig bolig og mat trekker, og bare trangboddhet eller langvarig sult presser.
+  migration: { checkSeconds: 24, maxInFlight: 2, hungerSeconds: 90, minFoodToReceive: 8, maxDistance: 1700 },
+  // OPUS-12 · Handel: hovedstaden importerer under `capitalLow`; en satellitt eksporterer bare over `satelliteKeep` (mineraler: alt).
+  // Mat fra hovedstaden til en sultende satellitt først når hovedstaden har minst `capitalFoodSurplus`.
+  trade: { checkSeconds: 4, maxQueued: 10, minBatch: 2, capitalLow: { wood: 100, stone: 80, planks: 16, cutstone: 12, food: 20 }, satelliteKeep: { wood: 120, stone: 90, planks: 20, cutstone: 14, food: 16 }, capitalFoodSurplus: 40, satelliteFoodLow: 6 },
   // OPUS-02 · Byplan: folket bygger selv videre når byen har overskudd. `reserve` er det som alltid blir igjen til innsikter.
   urban: { checkSeconds: 6, reserve: { wood: 140, stone: 100, planks: 14, cutstone: 10 } },
   // OPUS-02 · Takkoffer: PP-sluk. Hvert nivå reiser ett stykke av helligdommen; PrP ved Ragnarok vokser med kvadratrot (avtagende).

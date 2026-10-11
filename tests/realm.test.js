@@ -78,7 +78,7 @@ test('spilling: fire bosettinger med ulike roller, ruter fra faktiske turer og e
   for (const [k, v] of Object.entries(s.resources)) assert.ok(v >= 0, k);
   for (const k of Object.keys(s.region.reserved)) {
     const sum = s.region.deliveries.filter((d) => d.type === k && (d.status === 'reserved' || d.status === 'traveling')).reduce((n, d) => n + d.amount, 0);
-    assert.equal(s.region.reserved[k], sum);
+    assert.ok(Math.abs(s.region.reserved[k] - sum) < 1e-6, `reservert ${k}`);
   }
   // Ingen uendelig leveringssløyfe: hver levering er ferdig, kansellert eller under arbeid.
   assert.ok(s.region.deliveries.every((d) => ['done', 'cancelled', 'queued', 'reserved', 'traveling'].includes(d.status)));

@@ -290,3 +290,74 @@ function shrine(ctx, rnd, tiers) {
   }
   for (let i = 0; i < 5; i++) stoneBlob(ctx, rnd, (i - 2) * 11, 4 - (i % 2), 2.6, 2.4);
 }
+
+// ---------- Allmenning (OPUS-12) ----------
+// Bygdens åpne møteplass: tråkket grønning med flate sitteblokker i ring og et gammelt tre i midten. Ingen vegger — folk samles der.
+export function paintCommons(seed, p) {
+  return paintSprite(100, 86, 50, 58, (ctx) => {
+    const rnd = mulberry(seed);
+    const a = smooth(0, 0.15, p), grass = stage(p, 0.05, 0.5), seats = stage(p, 0.4, 0.8), tree = stage(p, 0.6, 1);
+    groundPatch(ctx, rnd, 36, 16, p, [104, 94, 66]);
+    for (let i = 0; i < 30 * grass; i++) dab(ctx, (rnd() - 0.5) * 62, (rnd() - 0.5) * 26, 2.4 + rnd() * 3, 1 + rnd() * 1.2, rnd() * 3, rgba([78 + rnd() * 26, 100 + rnd() * 24, 56 + rnd() * 10], 0.5));
+    // Flate sitteblokker i ring (halve bak treet males først).
+    const ring = [];
+    for (let k = 0; k < 8; k++) { const ang = k / 8 * Math.PI * 2 + 0.3; ring.push([Math.cos(ang) * 21, Math.sin(ang) * 8.5]); }
+    ring.sort((p1, p2) => p1[1] - p2[1]);
+    ctx.save(); ctx.globalAlpha = seats;
+    for (const [sx, sy] of ring) if (sy < 0) stoneBlob(ctx, rnd, sx, sy, 4.4, 2.1, [124, 118, 104]);
+    ctx.restore();
+    if (tree > 0) {
+      dab(ctx, 8, 2, 16, 5, 0, `rgba(16,12,6,${0.3 * tree})`);
+      taper(ctx, 0, 1, 0.6, -20 * tree, 3.4, 2.2, 'rgb(84,64,46)');
+      taper(ctx, 0.3, 0, 1.2, -18 * tree, 1.2, 0.8, 'rgba(176,140,100,0.4)');
+      ctx.save(); ctx.globalAlpha = smooth(0, 0.5, tree);
+      const cy = -29 * (0.6 + 0.4 * tree);
+      for (let i = 0; i < 16; i++) { const t = rnd() * Math.PI * 2, d = rnd(); dab(ctx, Math.cos(t) * 12 * d, cy + Math.sin(t) * 8 * d, 5 + rnd() * 4, 3.2 + rnd() * 2.4, rnd() * 3, rgba([58 + rnd() * 30, 86 + rnd() * 30, 46 + rnd() * 14], 0.9)); }
+      for (let i = 0; i < 6; i++) dab(ctx, -7 + rnd() * 10, cy - 5 - rnd() * 4, 3 + rnd() * 2, 2 + rnd(), 0, 'rgba(150,176,96,0.35)');
+      ctx.restore();
+    }
+    ctx.save(); ctx.globalAlpha = seats;
+    for (const [sx, sy] of ring) if (sy >= 0) stoneBlob(ctx, rnd, sx, sy, 4.4, 2.1, [124, 118, 104]);
+    ctx.restore();
+  });
+}
+
+// ---------- Park (OPUS-12) ----------
+// Byens grønne plass: plen, grusstier i kors, fontene med steinkant, benker og små trær. Bare byer har råd til å la jord ligge til pynt.
+export function paintPark(seed, p) {
+  return paintSprite(124, 100, 62, 66, (ctx) => {
+    const rnd = mulberry(seed);
+    const a = smooth(0, 0.15, p), lawn = stage(p, 0.05, 0.45), paths = stage(p, 0.3, 0.65), fount = stage(p, 0.55, 0.85), trees = stage(p, 0.75, 1);
+    dab(ctx, 0, 2, 44, 20, 0, rgba([60, 76, 48], 0.5 * a));
+    dab(ctx, 0, 1, 42, 18.5, 0, rgba([96, 124, 72], 0.9 * lawn));
+    for (let i = 0; i < 44 * lawn; i++) { const t = rnd() * Math.PI * 2, d = Math.sqrt(rnd()); dab(ctx, Math.cos(t) * 40 * d, Math.sin(t) * 17 * d, 2.2 + rnd() * 2.4, 0.9 + rnd(), rnd() * 3, rgba([86 + rnd() * 30, 114 + rnd() * 26, 62 + rnd() * 14], 0.5)); }
+    // Stier i kors, og en ring rundt fontenen.
+    ctx.save(); ctx.globalAlpha = paths;
+    taper(ctx, -40, 0, 40, 1, 4.2, 4.2, 'rgb(176,166,142)'); taper(ctx, -2, -17, 2, 17, 4.2, 4.2, 'rgb(176,166,142)');
+    dab(ctx, 0, 0.5, 15, 6.4, 0, 'rgb(182,172,148)');
+    ctx.restore();
+    if (fount > 0) {
+      ctx.save(); ctx.globalAlpha = fount;
+      dab(ctx, 0, 2, 11, 4.2, 0, 'rgba(16,12,6,0.32)');
+      ctx.fillStyle = 'rgb(138,132,120)'; ctx.beginPath(); ctx.ellipse(0, -3, 10, 4, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgb(118,112,100)'; ctx.beginPath(); ctx.moveTo(-10, -3); ctx.lineTo(-10, 0); ctx.ellipse(0, 0, 10, 4, 0, Math.PI, 0, true); ctx.lineTo(10, -3); ctx.ellipse(0, -3, 10, 4, 0, 0, Math.PI); ctx.closePath(); ctx.fill();
+      dab(ctx, 0, -3.3, 8, 3, 0, 'rgb(70,100,116)'); dab(ctx, -2, -3.6, 3, 1, 0, 'rgba(190,214,222,0.5)');
+      taper(ctx, 0, -3, 0, -12, 2.4, 1.6, 'rgb(150,144,132)'); dab(ctx, 0, -12.5, 3.4, 1.4, 0, 'rgb(120,166,186)');
+      taper(ctx, 0, -12.5, 0, -17, 0.9, 0.3, 'rgba(176,210,224,0.8)');
+      ctx.restore();
+    }
+    // Benker langs hovedstien.
+    ctx.save(); ctx.globalAlpha = paths;
+    for (const [bx, by] of [[-26, 5], [24, -5], [-9, -12]]) { taper(ctx, bx - 4, by, bx + 4, by, 2.2, 2.2, 'rgb(104,78,52)'); taper(ctx, bx - 4, by - 2.4, bx + 4, by - 2.4, 1.2, 1.2, 'rgb(84,60,40)'); }
+    ctx.restore();
+    if (trees > 0) {
+      ctx.save(); ctx.globalAlpha = trees;
+      for (const [tx, ty, sz] of [[-32, -7, 1], [31, -9, 0.9], [-22, 10, 0.8], [30, 9, 1.05]]) {
+        dab(ctx, tx + 4, ty + 1, 8 * sz, 2.8 * sz, 0, 'rgba(16,12,6,0.28)');
+        taper(ctx, tx, ty, tx + 0.3, ty - 11 * sz, 2.2, 1.5, 'rgb(86,66,48)');
+        for (let i = 0; i < 9; i++) { const t = rnd() * Math.PI * 2, d = rnd(); dab(ctx, tx + Math.cos(t) * 6 * sz * d, ty - 15 * sz + Math.sin(t) * 4.4 * sz * d, 3.8 * sz + rnd() * 2, 2.8 * sz + rnd() * 1.4, rnd() * 3, rgba([62 + rnd() * 34, 92 + rnd() * 30, 48 + rnd() * 14], 0.9)); }
+      }
+      ctx.restore();
+    }
+  });
+}

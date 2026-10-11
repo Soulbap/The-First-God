@@ -49,6 +49,7 @@ export function activityOf(state, h) {
       const to = carry ? ` med ${carry}` : '';
       return `Bærer varer${to} til en annen bygd`;
     }
+    case 'toMigrate': return 'Flytter til en annen bygd';
     case 'toRoad': return 'Går for å utbedre en gate';
     case 'roadwork': return 'Utbedrer gaten';
     case 'toExplore': return 'Speider etter nytt land';

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createGame, advance } from '../src/sim/game.js';
 import { enableMaterials, harvestMineral } from '../src/sim/materials.js';
 import { enableIndustry, stepIndustry, validRailway } from '../src/sim/industrial.js';
+import { planTrade } from '../src/sim/trade.js';
 import { serialize, deserialize, SAVE_VERSION } from '../src/sim/save.js';
 import { addBuilding, addPeople } from './support.js';
 
@@ -29,14 +30,27 @@ test('OPUS-07: fabrikk forvandler ekte innsatsvarer bare med dampkraft', () => {
   const made = s.resources.industrialMachinery; s.resources.coal = 0; advance(s, 20); assert.equal(s.resources.industrialMachinery, made, 'ingen fri fabrikkproduksjon');
 });
 
-test('OPUS-07: jernbane har gyldig landkorridor og kull finnes bare i transit før ankomst', () => {
+test('OPUS-07: jernbane har gyldig landkorridor; kull flyttes bare på bestilling og finnes bare i transit før ankomst (OPUS-12)', () => {
   const s = createGame(704); enableIndustry(s);
-  s.settlements.push({ id: 'second', name: 'Kullbygda', x: s.settlement.center.x + 700, y: s.settlement.center.y - 220, state: 'active', population: [], kind: 'mine', projectsDone: 0, role: 'Gruvebygd', stage: 'By' });
+  s.region.enabled = true;
+  s.settlements.push({ id: 'second', name: 'Kullbygda', x: s.settlement.center.x + 700, y: s.settlement.center.y - 220, state: 'active', population: [], kind: 'mine', projectsDone: 0, role: 'Gruvebygd', stage: 'By', stock: {} });
   assert.ok(validRailway(s, 'first', 'second'));
   addBuilding(s, 'locomotive_workshop'); s.resources.wood = 200; s.resources.planks = 80; s.resources.iron = 30; s.resources.railwayComponents = 8; s.resources.industrialMachinery = 4; s.resources.coal = 20;
   stepIndustry(s, 0.1); assert.equal(s.industrial.rails.length, 1); assert.equal(s.industrial.locomotives, 1);
-  const afterDeparture = s.resources.coal; assert.ok(s.industrial.shipments.some((q) => q.status === 'traveling'));
-  s.time += 30; stepIndustry(s, 0); assert.equal(s.industrial.deliveries, 1); assert.equal(s.resources.coal, afterDeparture + 3);
+  // Uten en bestilling går toget ikke (OPUS-11 sendte kull ut og tilbake uten nytte).
+  stepIndustry(s, 0.1); assert.ok(!s.industrial.shipments.some((q) => q.rail), 'ingen last uten behov');
+  // Når Kullbygda har overskudd av kull og hovedstaden mangler det, bestilles og fraktes kullet.
+  s.resources.coal = 0; s.second = s.settlements[1]; s.settlements[1].stock.coal = 9;
+  s.materials.enabled = true; s.buildings.push({ id: s.nextId++, type: 'coal_mine', x: 10, y: 10, radius: 30, complete: true, settlementId: 'first', builders: [] });
+  assert.ok(planTrade(s) >= 1, 'hovedstaden bestiller kull');
+  const sum = () => s.resources.coal + s.settlements[1].stock.coal + s.industrial.shipments.filter((q) => q.status === 'traveling').reduce((n, q) => n + q.amount, 0);
+  const total = sum();
+  stepIndustry(s, 0.1);
+  const t = s.industrial.shipments.find((q) => q.rail && q.status === 'traveling');
+  assert.ok(t && t.from === 'second' && t.to === 'first' && t.type === 'coal', 'toget går fra Kullbygda til hovedstaden');
+  assert.equal(sum(), total, 'lasten er i transit, ikke duplisert');
+  s.time += 30; stepIndustry(s, 0); assert.equal(s.industrial.deliveries, 1); assert.equal(sum(), total, 'ankomst bevarer lasten');
+  assert.equal(s.resources.coal, t.amount);
 });
 
 test('OPUS-07: v6-lagring fylles med industri uten å miste kull eller last', () => {

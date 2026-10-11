@@ -4,11 +4,14 @@
 // Hovedstaden (første bosetting) sender; hver ny bosetting bygger etter en plan som følger
 // stedets forhold (skog, stein, jord). Handelsruter vokser ut av faktiske reiser.
 import { BALANCE as B } from '../data/balance.js';
-import { startConstruction, siteIsValid } from './construction.js';
+import { startConstruction, siteIsValid, findBuildSite } from './construction.js';
 import { spawnHumans } from './population.js';
 import { settlementById, completedHomesOf, housingCapacity } from './settlements.js';
 import { storyRoute } from './story.js';
 import { beginRenovation } from './renovation.js';
+import { invGet, invAdd, invTake } from './inventory.js';
+import { inbound, planTrade, queueDelivery, recordFlow } from './trade.js';
+import { millSite, MILL_TYPES } from './mechanical.js';
 
 export { settlementStage, settlementRole, localCapacity } from './settlements.js';
 
@@ -35,28 +38,29 @@ export function landLink(s, a, b, maxDistance) {
   const d = Math.hypot(A.x - C.x, A.y - C.y);
   return d <= maxDistance && !((A.x - s.world.pond.x) * (C.x - s.world.pond.x) < 0 && Math.abs((A.y + C.y) / 2 - s.world.pond.y) < s.world.pond.ry);
 }
-// Lastebil overtar transporten til en bosetting når den kan: motorvogner finnes, drivstoff er der og landforbindelsen holder.
-// Da bestilles ingen bærere (folk bruker tiden på annet arbeid), og lastebilen henter det prosjektet mangler.
-const trucksServe = (state, id) => {
+// Lastebil overtar transporten mellom to bosettinger når den kan: motorvogner finnes, drivstoff er der og landforbindelsen holder.
+// Da bestilles ingen bærere (folk bruker tiden på annet arbeid), og lastebilen henter det som er bestilt.
+export const trucksServe = (state, from, to) => {
   const I = state.industrial, R = B.combustion.road;
-  return !!I?.roads && (state.resources.truck || 0) >= 1 && (state.resources.fuel || 0) >= R.fuelPerTrip && landLink(state, 'first', id, R.maxDistance);
+  return !!I?.roads && (state.resources.truck || 0) >= 1 && (state.resources.fuel || 0) >= R.fuelPerTrip && landLink(state, from, to, R.maxDistance);
 };
+// Toget tar over mellom de to endene av en jernbane når et lokomotiv finnes.
+export const trainServes = (state, from, to) => !!state.industrial?.locomotives && (state.industrial.rails || []).some((r) => (r.a === from && r.b === to) || (r.a === to && r.b === from));
 
 const planOf = (state, S) => (S.id === 'second' ? projectDefs : S.plan || []);
 
-// Bosettingens lager (OPUS-11). Hovedstaden bruker det delte hjemmelageret; satellittene har eget lager som bare fylles av leveranser.
-export const stockOf = (state, S, type) => (S?.id === 'first' ? state.resources[type] : S?.stock?.[type]) || 0;
+// Bosettingens lager (OPUS-11, OPUS-12): hovedstaden bruker `state.resources`; hver satellitt har eget lager som bare fylles av egen sanking,
+// egen produksjon og leveranser. Alt går via inventory.js.
+const r6 = (n) => Math.round(n * 1e6) / 1e6; // regnskapet avrundes så flyttall ikke gir sum-avvik
+export const stockOf = (state, S, type) => (S ? invGet(state, S.id, type) : 0);
 export function stockAdd(S, type, amount) { S.stock ??= {}; S.stock[type] = (S.stock[type] || 0) + amount; }
-// Varer underveis til en bosetting med motorvogn (ikke ennå i lageret).
-const truckTransit = (state, id, type) => (state.industrial?.shipments || []).filter((q) => q.mode === 'road' && q.to === id && q.type === type && q.status === 'traveling').reduce((n, q) => n + q.amount, 0);
-const carrierTransit = (state, id, type) => state.region.deliveries.filter((d) => d.destination === id && d.type === type && d.status !== 'done' && d.status !== 'cancelled').reduce((n, d) => n + d.amount, 0);
-// Hva prosjektene i satellittbosettingene fortsatt mangler (stedets lager + det som er underveis er trukket fra).
+// Hva prosjektene i satellittbosettingene fortsatt mangler (stedets lager + det som er underveis eller i kø er trukket fra).
 export function projectNeeds(state) {
   const needs = [];
   for (const p of Object.values(state.region?.projects || {})) {
     const S = settlementById(state, p.settlementId); if (!S) continue;
     for (const [type, need] of Object.entries(p.cost)) {
-      const missing = need - stockOf(state, S, type) - carrierTransit(state, S.id, type) - truckTransit(state, S.id, type);
+      const missing = need - stockOf(state, S, type) - inbound(state, S.id, type);
       if (missing > 0) needs.push({ settlementId: S.id, type, missing });
     }
   }
@@ -116,12 +120,18 @@ function activateProject(state, S, def) {
   state.events.push({ type: 'regionalProject', id: def.id, x: S.x, y: S.y });
 }
 
+// Bestiller det aktive prosjektene mangler (kalles av stepRegional; eksportert for tester).
+export const queueProjectNeeds = (state) => { for (const p of Object.values(state.region.projects)) queueNeed(state, p); };
+
 function queueNeed(state, p) {
   const amountMax = deliveryAmount(state), S = settlementById(state, p.settlementId);
   for (const [type, need] of Object.entries(p.cost)) {
-    const missing = need - stockOf(state, S, type) - carrierTransit(state, p.settlementId, type) - truckTransit(state, p.settlementId, type);
-    if (missing > 0 && !trucksServe(state, p.settlementId) && state.resources[type] >= Math.min(missing, amountMax)) {
-      state.region.deliveries.push({ id: state.nextId++, project: p.id, type, amount: Math.min(missing, amountMax), status: 'queued', source: 'first', destination: p.settlementId, createdAt: state.time, carrierId: null });
+    const missing = need - stockOf(state, S, type) - inbound(state, p.settlementId, type);
+    // Hovedstaden leverer det prosjektet mangler så lenge den selv har det (varen trekkes først når noen faktisk henter den).
+    const reserve = p.growth ? (B.urban.reserve[type] || 0) : 0; // bygdens egen vekst tar bare hovedstadens overskudd
+    const available = state.resources[type] - reserve - state.region.deliveries.filter((d) => d.source === 'first' && d.type === type && d.status === 'queued').reduce((n, d) => n + d.amount, 0);
+    if (missing > 0 && available >= Math.min(missing, amountMax)) {
+      queueDelivery(state, { project: p.id, type, amount: Math.min(missing, amountMax), source: 'first', destination: p.settlementId, reason: 'project' });
     }
   }
 }
@@ -136,20 +146,31 @@ function finishProject(state, p) {
     delete state.region.projects[S.id];
     return;
   }
-  const site = localSite(state, p.type, S, S.projectsDone || 0);
+  const site = MILL_TYPES.includes(p.type) ? millSite(state, S, p.type) : p.urban ? findBuildSite(state, p.type, S.id) : localSite(state, p.type, S, S.projectsDone || 0);
   if (!site) return;
   const b = startConstruction(state, p.type, { source: p.id, site, settlementId: S.id, onComplete: p.type === 'hut' ? { regionalPopulation: 1 } : null });
-  if (b) { for (const [k, n] of Object.entries(p.cost)) S.stock[k] -= n; state.region.completedProjects++; if (!p.urban) S.projectsDone = (S.projectsDone || 0) + 1; delete state.region.projects[S.id]; }
+  if (b) { for (const [k, n] of Object.entries(p.cost)) invTake(state, S.id, k, n); state.region.completedProjects++; if (!p.urban) S.projectsDone = (S.projectsDone || 0) + 1; delete state.region.projects[S.id]; }
+}
+
+// Punktet der varer hentes/leveres i en bosetting: lagerbygget, ellers bosettingens hjerte (hovedstaden: lagerplassen).
+function dockOf(state, id) {
+  const store = state.buildings.find((b) => b.complete && b.type === 'storage' && (b.settlementId || 'first') === id);
+  if (store) return { x: store.x, y: store.y + store.radius * 0.52 + 6 };
+  if (id === 'first') return { x: state.stockpile.x, y: state.stockpile.y + 10 };
+  const S = settlementById(state, id);
+  return S ? { x: S.x, y: S.y + 24 } : { x: state.stockpile.x, y: state.stockpile.y + 10 };
 }
 
 export function beginDelivery(state, h) {
   // Beholdningen kan ha blitt brukt siden leveransen ble satt i kø: bær bare det som faktisk finnes (aldri negativ).
-  const d = state.region?.deliveries.find((q) => q.status === 'queued' && state.resources[q.type] >= q.amount);
-  if (!d || h.settlementId !== 'first') return false;
-  d.status = 'reserved'; d.carrierId = h.id; state.resources[d.type] -= d.amount;
-  state.region.reserved[d.type] += d.amount;
+  const d = state.region?.deliveries.find((q) => q.status === 'queued' && q.source === h.settlementId && invGet(state, q.source, q.type) >= q.amount
+    && !trucksServe(state, q.source, q.destination) && !trainServes(state, q.source, q.destination));
+  if (!d) return false;
+  d.status = 'reserved'; d.carrierId = h.id; invTake(state, d.source, d.type, d.amount);
+  state.region.reserved[d.type] = r6((state.region.reserved[d.type] || 0) + d.amount);
   h.regionalDeliveryId = d.id; h.targetId = null;
-  h.tx = state.stockpile.x; h.ty = state.stockpile.y + 10; h.state = 'toDeliveryPickup';
+  const P = dockOf(state, d.source);
+  h.tx = P.x; h.ty = P.y; h.waypoints = null; h.state = 'toDeliveryPickup';
   return true;
 }
 
@@ -158,23 +179,24 @@ export function pickupDelivery(state, h) {
   const S = d && settlementById(state, d.destination);
   if (!d || !S || d.status !== 'reserved') return cancelDelivery(state, h);
   d.status = 'traveling'; h.carry = { type: d.type, amount: d.amount };
-  h.tx = S.x + (d.type === 'wood' || d.type === 'planks' ? -18 : 18); h.ty = S.y + 24; h.state = 'toDeliver';
+  const P = dockOf(state, d.destination);
+  h.tx = P.x + (d.type === 'wood' || d.type === 'planks' ? -14 : 14); h.ty = P.y; h.state = 'toDeliver';
 }
 
 export function completeDelivery(state, h) {
   const d = state.region.deliveries.find((q) => q.id === h.regionalDeliveryId);
   if (!d || d.status !== 'traveling') return cancelDelivery(state, h);
-  const S = settlementById(state, d.destination);
-  if (S) stockAdd(S, d.type, d.amount);
-  state.region.reserved[d.type] = Math.max(0, state.region.reserved[d.type] - d.amount);
+  invAdd(state, d.destination, d.type, d.amount);
+  state.region.reserved[d.type] = r6(Math.max(0, (state.region.reserved[d.type] || 0) - d.amount));
   d.status = 'done'; state.region.completedDeliveries++; h.carry = { type: null, amount: 0 }; h.regionalDeliveryId = null;
-  recordTrip(state, 'first', d.destination, d.type, d.amount);
+  recordTrip(state, d.source, d.destination, d.type, d.amount);
+  recordFlow(state, d.source, d.destination, d.type, d.amount, 'carrier');
   state.events.push({ type: 'regionalDelivery', x: h.x, y: h.y, resource: d.type, amount: d.amount });
 }
 
 export function cancelDelivery(state, h) {
   const d = state.region?.deliveries.find((q) => q.id === h.regionalDeliveryId);
-  if (d && d.status !== 'done' && d.status !== 'cancelled') { state.resources[d.type] += d.amount; state.region.reserved[d.type] = Math.max(0, state.region.reserved[d.type] - d.amount); d.status = 'cancelled'; }
+  if (d && d.status !== 'done' && d.status !== 'cancelled') { invAdd(state, d.source, d.type, d.amount); state.region.reserved[d.type] = r6(Math.max(0, (state.region.reserved[d.type] || 0) - d.amount)); d.status = 'cancelled'; }
   h.regionalDeliveryId = null; h.carry = { type: null, amount: 0 };
 }
 
@@ -192,7 +214,8 @@ export function stepRegional(state, dt) {
     const next = planOf(state, S)[S.projectsDone || 0];
     if (next && gateOpen(state, next)) activateProject(state, S, next);
   }
-  for (const p of Object.values(R.projects)) queueNeed(state, p);
+  queueProjectNeeds(state);
+  planTrade(state, deliveryAmount(state));
   for (const p of Object.values({ ...R.projects })) finishProject(state, p);
   // Hold leveringsloggen kort: ferdige og avbrutte poster trengs ikke lenger.
   if (R.deliveries.length > 80) R.deliveries = R.deliveries.filter((d) => d.status !== 'done' && d.status !== 'cancelled');

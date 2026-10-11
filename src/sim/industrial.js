@@ -3,7 +3,9 @@
 import { BALANCE as B } from '../data/balance.js';
 import { startConstruction, findBuildSite } from './construction.js';
 import { settlementById } from './settlements.js';
-import { projectNeeds, stockAdd, landLink } from './regional.js';
+import { landLink, trainServes } from './regional.js';
+import { invGet, invAdd, invTake } from './inventory.js';
+import { recordFlow } from './trade.js';
 import { chronicle } from './chronicle.js';
 import { factoryPower, stepPower } from './power.js';
 import { stepPetroleum } from './petroleum.js';
@@ -85,11 +87,24 @@ function buildLocomotive(s) {
   const I = s.industrial; if (I.locomotives || !I.rails.length || !afford(s, B.industrial.locomotive)) return;
   spend(s, B.industrial.locomotive); I.locomotives = 1;
 }
+// OPUS-12 · Toget går bare når en bosetting har bestilt noe (en leveranse i kø mellom de to endene av banen), aldri «for sikkerhets skyld».
+// Tidligere sendte det kull ut av og tilbake til hjemmelageret uten nytte. Bestillinger for samme vare og retning slås sammen opp til lasten;
+// varen trekkes fra avsenderens lager ved avreise og havner i mottakerens lager ved ankomst.
 function dispatchRail(s) {
-  const I = s.industrial, rail = I.rails[0]; if (!rail || !I.locomotives || I.shipments.some((q) => q.status === 'traveling' && q.rail) || s.resources.coal < B.industrial.rail.load) return;
-  // Lasten trekkes når toget går og finnes bare i transit før ankomst.
-  const amount = B.industrial.rail.load; s.resources.coal -= amount;
-  I.shipments.push({ id: s.nextId++, rail: rail.id, type: 'coal', amount, status: 'traveling', departAt: s.time, arriveAt: s.time + B.industrial.rail.travelSeconds });
+  const I = s.industrial, rail = I.rails[0];
+  if (!rail || !I.locomotives || I.shipments.some((q) => q.status === 'traveling' && q.rail)) return;
+  const queued = (s.region?.deliveries || []).filter((d) => d.status === 'queued' && ((d.source === rail.a && d.destination === rail.b) || (d.source === rail.b && d.destination === rail.a)));
+  const first = queued.find((d) => invGet(s, d.source, d.type) >= d.amount);
+  if (!first) return;
+  let amount = 0;
+  for (const d of queued) {
+    if (d.source !== first.source || d.destination !== first.destination || d.type !== first.type) continue;
+    if (amount + d.amount > B.industrial.rail.load || invGet(s, d.source, d.type) < amount + d.amount) continue;
+    amount += d.amount; d.status = 'cancelled'; d.handedTo = 'rail';
+  }
+  if (amount <= 0) return;
+  invTake(s, first.source, first.type, amount);
+  I.shipments.push({ id: s.nextId++, rail: rail.id, from: first.source, to: first.destination, type: first.type, amount, status: 'traveling', departAt: s.time, arriveAt: s.time + B.industrial.rail.travelSeconds });
 }
 
 // OPUS-08: landforbindelse for lastebiler. Samme regler som jernbanen, men kortere rekkevidde (ingen havkryssing).
@@ -107,33 +122,37 @@ function dispatchRoad(s) {
   if (!I.roads || s.resources.truck < 1) return;
   if (I.shipments.filter((q) => q.status === 'traveling' && q.mode === 'road').length >= s.resources.truck) return;
   if (s.resources.fuel < R.fuelPerTrip) return;
-  const need = projectNeeds(s).find((n) => landLink(s, 'first', n.settlementId, R.maxDistance) && (s.resources[n.type] || 0) >= Math.min(n.missing, R.load));
-  if (!need) return;
+  // OPUS-12: lastebilen tar en bestilling i kø (et prosjekt, vedlikehold eller handel) mellom to bosettinger med landforbindelse; toget har forrang der det går.
+  const order = (s.region?.deliveries || []).find((d) => d.status === 'queued' && !trainServes(s, d.source, d.destination) && landLink(s, d.source, d.destination, R.maxDistance) && invGet(s, d.source, d.type) >= Math.min(d.amount, R.load));
+  if (!order) return;
   if (I.truckWear >= R.tripsBeforeService) {
     if (!afford(s, R.service)) return;
     spend(s, R.service); I.truckWear = 0; I.serviceCount++;
   }
-  const amount = Math.min(R.load, Math.ceil(need.missing), Math.floor(s.resources[need.type]));
+  const amount = Math.min(R.load, Math.ceil(order.amount), Math.floor(invGet(s, order.source, order.type)));
   if (amount < 1) return;
-  s.resources.fuel -= R.fuelPerTrip; I.fuelBurned += R.fuelPerTrip; s.resources[need.type] -= amount;
+  s.resources.fuel -= R.fuelPerTrip; I.fuelBurned += R.fuelPerTrip; invTake(s, order.source, order.type, amount);
+  order.amount -= amount; if (order.amount <= 0) { order.status = 'cancelled'; order.handedTo = 'truck'; }
   I.truckWear += 1; I.roadTrips++;
-  I.shipments.push({ id: s.nextId++, mode: 'road', from: 'first', to: need.settlementId, type: need.type, amount, status: 'traveling', departAt: s.time, arriveAt: s.time + R.travelSeconds });
+  I.shipments.push({ id: s.nextId++, mode: 'road', from: order.source, to: order.destination, type: order.type, amount, status: 'traveling', departAt: s.time, arriveAt: s.time + R.travelSeconds });
 }
 function stepShipments(s) {
   for (const q of s.industrial.shipments) if (q.status === 'traveling' && s.time >= q.arriveAt) {
     q.status = 'done';
     if (q.mode === 'road') {
       const dest = settlementById(s, q.to);
-      if (dest) stockAdd(dest, q.type, q.amount); else s.resources[q.type] += q.amount; // mål borte: lasten går tilbake til hovedlageret
+      invAdd(s, dest ? q.to : 'first', q.type, q.amount); // mål borte: lasten går tilbake til hovedlageret
+      recordFlow(s, q.from, q.to, q.type, q.amount, 'truck');
       s.industrial.roadDeliveries++;
       const A = settlementById(s, q.from), C = settlementById(s, q.to);
       chronicle(s, 'motor:first-delivery', 'route', 'De første motorvognene frakter varer mellom bosetninger.', A && C ? { x: (A.x + C.x) / 2, y: (A.y + C.y) / 2 } : null);
       continue;
     }
-    s.resources[q.type] += q.amount; // jernbanelasten (kull) leveres tilbake til hjemmelageret ved ankomst
+    invAdd(s, settlementById(s, q.to ?? 'first') ? (q.to ?? 'first') : 'first', q.type, q.amount); // jernbanelasten havner i mottakerens lager
     s.industrial.deliveries++;
+    recordFlow(s, q.from ?? 'first', q.to ?? 'first', q.type, q.amount, 'rail');
     const rail = s.industrial.rails.find((r) => r.id === q.rail), A = rail && settlementById(s, rail.a), C = rail && settlementById(s, rail.b);
-    chronicle(s, `industrial:shipment:${q.id}`, 'route', 'Et damplokomotiv frakter kull til industribyen.', A && C ? { x: (A.x + C.x) / 2, y: (A.y + C.y) / 2 } : null);
+    chronicle(s, `industrial:shipment:${q.id}`, 'route', 'Et damplokomotiv frakter varer mellom bosettingene.', A && C ? { x: (A.x + C.x) / 2, y: (A.y + C.y) / 2 } : null);
   }
   if (s.industrial.shipments.length > 30) s.industrial.shipments = s.industrial.shipments.filter((q) => q.status !== 'done');
 }

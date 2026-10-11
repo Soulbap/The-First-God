@@ -9,7 +9,7 @@ import { addWear } from './wear.js';
 import { inBounds, inPond, dist } from './world.js';
 import { startConstruction } from './construction.js';
 import { harvestMineral, materialEnabled, mineralHarvestable, wantedMineral } from './materials.js';
-import { beginDelivery, pickupDelivery, completeDelivery, recordTrip } from './regional.js';
+import { beginDelivery, pickupDelivery, completeDelivery } from './regional.js';
 import { isHome, settlementById } from './settlements.js';
 import { partyArrive, partyTick } from './realm.js';
 import { missionAtEdge, missionHome } from './worldmap.js';
@@ -17,6 +17,8 @@ import { festivalActive } from './civilization.js';
 import { storyFounded } from './story.js';
 import { pickPlace, releasePlace, lingerSeconds } from './community.js';
 import { routeAlong, roadJobPoint, workRoad } from './streets.js';
+import { invOf, invAdd, invGet } from './inventory.js';
+import { arriveMigrant } from './migration.js';
 
 const H = B.human;
 
@@ -34,10 +36,14 @@ export function gatherInterval(state, h, kind) {
 
 const nodeById = (state, id) => state.nodes.find((n) => n.id === id);
 const buildingById = (state, id) => state.buildings.find((b) => b.id === id);
-const fireOf = (state) => state.buildings.find((b) => b.type === 'fire' && b.complete);
-const hearthOf = (state) => state.buildings.find((b) => b.type === 'hearth' && b.complete);
-const storeOf = (state) => state.buildings.find((b) => b.type === 'storage' && b.complete);
-const deliveryPoint = (state) => storeOf(state) || state.stockpile;
+const fireOf = (state, id = 'first') => state.buildings.find((b) => b.type === 'fire' && b.complete && (b.settlementId || 'first') === id);
+const hearthOf = (state, id = 'first') => state.buildings.find((b) => b.type === 'hearth' && b.complete && (b.settlementId || 'first') === id);
+// OPUS-12: hver bosetting leverer til sitt eget lager (egen lagerbygning, ellers bosettingens hjerte), ikke til hovedstadens.
+const storeOf = (state, id = 'first') => state.buildings.find((b) => b.type === 'storage' && b.complete && (b.settlementId || 'first') === id);
+const deliveryPoint = (state, h) => {
+  const id = h?.settlementId || 'first';
+  return storeOf(state, id) || (id === 'first' ? state.stockpile : settlementById(state, id) || state.stockpile);
+};
 
 export function nodeUsable(n, state) {
   if (n.kind === 'tree') return n.state === 'alive' && n.growth >= B.tree.harvestMinGrowthHuman && treeAvailable(n) > 0;
@@ -85,9 +91,9 @@ function moveTo(state, h, dt) {
   return false;
 }
 
-function chooseResourceKind(state) {
-  // Holder et grovt forhold 3:2 mellom trevirke og stein, med litt menneskelig variasjon.
-  const woodScore = state.resources.wood / 0.6, stoneScore = state.resources.stone / 0.4;
+function chooseResourceKind(state, h) {
+  // Holder et grovt forhold 3:2 mellom trevirke og stein, med litt menneskelig variasjon (i bosettingens eget lager).
+  const woodScore = invGet(state, h.settlementId, 'wood') / 0.6, stoneScore = invGet(state, h.settlementId, 'stone') / 0.4;
   let kind = woodScore <= stoneScore ? 'tree' : 'rock';
   if (rand(state.rng) < 0.25) kind = kind === 'tree' ? 'rock' : 'tree';
   return kind;
@@ -117,7 +123,7 @@ function routeTo(state, h) {
 }
 
 function goStore(state, h) {
-  const store = deliveryPoint(state);
+  const store = deliveryPoint(state, h);
   h.state = 'toStore';
   h.tx = store.x + range(state.rng, -14, 14);
   h.ty = store.y + (store.type === 'storage' ? store.radius * 0.52 : 10) + range(state.rng, 2, 12);
@@ -132,7 +138,7 @@ function goMaintenance(state, h) {
   // OPUS-12: vedlikehold, handel og arbeid skjer ved bosettingens egne steder (torg, hall, brønn, arbeidssted, hjem, lager) med begrenset plass.
   const pick = pickPlace(state, h, 'maintain');
   if (!pick) {
-    const store = deliveryPoint(state);
+    const store = deliveryPoint(state, h);
     if (!store) return false;
     h.targetId = store.id || null; h.at = store.type || null; h.tx = store.x; h.ty = store.y + (store.radius || 10) * 0.52 + 6; h.state = 'toMaintain';
     return true;
@@ -191,6 +197,17 @@ function wanderPoint(state, rx, ry) {
   return { x: Math.cos(a) * r * rx, y: Math.sin(a) * r * ry };
 }
 
+// Hvilket mineral et menneske henter: hovedstadens behov (som før), eller – for en satellitt – bare det hovedstaden etterspør og som ligger
+// innen rekkevidde av satellitten, så lenge satellittens eget lager av det ikke er fullt (resten fraktes av handelen). Hver mineralbygd oppstår av geografi.
+function wantedFor(state, h) {
+  const kind = wantedMineral(state);
+  if (!kind || h.settlementId === 'first') return kind;
+  const S = settlementById(state, h.settlementId);
+  if (!S || invGet(state, S.id, kind) >= B.human.stockCap.satelliteMineral) return null;
+  const near = state.nodes.some((n) => n.kind === 'mineral' && n.mineral === kind && n.discovered && n.amount > 0 && Math.hypot(n.x - S.x, n.y - S.y) < B.human.stockCap.mineralReach);
+  return near ? kind : null;
+}
+
 function chooseTask(state, h) {
   if (state.expansion.founding && !state.expansion.founded && !state.expansion.founders.length && state.humans.length >= B.human.foundingParty) {
     const founders = state.humans.slice(0, B.human.foundingParty);
@@ -227,16 +244,17 @@ function chooseTask(state, h) {
   if (h.settlementId !== 'first' && state.expansion.founded && h.deliveries % 2 === 0 && goLeisure(state, h)) return;
   if (maybeExplore(state, h)) return;
   // 2) Sanking.
-  const kind = chooseResourceKind(state);
+  const kind = chooseResourceKind(state, h);
   // Før industri teller kull ikke som en mangel: ellers ble malm aldri hentet og metallkjeden ble aldri startet.
   // OPUS-08: når gruven står og kull er knapt, prioriteres kullet. Ellers blir det liggende urørt,
   // fordi nærmere malm alltid vinner og damp/elektrisitet aldri får brensel.
   // OPUS-11: i stedet for «nærmeste mineral» velges det mineralet som mangler mest i forhold til sitt lagermål.
-  const wanted = wantedMineral(state);
+  const wanted = wantedFor(state, h);
   // Folk sanker ikke videre når lageret er rikelig fylt (OPUS-11): ellers hogges skogen ned til tom slette mens tre og stein hoper seg opp
   // til titusener uten bruk. Taket vokser med folketallet, og som før hentes malm og kull etter behov.
-  const cap = B.human.stockCap, pop = state.humans.length;
-  const wantsTree = state.resources.wood < cap.wood + cap.perPerson * pop, wantsRock = state.resources.stone < cap.stone + cap.perPerson * pop;
+  const cap = B.human.stockCap, here = settlementById(state, h.settlementId), pop = here ? here.population.length : state.humans.length;
+  const mine = h.settlementId === 'first' ? 1 : B.human.stockCap.satelliteShare; // en satellitt holder mindre lager enn hovedstaden
+  const wantsTree = invGet(state, h.settlementId, 'wood') < (cap.wood + cap.perPerson * pop) * mine, wantsRock = invGet(state, h.settlementId, 'stone') < (cap.stone + cap.perPerson * pop) * mine;
   const first = kind === 'tree' ? (wantsTree ? 'tree' : null) : (wantsRock ? 'rock' : null), other = kind === 'tree' ? (wantsRock ? 'rock' : null) : (wantsTree ? 'tree' : null);
   const n = (wanted && findNode(state, h, 'mineral', wanted)) || (first && findNode(state, h, first)) || (other && findNode(state, h, other));
   if (n) {
@@ -271,18 +289,17 @@ function goLeisure(state, h) {
 function deliver(state, h) {
   const { type, amount } = h.carry;
   if (type && amount > 0) {
-    state.resources[type] += amount;
+    invAdd(state, h.settlementId, type, amount); // OPUS-12: til bosettingens eget lager
     state.totals[type] += amount;
-    recordAuto(state, type, amount);
-    const store = deliveryPoint(state);
+    if (h.settlementId === 'first') recordAuto(state, type, amount);
+    const store = deliveryPoint(state, h);
     state.events.push({ type: 'gain', res: type, amount, x: store.x, y: store.y, manual: false });
     h.deliveries++;
-    if (h.settlementId !== 'first') recordTrip(state, h.settlementId, 'first', type, amount);
   }
   h.carry = { type: null, amount: 0 };
-  if (!state.buildings.some((b) => !b.complete) && hearthOf(state) && h.deliveries % 3 === 1 && goMaintenance(state, h)) return;
-  const fire = hearthOf(state) || fireOf(state);
-  const every = hearthOf(state) ? H.villageRestEveryDeliveries : H.restEveryDeliveries;
+  if (!state.buildings.some((b) => !b.complete && (b.settlementId || 'first') === h.settlementId) && hearthOf(state, h.settlementId) && h.deliveries % 3 === 1 && goMaintenance(state, h)) return;
+  const fire = hearthOf(state, h.settlementId) || fireOf(state, h.settlementId);
+  const every = hearthOf(state, h.settlementId) ? H.villageRestEveryDeliveries : H.restEveryDeliveries;
   if (fire && h.deliveries > 0 && h.deliveries % every === 0) {
     // OPUS-12: hvilen foregår ved et sted med ledig plass i egen bosetting (hjem om kvelden, torg og allmenning om dagen), ikke alltid ved ilden.
     const pick = pickPlace(state, h, 'rest');
@@ -368,7 +385,7 @@ export function stepHuman(state, h, dt) {
       break;
     }
     case 'toFire': {
-      const spot = h.destId != null ? state.buildings.find((b) => b.id === h.destId) : (hearthOf(state) || fireOf(state));
+      const spot = h.destId != null ? state.buildings.find((b) => b.id === h.destId) : (hearthOf(state, h.settlementId) || fireOf(state, h.settlementId));
       if (!spot) { goIdle(state, h); break; }
       if (moveTo(state, h, dt)) {
         h.state = 'rest';
@@ -377,6 +394,9 @@ export function stepHuman(state, h, dt) {
       }
       break;
     }
+    case 'toMigrate':
+      if (moveTo(state, h, dt)) arriveMigrant(state, h);
+      break;
     case 'toRoad':
       if (!settlementById(state, h.settlementId)?.roadJob) { goIdle(state, h); break; }
       if (moveTo(state, h, dt)) { h.state = 'roadwork'; h.anim = 0; }

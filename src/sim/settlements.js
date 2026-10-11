@@ -2,6 +2,7 @@
 // Trinn og roller oppstår av faktiske bygg, folk og forbindelser; ingen timere og ingen spillerordre.
 import { BALANCE as B } from '../data/balance.js';
 import { storyStage } from './story.js';
+import { invGet } from './inventory.js';
 
 export const STAGES = ['Leir', 'Grend', 'Landsby', 'Voksende landsby', 'Tidlig by', 'By', 'Storby'];
 export const stageRank = (stage) => STAGES.indexOf(stage);
@@ -30,8 +31,8 @@ export function housingCapacity(state, id) {
 
 export const completedHomesOf = (state, id) => done(state, id).filter(isHome);
 
-export function fieldsCount(state) {
-  return state.buildings.filter((b) => b.complete && b.type === 'field').length;
+export function fieldsCount(state, id = null) {
+  return state.buildings.filter((b) => b.complete && b.type === 'field' && (id == null || (b.settlementId || 'first') === id)).length;
 }
 
 // Hvilke krav som mangler for å bli «By» — brukes både av trinnet og av panelet i Rike.
@@ -42,7 +43,7 @@ export function cityRequirements(state, S) {
     { id: 'people', label: 'Befolkning', have: S.population.length, need: C.minPopulation },
     { id: 'housing', label: 'Boliger med plass', have: housingCapacity(state, id), need: Math.max(C.minPopulation, S.population.length) },
     { id: 'townhouse', label: 'Bolighus', have: bs.filter((b) => b.type === 'townhouse').length, need: 1 },
-    { id: 'food', label: 'Matforsyning (åkre og lager)', have: fieldsCount(state) >= C.minFields ? Math.floor(state.resources.food) : 0, need: C.minFoodStock },
+    { id: 'food', label: 'Matforsyning (åkre og lager)', have: fieldsCount(state, id) >= 1 || invGet(state, id, 'food') >= C.minFoodStock ? Math.floor(invGet(state, id, 'food')) : 0, need: C.minFoodStock },
     { id: 'infra', label: 'Infrastruktur', have: infrastructure, need: C.minInfrastructure },
     { id: 'sawmill', label: 'Sagbruk', have: hasBuilt(state, id, 'sawmill') ? 1 : 0, need: 1 },
     { id: 'mason', label: 'Steinhoggeri', have: hasBuilt(state, id, 'mason') ? 1 : 0, need: 1 },

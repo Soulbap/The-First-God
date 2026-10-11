@@ -8,6 +8,7 @@ import { runSeed, CHAIN } from './fastforward.mjs';
 import { tierOf } from '../src/sim/renovation.js';
 import { housingCapacity, isHome } from '../src/sim/settlements.js';
 import { siteStats } from '../src/sim/construction.js';
+import { roadStats } from '../src/sim/streets.js';
 
 function measure(seed, seconds, until) {
   const r = runSeed({ seed, seconds, until, keepState: true, snapshotEvery: 900 });
@@ -31,6 +32,8 @@ function measure(seed, seconds, until) {
     rails: s.industrial.rails.length, roadTrips: s.industrial.roadTrips, fuelBurned: Math.round(s.industrial.fuelBurned), flights: s.aviation.flightsDone, surveys: s.aviation.surveys,
     lit: s.industrial.litSettlements, electronics: s.totals.electronics, research: Math.round(s.science.researchKnowledge || 0),
     siteSearches: siteStats.searches, siteSkipped: siteStats.skipped,
+    trade: s.trade, stocks: Object.fromEntries(s.settlements.map((q) => [q.id, Object.fromEntries(Object.entries(q.id === 'first' ? s.resources : q.stock || {}).filter(([k, v]) => ['wood', 'stone', 'food', 'planks', 'cutstone', 'coal', 'ironOre', 'copperOre'].includes(k) && v >= 1).map(([k, v]) => [k, Math.round(v)]))])),
+    roads: s.settlements.map((q) => `${q.id}:${JSON.stringify(roadStats(q).levels)}`),
   };
 }
 

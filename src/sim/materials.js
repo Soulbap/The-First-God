@@ -72,12 +72,19 @@ export function wantedMineral(state, h = null) {
   state.materials.wanted = { t: Math.floor(state.time), kind };
   return kind;
 }
-function computeWantedMineral(state) {
+// Lagermålet for et mineral akkurat nå (0 når det ikke er etterspurt ennå): kull først når industri og kullgruve finnes, tidlig jern lavere.
+export function mineralTarget(state, kind) {
   const T = M.stockTargets, ind = !!state.industrial?.enabled;
+  if (!materialEnabled(state)) return 0;
+  if (kind === 'coal' && !(ind && state.buildings.some((b) => b.complete && b.type === 'coal_mine'))) return 0;
+  return kind === 'ironOre' && !state.materials.ironworking ? T.ironOreEarly : T[kind] || 0;
+}
+function computeWantedMineral(state) {
+  const T = M.stockTargets;
   let best = null, bestScore = 0;
   for (const kind of ['coal', 'ironOre', 'copperOre', 'tinOre']) {
-    if (kind === 'coal' && !(ind && state.buildings.some((b) => b.complete && b.type === 'coal_mine'))) continue;
-    const target = kind === 'ironOre' && !state.materials.ironworking ? T.ironOreEarly : T[kind];
+    const target = mineralTarget(state, kind);
+    if (!target) continue;
     const have = state.resources[kind] || 0;
     if (have >= target) continue;
     if (!state.nodes.some((n) => n.kind === 'mineral' && n.mineral === kind && n.discovered && n.amount > 0)) continue;

@@ -5,6 +5,7 @@ import { BALANCE as B } from '../data/balance.js';
 import { recordAuto } from './stats.js';
 import { settlementById, roleEffect } from './settlements.js';
 import { mechanicalMultiplier } from './mechanical.js';
+import { invOf } from './inventory.js';
 
 const RECIPE_TYPES = ['sawmill', 'mason'];
 export const recipeOf = (type) => (RECIPE_TYPES.includes(type) ? B.production[type] : null);
@@ -27,13 +28,14 @@ export function addKnowledge(state, amount, S) {
 
 const staffed = (S) => !!S && S.population.length >= B.production.minPopulation;
 
+// OPUS-12: sagbruk og steinhoggeri arbeider på sin egen bosettings lager (planker fra en satellitts sagbruk blir i satellitten til handelen henter dem).
 function stepRecipe(state, b, S, dt) {
-  const recipe = recipeOf(b.type);
+  const recipe = recipeOf(b.type), inv = invOf(state, S.id);
   const inputs = Object.entries(recipe.inputs);
-  const enough = inputs.every(([k, n]) => state.resources[k] >= n + recipe.reserve);
-  const cap = recipe.cap * (state.buildings.some((q) => q.complete && q.type === 'market') ? B.production.marketCapMultiplier : 1)
-    * (state.buildings.some((q) => q.complete && q.type === 'warehouse') ? B.production.warehouseCapMultiplier : 1);
-  if (b.cycle <= 0 && Object.keys(recipe.outputs).every((k) => state.resources[k] >= cap)) { b.active = false; b.idle = 'fullt'; return; }
+  const enough = inputs.every(([k, n]) => (inv[k] || 0) >= n + recipe.reserve);
+  const here = (type) => state.buildings.some((q) => q.complete && q.type === type && (q.settlementId || 'first') === S.id);
+  const cap = recipe.cap * (here('market') ? B.production.marketCapMultiplier : 1) * (here('warehouse') ? B.production.warehouseCapMultiplier : 1);
+  if (b.cycle <= 0 && Object.keys(recipe.outputs).every((k) => (inv[k] || 0) >= cap)) { b.active = false; b.idle = 'fullt'; return; }
   if (!staffed(S)) { b.active = false; b.idle = 'folk'; return; }
   if (!enough && b.cycle <= 0) { b.active = false; b.idle = 'råvare'; return; }
   b.active = true; b.idle = null;
@@ -42,11 +44,11 @@ function stepRecipe(state, b, S, dt) {
   b.cycle += dt * craftSpeed(state, S) * mechanicalMultiplier(state, S.id, b.type);
   if (b.cycle < recipe.seconds) return;
   // Sjekk igjen ved avslutning: aldri negativ beholdning, og råvaren trekkes først nå.
-  if (!inputs.every(([k, n]) => state.resources[k] >= n)) { b.cycle = recipe.seconds; b.active = false; b.idle = 'råvare'; return; }
+  if (!inputs.every(([k, n]) => (inv[k] || 0) >= n)) { b.cycle = recipe.seconds; b.active = false; b.idle = 'råvare'; return; }
   b.cycle = 0;
-  for (const [k, n] of inputs) state.resources[k] -= n;
+  for (const [k, n] of inputs) inv[k] -= n;
   for (const [k, n] of Object.entries(recipe.outputs)) {
-    state.resources[k] += n; state.totals[k] += n; recordAuto(state, k, n);
+    inv[k] = (inv[k] || 0) + n; state.totals[k] += n; if (S.id === 'first') recordAuto(state, k, n);
   }
   b.made++;
   addKnowledge(state, B.knowledge.perCycle, S);
