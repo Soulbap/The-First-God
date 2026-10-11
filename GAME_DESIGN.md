@@ -471,3 +471,24 @@ Rapporter: `docs/opus-11/` (`REPORT.md`, `PROGRESSION_RESULTS.md`, `VISUAL_QA.md
 - Satellittbosettinger når ikke trinnet «By» i en vanlig kjøring, og hovedstaden har ett endelig bosettingsmønster (84 bygg, 4 bosettinger) uansett frø; forskjellen mellom frø ligger i geografi, ressursstrøm og tidspunkter.
 - Hovedstaden bruker fortsatt det delte hjemmelageret, og folk i satellittene leverer fortsatt det de sanker til det (de bruker ikke eget lager). Full regional økonomi (egen produksjon og forbruk i hver bosetting) er ikke gjort.
 - Jernbanen flytter kull ut av og tilbake til hjemmelageret (bevart, men uten egen nytte); trær har fortsatt bare to arter (bjørk og gran).
+
+## 17. OPUS-12 — levende sivilisasjon (2026-10-11)
+
+Rapporter: `docs/opus-12/` (`REPORT.md`, `VISUAL_QA.md`, `ECONOMY_AND_SETTLEMENT_RESULTS.md`). Alt under er **implementert** av utvikleren etter prosjektansvarliges OPUS-12-oppdrag; ingenting er spilltestet av et menneske ennå.
+
+### Implementert
+
+- **Utseendet til en bosetting følger av menneskenes virksomhet.** Mennesker har hjem og arbeidssted, møtes ved steder med begrenset plass (bål, ildsted, brønn, torg, hall, allmenning, park, helligdom, hjem, arbeidssteder) og fordeler seg etter bosettingens trinn og døgnet. Bålet er den viktigste samlingen i leiren og en ceremoniell møteplass senere, ikke hele byens samlingspunkt.
+- **Gater er infrastruktur, ikke dekor.** Gatenettet vokser av byggene (aldri gjennom bygg), beholder sin historie, og dekket (sti → jordvei → grusvei → brolagt gate) bygges ett stykke om gangen av folket, med materialer fra bosettingens eget lager, tid og hender. Folk går langs gatene; bygg legger seg ved gaten.
+- **Områder oppstår, de planlegges ikke.** Bolig, jordbruk, handel, industri, sivilt, transport og forskning avledes av byggene; ingen sonetegning, ingen områdemeny.
+- **Hver bosetting eier sitt lager.** Sanking, åkre, foredling og møller bruker og fyller bosettingens eget lager. Varer flyttes bare på bestilling (prosjekt, vedlikehold, import til hovedstaden under lavvann, matstøtte) med bærere, lastebil eller tog, og bevares i transitt. Tog og lastebil går ikke uten bestilling.
+- **Bosettinger utvikler seg etter sted.** Skog gir sagbruk, stein gir steinhoggeri, malm gir gruve; arbeidsplasser avgjør hvor mange hus og bolighus en satellitt bygger; folk spiser, og en sulten bosetting vokser ikke. Folk flytter én og én dit det finnes bolig, mat og arbeid. Bosettingene får identitet (Gruveby, Skogsby, Steinbrudd …) av det de driver med.
+- **Variert arkitektur.** Bygård (3–5 etasjer, tegl/puss/stein, flatt tak/saltak/mansard, balkonger) og moderne blokk (4–8 etasjer, betong/glass/tegl/panel, flatt/terrasse/pulttak/loft) tegnes etter en deterministisk byggeplan; høyden følger grunnens verdi (sentrum, tetthet, folketall, trinn).
+
+### Antakelser — åpne
+
+- Alle nye tall (`BALANCE.trade`, `.migration`, `.human.foodPerPersonSecond`, `.foodStore`, veiarbeidets kostnader i `streets.js`, arbeidsplasser i `growth.js`) er provisoriske.
+- «Redevelopment» er begrenset til ombygging på stedet, bedre gater rundt og sentrumsnær høyde; sammenslåing av flere gamle hus til ett stort bygg er ikke gjort.
+- Mineraler kan fortsatt hentes fra årer av satellittens folk uten at gruven står i samme bosetting; gruvebygget er i praksis en arbeidsplass.
+- Fjerne land (regioner utenfor hjemmekartet) har fortsatt oppsummerte bilder (ingen gater/industri).
+

@@ -165,7 +165,43 @@ const OPUS_11_SCENES = [
   { name: '15-planet-view', w: 1920, h: 1080, js: `${BOT11} ${PLANET} to('planetary_survey'); T.advance(30); calm(); close(); await planet(3.1); settle(1.5);` },
   { name: '16-settlement-clearing-no-regrowth', w: 1920, h: 1080, js: `${BOT11} to('city_rises'); T.advance(1800); ${day()} calm(); T.view(C.x, C.y + 10, 1500); close(); settle(1.5);` },
 ];
-const SCENES = process.env.OPUS_11 === '1' ? OPUS_11_SCENES : process.env.OPUS_01 === 'sizes' ? OPUS_01_SIZES : process.env.OPUS_01 === '1' ? OPUS_01_SCENES : process.env.OPUS_01 === 'transition' ? OPUS_01_TRANSITION : process.env.GAMEPLAY_07_10 === '1' ? GAMEPLAY_07_10_SCENES : process.env.GAMEPLAY_06 === '1' ? GAMEPLAY_06_SCENES : process.env.GAMEPLAY_05 === '1' ? GAMEPLAY_05_SCENES : process.env.GAMEPLAY_04 === '1' ? GAMEPLAY_04_SCENES : process.env.GAMEPLAY_03 === '1' ? GAMEPLAY_03_SCENES : process.env.GAMEPLAY_02 === '1' ? GAMEPLAY_02_SCENES : DEFAULT_SCENES;
+// OPUS-12: levende sivilisasjon. Ett forberedelsestrinn spiller hele forløpet med boten (ingen snarveier) og lagrer sjekkpunkter i
+// nettleserens localStorage (utviklernøkler); alle bildene hentes deretter fra disse sjekkpunktene. Døgnfasen følger den ekte spillklokka.
+const BOT12 = BOT.replace('14400', '21600') + ' T.state.unlocks.zoomArea = true;';
+const PHASE = `const toPhase = (p) => { for (let i = 0; i < 240; i++) { const ph = (((0.3 + T.state.time / 480) % 1) + 1) % 1; if (Math.abs(ph - p) < 0.012) break; T.advance(4); } T.tick(1.5); };`;
+const L12 = (k) => `${BOT} ${PHASE} if (!T.loadFrom('o12-${k}')) throw new Error('mangler sjekkpunkt ${k}'); T.state.unlocks.zoomArea = true;`;
+const sat = (i) => `const A = T.state.settlements[${i}] || T.state.settlements[1];`;
+const OPUS_12_SCENES = [
+  { name: '00-prepare', w: 1920, h: 1080, js: `${BOT12}
+      to('settlement'); T.advance(40); T.saveAs('o12-settlement');
+      to('first_village'); T.advance(90); T.saveAs('o12-village');
+      to('first_town'); T.advance(120); T.saveAs('o12-town');
+      to('city_rises'); T.advance(300); T.saveAs('o12-city');
+      to((s) => s.buildings.some((b) => b.type === 'metalworks' && b.complete)); T.advance(400); T.saveAs('o12-industrial');
+      to((s) => s.buildings.some((b) => b.type === 'research_institute' && b.complete)); T.advance(300); T.saveAs('o12-institute');
+      camp(); calm();` },
+  { name: '01-primitive-settlement', w: 1920, h: 1080, js: `${L12('settlement')} calm(); T.view(C.x - 10, C.y - 20, 640); close(); settle(1.5);` },
+  { name: '02-early-village', w: 1920, h: 1080, js: `${L12('village')} calm(); T.view(C.x - 10, C.y - 10, 860); close(); settle(1.5);` },
+  { name: '03-developed-village', w: 1920, h: 1080, js: `${L12('town')} calm(); T.view(C.x - 10, C.y - 10, 1000); close(); settle(1.5);` },
+  { name: '04-town-with-streets', w: 1920, h: 1080, js: `${L12('city')} toPhase(0.45); calm(); T.view(C.x, C.y + 10, 900); close(); settle(1.5);` },
+  { name: '05-industrial-town', w: 1920, h: 1080, js: `${L12('industrial')} toPhase(0.45); calm(); T.view(C.x, C.y + 10, 1000); close(); settle(1.5);` },
+  { name: '06-modern-city', w: 1920, h: 1080, js: `${L12('institute')} toPhase(0.45); calm(); T.view(C.x, C.y + 10, 1000); close(); settle(1.5);` },
+  { name: '07-modern-city-night', w: 1920, h: 1080, js: `${L12('institute')} toPhase(0.97); calm(); T.view(C.x, C.y + 10, 900); close(); settle(1.5);` },
+  { name: '08-market-and-civic-gathering', w: 1920, h: 1080, js: `${L12('institute')} toPhase(0.5); const m = first('market'); calm(); T.view(m.x + 40, m.y + 10, 560); close(); settle(1.5);` },
+  { name: '09-residential-neighborhood', w: 1920, h: 1080, js: `${L12('institute')} toPhase(0.45); const hs = T.state.buildings.filter((b) => b.complete && (b.tier || 0) >= 4 && (b.settlementId || 'first') === 'first'); const h = hs[Math.floor(hs.length / 2)] || first('townhouse'); calm(); T.view(h.x, h.y + 10, 480); close(); settle(1.5);` },
+  { name: '10-industrial-district', w: 1920, h: 1080, js: `${L12('institute')} toPhase(0.45); const d = first('metalworks') || T.state.settlements[0].districts.industri; calm(); T.view(d.x, d.y + 10, 620); close(); settle(1.5);` },
+  { name: '11a-satellite-economy-A', w: 1920, h: 1080, js: `${L12('institute')} toPhase(0.45); ${sat(1)} calm(); T.view(A.x, A.y + 20, 900); close(); settle(1.5);` },
+  { name: '11b-satellite-economy-B', w: 1920, h: 1080, js: `${L12('institute')} toPhase(0.45); ${sat(2)} calm(); T.view(A.x, A.y + 20, 900); close(); settle(1.5);` },
+  { name: '11c-realm-panel', w: 1920, h: 1080, js: `${L12('institute')} toPhase(0.45); calm(); T.view(C.x, C.y, 2300); open('realm'); settle(1.5);` },
+  { name: '12-regional-trade-infrastructure', w: 1920, h: 1080, js: `${L12('institute')} toPhase(0.45); const A = T.state.settlements[1]; calm(); T.view((C.x + A.x) / 2, (C.y + A.y) / 2, 2300); close(); settle(1.5);` },
+  { name: '13-remote-settlement-local-zoom', w: 1920, h: 1080, js: `${L12('institute')} toPhase(0.45); ${sat(3)} calm(); T.view(A.x, A.y + 20, 700); close(); settle(1.5);` },
+  { name: '14-historic-structures', w: 1920, h: 1080, js: `${L12('institute')} toPhase(0.45); const hs = T.state.buildings.filter((b) => b.heritage); const h = hs[hs.length - 1]; calm(); T.view(h.x, h.y, 440); close(); settle(1.5);` },
+  { name: '15-people-working', w: 1920, h: 1080, js: `${L12('city')} toPhase(0.42); const m = first('sawmill'); calm(); T.view(m.x, m.y, 420); close(); settle(1.5);` },
+  { name: '16a-redevelopment-before', w: 1920, h: 1080, js: `${L12('city')} toPhase(0.45); calm(); T.view(C.x + 40, C.y + 10, 760); close(); settle(1.5);` },
+  { name: '16b-redevelopment-after', w: 1920, h: 1080, js: `${L12('institute')} toPhase(0.45); calm(); T.view(C.x + 40, C.y + 10, 760); close(); settle(1.5);` },
+  ...[['a1-morning', 0.28], ['a2-work', 0.4], ['a3-midday-transport', 0.52], ['a4-social', 0.66], ['a5-evening', 0.8], ['a6-night', 0.96]].map(([n, p]) => ({ name: `act-${n}`, w: 1920, h: 1080, js: `${L12('institute')} toPhase(${p}); calm(); T.view(C.x + 20, C.y + 20, 760); close(); settle(0.8);` })),
+];
+const SCENES = process.env.OPUS_12 === '1' ? OPUS_12_SCENES : process.env.OPUS_11 === '1' ? OPUS_11_SCENES : process.env.OPUS_01 === 'sizes' ? OPUS_01_SIZES : process.env.OPUS_01 === '1' ? OPUS_01_SCENES : process.env.OPUS_01 === 'transition' ? OPUS_01_TRANSITION : process.env.GAMEPLAY_07_10 === '1' ? GAMEPLAY_07_10_SCENES : process.env.GAMEPLAY_06 === '1' ? GAMEPLAY_06_SCENES : process.env.GAMEPLAY_05 === '1' ? GAMEPLAY_05_SCENES : process.env.GAMEPLAY_04 === '1' ? GAMEPLAY_04_SCENES : process.env.GAMEPLAY_03 === '1' ? GAMEPLAY_03_SCENES : process.env.GAMEPLAY_02 === '1' ? GAMEPLAY_02_SCENES : DEFAULT_SCENES;
 const ACTIVE_SCENES = process.env.CAPTURE_SCENES
   ? SCENES.filter((s) => process.env.CAPTURE_SCENES.split(',').some((name) => s.name.startsWith(name.trim())))
   : SCENES;

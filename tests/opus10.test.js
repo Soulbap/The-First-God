@@ -103,7 +103,7 @@ test('OPUS-10: rakettgrunnlaget er kun kunnskap, uten rakett- eller banebygg', (
 
 test('OPUS-10: v9-lagring fylles med vitenskap uten å miste elektronikk eller forskningsdata', () => {
   const s = createGame(1008); enableIndustry(s); s.resources.electronics = 4; s.science.communication = true; s.science.researchKnowledge = 12;
-  assert.equal(SAVE_VERSION, 11);
+  assert.equal(SAVE_VERSION, 12);
   const raw = JSON.parse(serialize(s)); raw.v = 9; delete raw.state.science; delete raw.state.resources.electronics; delete raw.state.industrial.electronics;
   const old = deserialize(JSON.stringify(raw));
   assert.equal(old.science.communication, false); assert.equal(old.resources.electronics, 0);

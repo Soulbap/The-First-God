@@ -41,7 +41,7 @@ export function cityRequirements(state, S) {
   const infrastructure = bs.filter((b) => !isHome(b) && b.type !== 'fire').length;
   const reqs = [
     { id: 'people', label: 'Befolkning', have: S.population.length, need: C.minPopulation },
-    { id: 'housing', label: 'Boliger med plass', have: housingCapacity(state, id), need: Math.max(C.minPopulation, S.population.length) },
+    { id: 'housing', label: 'Boliger med plass', have: housingCapacity(state, id), need: Math.max(C.minPopulation, Math.floor(S.population.length * 0.9)) }, // OPUS-12: en liten overskridelse (en tilflytter) gir ikke tilbakegang
     { id: 'townhouse', label: 'Bolighus', have: bs.filter((b) => b.type === 'townhouse').length, need: 1 },
     { id: 'food', label: 'Matforsyning (åkre og lager)', have: fieldsCount(state, id) >= 1 || invGet(state, id, 'food') >= C.minFoodStock ? Math.floor(invGet(state, id, 'food')) : 0, need: C.minFoodStock },
     { id: 'infra', label: 'Infrastruktur', have: infrastructure, need: C.minInfrastructure },

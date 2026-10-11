@@ -110,6 +110,8 @@ import { foundingReadiness } from '../sim/realm.js';
 import { establishedRoutes } from '../sim/regional.js';
 import { discoveredRegions, outpostRegions, worldReadiness, BIOMES, reachableUnknown } from '../sim/worldmap.js';
 import { techCount } from '../sim/economy.js';
+import { recognizedDistricts, DISTRICT_NAME } from '../sim/districts.js';
+import { roadStats, ROAD_NAMES } from '../sim/streets.js';
 
 export const realmVisible = (state) => state.milestones.dawn_civilization != null || state.settlements.length >= 2 || state.resources.knowledge > 0;
 
@@ -122,7 +124,12 @@ export function selectRealm(state) {
   const settlements = state.settlements.map((s) => ({
     id: s.id, name: s.name, stage: s.stage || 'Leir', role: s.role || '', people: s.population.length,
     housing: housingCapacity(state, s.id), founding: s.state !== 'active',
+    // OPUS-12: hva bosettingen er blitt (økonomi, områder, gater og arbeid) — leses fra tilstanden, aldri styrt av spilleren.
+    identity: s.state === 'active' ? (s.identity || '') : '', jobs: s.jobs ?? null,
+    districts: s.state === 'active' ? recognizedDistricts(state, s).map((d) => DISTRICT_NAME[d]) : [],
+    roads: roadStats(s), roadBest: (() => { const r = roadStats(s); const lv = r.levels.map((n, i) => (n ? i : -1)).filter((i) => i >= 0); return r.edges ? ROAD_NAMES[Math.max(...lv)] : ''; })(),
   }));
+  const trade = state.trade ? { modes: state.trade.modes, moved: Math.round(Object.values(state.trade.flows).reduce((a, b) => a + b, 0)), migrants: state.migration?.done || 0 } : null;
   const city = capital && !['By', 'Storby'].includes(capital.stage) && state.milestones.dawn_civilization != null ? cityRequirements(state, capital) : null;
   const expansion = state.realm.autoFounding && state.settlements.length < state.realm.limit ? foundingReadiness(state).filter((c) => c.id !== 'limit') : null;
   const G = state.globe;
@@ -132,7 +139,7 @@ export function selectRealm(state) {
   return {
     stage: stage.name, next: stage.next?.name || null,
     knowledge: { value: state.resources.knowledge, rate: rate.knowledge, techs: techCount(state) },
-    settlements, city, expansion,
+    settlements, city, expansion, trade,
     network: { routes: establishedRoutes(state).length, deliveries: state.region.completedDeliveries, trips: state.network.trips, caravans: G.stats.caravanDeliveries },
     world: {
       unlocked: G.expeditionsEnabled, regions, unknown: G.regions.length - 1 - discoveredRegions(state).length,

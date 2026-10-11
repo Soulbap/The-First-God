@@ -8,6 +8,7 @@ import { clearTrees } from './nature.js';
 import { stageRank } from './settlements.js';
 import { streetSegments, distToStreet } from './streets.js';
 import { planArchitecture } from './architecture.js';
+import { railSegments } from './rails.js';
 
 // Luft mellom bygg etter bosettingens trinn (OPUS-11): leirer og grender har rom mellom skur, stier og felles plasser;
 // tettere by først når bosettingen er blitt en by. Gjelder bare bygg i samme bosetting; kollisjon er alltid forbudt.
@@ -34,13 +35,27 @@ export function siteIsValid(state, type, x, y, settlementId = null) {
     const need = n.kind === 'tree' ? r + 22 : r + n.radius + 10, dx = x - n.x, dy = y - n.y;
     if (dx * dx + dy * dy < need * need) return false;
   }
+  // OPUS-12: bygg står ikke på jernbanetraseen (sporet går mellom stasjonene og holdes åpent).
+  if (type !== 'rail_terminal' && state.industrial?.rails?.length) {
+    const lim = r * 0.6 + 12;
+    for (const [ax, ay, bx, by] of railSegments(state)) {
+      if (x < Math.min(ax, bx) - lim || x > Math.max(ax, bx) + lim || y < Math.min(ay, by) - lim || y > Math.max(ay, by) + lim) continue;
+      const vx = bx - ax, vy = by - ay, l2 = vx * vx + vy * vy, t = l2 ? Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / l2)) : 0;
+      const dx = ax + vx * t - x, dy = ay + vy * t - y;
+      if (dx * dx + dy * dy < lim * lim) return false;
+    }
+  }
   // OPUS-12: bygg står ved gaten, ikke oppå den. Eksisterende gater (bosettingens nett) holdes åpne.
   if (settlementId && type !== 'fire' && type !== 'well') {
     const segs = streetSegments(state, state.settlements.find((q) => q.id === settlementId));
     const lim = r * 0.55 + 4;
-    for (const sg of segs) {
-      if (x < Math.min(sg[0], sg[2]) - lim || x > Math.max(sg[0], sg[2]) + lim || y < Math.min(sg[1], sg[3]) - lim || y > Math.max(sg[1], sg[3]) + lim) continue;
-      if (distToStreet([sg], x, y) < lim) return false;
+    for (let i = 0; i < segs.length; i++) {
+      const sg = segs[i], ax = sg[0], ay = sg[1], bx = sg[2], by = sg[3];
+      if (x < Math.min(ax, bx) - lim || x > Math.max(ax, bx) + lim || y < Math.min(ay, by) - lim || y > Math.max(ay, by) + lim) continue;
+      const vx = bx - ax, vy = by - ay, l2 = vx * vx + vy * vy;
+      const t = l2 ? Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / l2)) : 0;
+      const dx = ax + vx * t - x, dy = ay + vy * t - y;
+      if (dx * dx + dy * dy < lim * lim) return false;
     }
   }
   return true;
@@ -71,6 +86,15 @@ function resourceDir(state, anchor, kind) {
   }
   const l = Math.hypot(sx, sy);
   return l > 1e-9 ? { x: sx / l, y: sy / l } : null;
+}
+
+// Retning (enhetsvektor) fra et punkt mot den andre enden av bosettingens jernbane — stasjonen legges på den siden.
+function partnerDir(state, settlementId, anchor) {
+  const rail = (state.industrial?.rails || []).find((r) => r.a === settlementId || r.b === settlementId);
+  const other = rail && state.settlements.find((q) => q.id === (rail.a === settlementId ? rail.b : rail.a));
+  if (!other) return null;
+  const dx = other.x - anchor.x, dy = other.y - anchor.y, l = Math.hypot(dx, dy);
+  return l > 1 ? { x: dx / l, y: dy / l } : null;
 }
 
 // Gater følger de virkelige forbindelsene: retningene fra bosettingen mot de andre bosettingene den sender og
@@ -182,7 +206,7 @@ function searchBuildSite(state, type, settlementId, maxRing) {
   }
   const zone = zoneOf(type);
   const Sx = state.settlements.find((q) => q.id === settlementId);
-  const ctx = { settlementId, segs: streetSegments(state, Sx), transport: state.buildings.filter((b) => b.complete && (b.settlementId || 'first') === settlementId && (b.type === 'rail_terminal' || b.type === 'motor_depot' || b.type === 'dock' || b.type === 'airfield')), rays: zone === 'home' ? streetRays(state, settlementId) : null, dir: type === 'sawmill' ? resourceDir(state, anchor, 'tree') : type === 'mason' ? resourceDir(state, anchor, 'rock') : type === 'mine' ? resourceDir(state, anchor, 'mineral') : null };
+  const ctx = { settlementId, segs: streetSegments(state, Sx), transport: state.buildings.filter((b) => b.complete && (b.settlementId || 'first') === settlementId && (b.type === 'rail_terminal' || b.type === 'motor_depot' || b.type === 'dock' || b.type === 'airfield')), rays: zone === 'home' ? streetRays(state, settlementId) : null, dir: type === 'rail_terminal' ? partnerDir(state, settlementId, anchor) : type === 'sawmill' ? resourceDir(state, anchor, 'tree') : type === 'mason' ? resourceDir(state, anchor, 'rock') : type === 'mine' ? resourceDir(state, anchor, 'mineral') : null };
   // Hvor langt utover første ledige ring vi vurderer. Verksteder med en råvareretning (sagbruk mot skog, steinhoggeri mot stein, gruve mot malm)
   // ser lenger, slik at de når kanten av en tett skog i stedet for å stoppe ved første ledige plass på feil side (OPUS-11).
   const reach = ctx.dir ? 280 : zone === 'field' ? 150 : zone === 'work' ? 120 : 70;

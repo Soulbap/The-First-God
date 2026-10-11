@@ -31,6 +31,31 @@ Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på ve
 ```md
 ## [Unreleased]
 
+### OPUS-12 · levende sivilisasjon (pågår, gren `feature/opus-12-living-civilization`)
+
+#### Added
+- **Menneskenes daglige liv** (`src/sim/community.js`): hvert menneske har et hjem (`homeId`) og et arbeidssted (`workId`) i egen bosetting, og hvile, fritid og vedlikehold foregår ved bosettingens egne steder med begrenset plass (bål, ildsted, brønn, torg, hall, allmenning, park, helligdom, hjem, arbeidssteder). Vektene følger bosettingens trinn og døgnet (om natten søker folk hjem, om dagen torg og arbeid; uten strøm er bålet viktigere). Plassene fordeles i ringer/rader (`slotPoint`), så ingen står i klumper. Nye tilstander: `linger` (fritid ved et sted), `toRoad`/`roadwork`, `toMigrate`.
+- **Gatenett som infrastruktur** (`src/sim/streets.js`, lagres på bosettingen som `S.net`): gater vokser fram av byggene (nye bygg knyttes til de nærmeste dørene, aldri gjennom andre bygg), beholder sin historie og får bedre dekke gjennom veiarbeid (sti → jordvei → grusvei → brolagt) som krever trinn, kunnskap, materialer fra bosettingens eget lager, tid og to hender. Folk går langs nettet (`routeAlong`), og bygg står ved gaten, ikke oppå den (`siteIsValid`). Tegningen (`src/render/streets.js`) leser det faktiske nettet.
+- **Funksjonelle områder og økonomisk identitet** (`src/sim/districts.js`): bolig, jordbruk, handel, industri, sivilt, transport og forskning avledes av byggene; bosettingen får en identitet (Gruveby, Skogsby, Steinbrudd, Jordbruksbygd, Industriby …) ut fra hva den driver med og sender ut. Vises i Rike-panelet.
+- **Allmenning og park** (nye bygg `commons`, `park` med egne sprites): åpne møteplasser som fordeler folk bort fra bålet.
+- **Regional økonomi**: `src/sim/inventory.js` (hver bosetting eier sitt lager), `src/sim/trade.js` (handelsplanlegger: import til hovedstaden under lavvann, matstøtte til sultne bosettinger), `src/sim/growth.js` (satellitter bygger etter behov og sted: sagbruk ved skog, steinhoggeri ved stein, gruve ved malm, åkre, marked, lager, bolighus, park), `src/sim/migration.js` (flytting én og én til bosettinger med bolig, mat og arbeid), `src/sim/architecture.js` (byggeplan per hus).
+- **Arkitektur**: bygård og moderne blokk tegnes etter en deterministisk byggeplan (etasjer 3–5 / 4–8, 2–4 akser, flatt/saltak/mansard resp. flatt/terrasse/pult/loft, fasade i tegl/puss/stein resp. betong/glass/tegl/panel, inngang, balkonger). Høyden følger grunnens verdi (sentrum, tetthet, folketall, trinn). Vinduene for nattlyset følger planen.
+- Verktøy: `tools/behavior-report.mjs`, `tools/place-tally.mjs`, `tools/city-report.mjs`, `src/sim/metrics.js` (trengselsmåling), `OPUS_12=1` scener i `tools/capture-gui.mjs`.
+
+#### Changed
+- **Hver bosetting eier sitt lager**: sankere i en satellitt leverer til bosettingens eget lager (egen lagerbygning eller bosettingens hjerte), åkre mater sin egen bosetting, sagbruk og steinhoggeri arbeider på eget lager, og en satellitts mølle er et regionalt prosjekt som må leveres (tidligere betalt fra hovedstaden; vannmøllen sto dessuten ved hovedtjernet). Mineraler hentes av en satellitt bare når hovedstaden mangler dem og malmen ligger innen rekkevidde.
+- **Folk spiser** (`foodPerPersonSecond`), matlager har en øvre grense, og en sulten bosetting vokser ikke; over tid flytter folk. Arbeidsplasser (`jobsOf`) styrer hvor mange hus og bolighus en satellitt bygger videre, så bosettingene får ulik størrelse.
+- **Tog og lastebil går på bestilling**: en leveranse i kø (prosjekt, vedlikehold, import eller matstøtte) mellom to bosettinger med forbindelse. Toget sendte tidligere kull ut av og tilbake til hjemmelageret uten nytte (nå fjernet); last trekkes fra avsenderens lager ved avreise og havner i mottakerens ved ankomst. Jernbanelast 12.
+- Seks avledede forbedringer av tomtevalg: gateadgang for hus, fraktadgang for verksteder, bosettingsavhengig plassering av satellittprosjekter (`findBuildSite`).
+- Lagringsformat **v12** (migrerer v11; nye felt fylles ved bruk). Moderne blokker lyser om natten bare der nettet leverer strøm.
+
+#### Fixed
+- Sammenblanding av innbyggere mellom bosettinger: hjem/arbeidssted/møteplass nullstilles når et menneske bytter bosetting.
+- Flyttallsavvik i leveringsregnskapet (`reserved`) avrundes.
+
+#### Tests
+- `tests/opus12-world.test.js` (16) og `tests/opus12-economy.test.js` (12); tre eldre transporttester (jernbane/lastebil) oppdatert til bestillingsmodellen.
+
 ### OPUS-11 · integrasjon, verdensutvikling og kvalitet (pågår)
 
 #### Changed (fase F · landskap og avstand justert etter skjermbilder)

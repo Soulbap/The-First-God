@@ -1,5 +1,14 @@
 # Spilltest — Genesis-01
 
+## OPUS-12 · levende sivilisasjon
+
+- [ ] Følg en landsby fra leir til by i ett strekk: ser du stier som blir til jordveier og grusveier (først i kjernen, så ut mot kantene)? Står husene ved gatene i stedet for spredt rundt bålet?
+- [ ] Se på folk midt på dagen i en stor by: er de fordelt på torg, allmenning, brønn og arbeidssteder, eller samles noen fortsatt i klumper? Om natten: går de hjem?
+- [ ] Sammenlign to satellitter: har de ulik størrelse og ulikt preg (sagbruk, steinbrudd, gruve, åkre)? Står identitet og områder riktig i Rike-panelet?
+- [ ] Mangler hovedstaden noe (f.eks. kull) mens en satellitt har det: kommer det med tog eller lastebil, og stopper det når behovet er dekket?
+- [ ] Er de moderne boligene varierte nok (høyde, tak, fasade) uten å se ut som ulike stilarter? Er skyline-forskjellen mellom hovedstaden og en liten satellitt lesbar?
+- [ ] Lagre midt i et veiarbeid, en flytting og en levering, last igjen og bekreft at ingenting dobles eller forsvinner. Ragnarok skal gi en by uten gater og uten handelshistorikk.
+
 ## OPUS-07 · damp og industri
 
 - [ ] Etter **Dampkraft**: finn en mørk kullåre og se at kull ikke samles før kullgruven er ferdig.

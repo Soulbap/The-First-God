@@ -58,7 +58,8 @@ export function stepMigration(state, dt) {
 export function arriveMigrant(state, h) {
   const to = settlementById(state, h.migrateTo), from = settlementById(state, h.settlementId);
   h.migrateTo = null;
-  if (!to || !from || to.state !== 'active') { h.state = 'idle'; h.timer = 0.5; return; }
+  // Er stedet blitt fullt mens vedkommende gikk (naturlig vekst tok plassen), blir vedkommende der han kom fra.
+  if (!to || !from || to.state !== 'active' || to.population.length >= housingCapacity(state, to.id)) { h.state = 'idle'; h.timer = 0.5; return; }
   from.population = from.population.filter((id) => id !== h.id);
   if (!to.population.includes(h.id)) to.population.push(h.id);
   h.movedAt = state.time; h.settlementId = to.id; h.homeId = null; h.workId = null; h.deliveries = 0;

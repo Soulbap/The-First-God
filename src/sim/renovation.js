@@ -40,7 +40,14 @@ const affordable = (state, cost) => Object.entries(cost).every(([k, n]) => (stat
 
 // Det eldste hjemmet blir et bevart minnested når bosettingen er blitt en by: en gammel halmhytte som får stå (ikke ombygd, ikke glemt).
 function preserveHeritage(state, S) {
-  if (stageRank(S.stage || 'Leir') < stageRank('By') || S.id !== 'first') return;
+  // Satellitter bevarer også sitt første hus som minnested (flagges som landsby, før første ombygging) (OPUS-12).
+  if (S.id !== 'first') {
+    if (stageRank(S.stage || 'Leir') < stageRank('Landsby') || state.buildings.some((b) => b.heritage && (b.settlementId || 'first') === S.id)) return;
+    const first = homesOf(state, S.id).filter((b) => b.type === 'hut' && tierOf(b) === 1).sort((a, b) => a.id - b.id)[0];
+    if (first) { first.heritage = true; state.events.push({ type: 'heritage', id: first.id, x: first.x, y: first.y }); }
+    return;
+  }
+  if (stageRank(S.stage || 'Leir') < stageRank('By')) return;
   if (state.buildings.some((b) => b.heritage && b.type === 'hut' && (b.settlementId || 'first') === S.id)) return;
   const old = homesOf(state, S.id).filter((b) => b.type === 'hut' && tierOf(b) === 1).sort((a, b) => a.id - b.id)[0];
   if (old) { old.heritage = true; state.events.push({ type: 'heritage', id: old.id, x: old.x, y: old.y }); }

@@ -202,9 +202,10 @@ test('bygg overlapper aldri: fotavtrykkene i samme bosetting holder avstand', ()
 });
 
 test('det eldste hjemmet og det første lyet bevares som minnesteder når byen bygges om', () => {
-  const { s } = reached('first_world_civilization', 4242, 21600);
+  const { s } = settled();
   const heritage = s.buildings.filter((b) => b.heritage);
   assert.ok(heritage.length >= 1, 'minst ett bevart minnested');
+  assert.ok(new Set(heritage.map((b) => b.settlementId || 'first')).size >= 2, 'også en satellitt bevarer sitt første hus');
   for (const b of heritage) assert.ok(tierOf(b) <= 1, `${b.type} er ikke bygget om til et høyere trinn`);
   assert.ok(s.buildings.some((b) => b.type === 'shelter'), 'det første lyet står fortsatt');
 });

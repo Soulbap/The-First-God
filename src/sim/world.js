@@ -4,6 +4,7 @@ import { createRng, rand, range } from '../core/rng.js';
 import { createGlobe } from './worldmap.js';
 import { createChronicle } from './chronicle.js';
 import { generateGeography, populateLandscape, inAnyWater } from './landscape.js';
+import { railEnds } from './rails.js';
 
 export const dist = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
 
@@ -66,8 +67,8 @@ export function onMaintainedLine(state, x, y) {
     }
   }
   for (const r of state.industrial?.rails || []) {
-    const A = state.settlements.find((q) => q.id === r.a), Cc = state.settlements.find((q) => q.id === r.b);
-    if (A && Cc && segDist(x, y, A.x, A.y, Cc.x, Cc.y) < 26) return true;
+    const e = railEnds(state, r);
+    if (e && segDist(x, y, e.a.x, e.a.y, e.b.x, e.b.y) < 26) return true;
   }
   return false;
 }

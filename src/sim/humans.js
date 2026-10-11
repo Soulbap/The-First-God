@@ -64,6 +64,31 @@ function release(state, h) {
   h.targetId = null;
 }
 
+// Første bygg på rett kurs (utenom bygget målet ligger ved), og et punkt ved siden av det. Billig: kun bygg nær linjen.
+function detourAround(state, h) {
+  const dx = h.tx - h.x, dy = h.ty - h.y, len = Math.hypot(dx, dy);
+  if (len < 24) return null;
+  const nx = dx / len, ny = dy / len;
+  let hit = null, hitT = Infinity;
+  for (const b of state.buildings) {
+    if (b.type === 'fire' || b.type === 'well' || b.type === 'commons' || b.type === 'park' || b.type === 'field') continue;
+    const rx = b.radius * 0.78 + 4, ry = b.radius * 0.42 + 3, cy = b.y - b.radius * 0.12;
+    if (Math.abs(b.x - h.x) > len + rx + 10 && Math.abs(b.x - h.tx) > len + rx + 10) continue;
+    // Er målet selv ved bygget (ved døren), er det ikke en hindring.
+    if (((h.tx - b.x) / (rx + 6)) ** 2 + ((h.ty - cy) / (ry + 8)) ** 2 < 1.4) continue;
+    if (((h.x - b.x) / rx) ** 2 + ((h.y - cy) / ry) ** 2 < 1) continue; // står allerede innenfor (f.eks. rett etter bygging): ingen omvei
+    // Nærmeste punkt på linjen til bygget.
+    const t = Math.max(0, Math.min(len, (b.x - h.x) * nx + (cy - h.y) * ny));
+    const px = h.x + nx * t, py = h.y + ny * t;
+    if (((px - b.x) / rx) ** 2 + ((py - cy) / ry) ** 2 < 1 && t < hitT) { hit = b; hitT = t; }
+  }
+  if (!hit) return null;
+  // Sidevalg: den siden av bygget linjen allerede ligger på.
+  const rx = hit.radius * 0.78 + 14, cy = hit.y - hit.radius * 0.12;
+  const side = (h.x - hit.x) * -ny + (h.y - cy) * nx >= 0 ? 1 : -1;
+  return { x: hit.x + -ny * side * (rx + 8), y: cy + nx * side * (hit.radius * 0.42 + 14) };
+}
+
 function moveTo(state, h, dt) {
   // En liten lokal styring: gå rundt tjernet og ikke gjennom et bygg. Dette er
   // bevisst ikke et eget pathfinding-system; den brukes bare når direkte kurs er blokkert.
@@ -75,6 +100,12 @@ function moveTo(state, h, dt) {
       // Omveien legges bare én gang per mål; ellers kunne en som står ved omveiens punkt legge en ny i det uendelige.
       if (crossesPond && h.pondSig !== sig) { h.waypoints = [{ x: p.x + (h.x < p.x ? -p.rx - 55 : p.rx + 55), y: p.y - p.ry - 45 }]; h.pondSig = sig; break; }
     }
+  }
+  // OPUS-12: gå rundt bygg i stedet for gjennom dem. Omveien legges ett punkt av gangen (høyst tre per mål) og bare når rett kurs krysser et fotavtrykk.
+  if (!h.waypoints?.length) {
+    const dsig = `${Math.round(h.tx)},${Math.round(h.ty)}`;
+    if (h.detourSig !== dsig) { h.detourSig = dsig; h.detours = 0; }
+    if (h.detours < 3) { const wp = detourAround(state, h); if (wp) { h.waypoints = [wp]; h.detours++; } }
   }
   const goal = h.waypoints?.[0] || { x: h.tx, y: h.ty };
   const dx = goal.x - h.x, dy = goal.y - h.y;

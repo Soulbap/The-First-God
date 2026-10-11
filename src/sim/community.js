@@ -153,6 +153,9 @@ export function pickPlace(state, h, purpose, { festival = false } = {}) {
   const slot = freeSlot(state, pick), p = slotPoint(pick, slot);
   if (isWorkplace(pick)) h.workId = pick.id;
   h.destId = pick.id; h.slot = slot;
+  // Hold belegget à jour innen samme steg: neste person som velger i dette steget skal se at plassen er tatt.
+  const occ = occupancy(state), e = occ.get(pick.id) || (occ.set(pick.id, { n: 0, slots: new Set() }), occ.get(pick.id));
+  e.n++; e.slots.add(slot);
   return { b: pick, x: p.x + range(state.rng, -1.5, 1.5), y: p.y + range(state.rng, -1, 1) };
 }
 

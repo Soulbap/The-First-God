@@ -185,3 +185,11 @@ Før design eller implementasjon etter OPUS-03 skal relevante deler av `docs/des
 - **Tomtesøk:** et mislykket søk huskes i `state.siteMisses` (lagres med spillet), utvides stadig og gjentas aldri i hvert steg. Egne tomtesøk bruker `memoSearch` i `construction.js`. Mål ytelse med `node tools/profile-sites.mjs <frø> <sekunder>`.
 - **Visuell kvalitetssikring:** `OPUS_11=1 node tools/capture-gui.mjs <url> <mappe> [suffiks]` tar 16 faste scener (ekte spill med boten); `CAPTURE_SCENES=01,05` velger scener. Sammenlign mot en `git worktree` på en eldre commit med `node tools/serve.mjs 5180`.
 - **Landskap og biom:** `createWorld(seed, biome, { remote })`; fjerne land bygges av `projectRegionScene` med samme biom og får forekomster fra regionens lager.
+
+## 12. Verktøy fra OPUS-12
+
+- **Atferd og trengsel:** `node tools/behavior-report.mjs <frø> <sekunder> [intervall]` (trengsel, andel ved bål, tilstander), `node tools/place-tally.mjs <frø> <sekunder>` (hvilke steder folk oppholder seg ved), `node tools/city-report.mjs <frø> <sekunder>` (trinn, bygg, gater, områder, identitet). `src/sim/metrics.js` er den testbare målingen.
+- **Regional økonomi:** `tools/progression-report.mjs` skriver nå også handelsregnskap (`trade`: bestillinger, fraktet per rute og transportmåte), lagre per bosetting, bosettingsprofiler (`sett`), flytting og gatedekke. Lagre går alltid via `src/sim/inventory.js` (`invGet/invAdd/invTake`); ikke les `state.resources` for en satellitt.
+- **Skjermbilder:** `OPUS_12=1 node tools/capture-gui.mjs <url> <mappe> [suffiks]` spiller hele forløpet med boten, lagrer sjekkpunkter (`o12-*`) i nettleserens localStorage og tar 31 scener fra dem; `CAPTURE_SCENES=00,06` velger scener (scene `00-prepare` må kjøres først).
+- **Regel for nye regler:** en ny regel som flytter varer skal gå via en leveranse i kø (`queueDelivery`) og bevares i transitt; en ny regel som plasserer folk skal gå via `pickPlace` (kapasitet), ikke et felles mål.
+

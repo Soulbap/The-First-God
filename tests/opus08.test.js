@@ -147,7 +147,7 @@ test('OPUS-08: oppgraderingene krever reelle forutsetninger før de låses opp',
 test('OPUS-08: v7-lagring fylles med nye felt uten å miste råvarer eller oljefeltet', () => {
   const s = createGame(811); ensureOilField(s); enableIndustry(s); s.resources.crudeOil = 3; s.resources.fuel = 2; s.resources.truck = 1;
   s.industrial.roadTrips = 0; s.industrial.shipments.push({ id: 9, mode: 'road', from: 'first', to: 'second', type: 'planks', amount: 4, status: 'traveling', departAt: 2, arriveAt: 8 });
-  const raw = JSON.parse(serialize(s)); assert.equal(raw.v, SAVE_VERSION); assert.equal(SAVE_VERSION, 11);
+  const raw = JSON.parse(serialize(s)); assert.equal(raw.v, SAVE_VERSION); assert.equal(SAVE_VERSION, 12);
   raw.v = 7; delete raw.state.industrial.electric; delete raw.state.industrial.petroleum; delete raw.state.resources.truck; delete raw.state.resources.crudeOil;
   const old = deserialize(JSON.stringify(raw));
   assert.equal(old.industrial.electric, false); assert.equal(old.resources.truck, 0);

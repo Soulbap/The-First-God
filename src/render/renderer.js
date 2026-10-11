@@ -17,6 +17,7 @@ import { plankPileSprite, blockPileSprite } from './city.js';
 import { drawOverview } from './overview.js';
 import { stageRank } from '../sim/settlements.js';
 import { buildStreets, lampPosts } from './streets.js';
+import { railEnds } from '../sim/rails.js';
 import { farmPlots, paintFarm } from './farmland.js';
 import { BALANCE as B } from '../data/balance.js';
 import { propsFor, lantern } from './yards.js';
@@ -635,8 +636,9 @@ export function createRenderer(canvas) {
     // OPUS-07: regionale jernbaner er enkle korridorer, men bare når den
     // autoritative industrimodellen faktisk har bygget forbindelsen.
     for (const rail of state.industrial?.rails || []) {
-      const a = state.settlements.find((q) => q.id === rail.a), b = state.settlements.find((q) => q.id === rail.b);
-      if (!a || !b) continue;
+      const ends = railEnds(state, rail);
+      if (!ends) continue;
+      const a = ends.a, b = { x: ends.b.x, y: ends.b.y }; // sporet går mellom stasjonene (OPUS-12)
       // Trasé med sviller og to skinner (OPUS-11): leses som jernbane også uten tog.
       const rl = Math.hypot(b.x - a.x, b.y - a.y), ux = (b.x - a.x) / rl, uy = (b.y - a.y) / rl;
       taper(ctx, a.x, a.y + 6, b.x, b.y + 6, 5, 5, 'rgba(70,58,44,.35)');
