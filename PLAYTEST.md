@@ -10,6 +10,8 @@
 - [ ] Lagre midt i et veiarbeid, en flytting og en levering, last igjen og bekreft at ingenting dobles eller forsvinner. Ragnarok skal gi en by uten gater og uten handelshistorikk.
 - [ ] **OPUS-12B:** i en moden, boligpresset by: står moderne boliger tydeligere ved gaten, og blir et tett par gamle, ikke-vernede hytter eventuelt erstattet av én bygård uten at innbyggere eller boligplass forsvinner? Er minnestedet bevart?
 - [ ] **OPUS-12C:** følg en moden hovedstad fra område- til nærzoom: fylles ledige gatefronter med ekte, ressursbetalte boliger, og leses minst én sammenhengende gatevegg eller liten gårdsform uten å fortrenge park, torg eller minnested?
+- [ ] **OPUS-12C.2:** følg ett ordinært gammelt hjem gjennom omstrukturering. Står hjemmet mens ny tomt ryddes og bygges, trekkes kostnaden fra riktig lokallager, flyttes beboerne først ved ferdigstillelse, krediteres berging bare én gang, og er minnestedet fortsatt urørt?
+- [ ] **OPUS-12C.2:** sammenlign moderne sentrum, boligområde, industri og utkant uten å bruke Rike-panelet. Leses en faktisk flerbyggsfront og en kompakt klynge, samtidig som gater, innganger, jernbane, park og historisk kjerne forblir frie?
 
 ## OPUS-07 · damp og industri
 

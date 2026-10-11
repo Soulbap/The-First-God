@@ -64,6 +64,7 @@ export function deserialize(text, { seed } = {}) {
   // (fillDefaults gir `trade` og `migration`; resten oppstår av simuleringen). Eldre leveranser og tog uten avsender/mottaker leses som hovedstaden.
   for (const d of s.region?.deliveries || []) if (d.source == null) d.source = 'first';
   for (const q of s.industrial?.shipments || []) if (q.rail && q.to == null) { q.from = q.from ?? 'first'; q.to = q.to ?? 'first'; }
+  // OPUS-12C.2-feltene er additive innen v12 og fylles av `fillDefaults`.
   s.events = [];
   return s;
 }

@@ -683,6 +683,12 @@ export function createRenderer(canvas) {
         for (const pr of ent.props) list.push({ y: pr.ground ? b.y - 60 : b.y + pr.y, draw: () => drawSprite(ctx, pr.s, b.x + pr.x, b.y + pr.y) });
       }
       list.push({ y: b.y, draw: () => drawBuilding(b) });
+      // Erstatningstomten kan ligge langt fra huset som fremdeles er i bruk.
+      // Sorter den på sin egen y-posisjon, ellers kan trær og hus med feil dybde
+      // skjule hele årsak–virkning-forløpet.
+      if (b.renovation?.kind === 'restructuring' && inView(b.renovation.x, b.renovation.y, 90, 90)) {
+        list.push({ y: b.renovation.y, draw: () => drawRestructuringSite(b) });
+      }
       if (!b.complete) {
         const n = Math.ceil((1 - b.progress) * 5);
         list.push({ y: b.y + 8, draw: () => drawSprite(ctx, materialSprite(n), b.x + b.radius + 4, b.y + 8) });
@@ -1022,7 +1028,7 @@ export function createRenderer(canvas) {
       R.tiers.set(b.id, v);
       const s = buildingSprite(b, v);
       drawSprite(ctx, s, b.x, b.y);
-      if (b.renovation) drawScaffold(b);
+      if (b.renovation && b.renovation.kind !== 'restructuring') drawScaffold(b);
       if (b.type === 'sawmill' && b.complete && b.active) {
         // Sagbladet går opp og ned mens sagbruket arbeider.
         const off = Math.sin(renderTime * 8 + b.id) * 2.6;
@@ -1041,6 +1047,16 @@ export function createRenderer(canvas) {
       for (let k = 1; k <= 3; k++) { const yy = b.y - (h * k) / 3.2; ctx.beginPath(); ctx.moveTo(b.x - w, yy); ctx.lineTo(b.x + w, yy); ctx.stroke(); }
       ctx.strokeStyle = 'rgba(150,118,76,0.7)'; ctx.beginPath(); ctx.moveTo(b.x - w, b.y + 2); ctx.lineTo(b.x + w, b.y - h * 0.62); ctx.stroke();
       if (!snapshot && Math.sin(renderTime * 3 + b.id) > 0.92) emit(fx, 'dust', b.x + w * 0.6, b.y, 2, { spread: 10, spreadY: 4, z: 3 });
+    }
+    // Ved omstrukturering står det gamle hjemmet i bruk til erstatningen er
+    // ferdig. Fundament og stillas vises derfor på den nye gateparsellen.
+    function drawRestructuringSite(source) {
+      const r = source.renovation, p = 1 - Math.max(0, r.left) / B.renovation.restructuring.seconds;
+      const b = { x: r.x, y: r.y, radius: B.building.townhouse.radius, renovation: r, id: source.id };
+      dab(ctx, b.x + 2, b.y + 3, b.radius * 0.9, b.radius * 0.3, 0, 'rgba(34,28,20,0.42)');
+      ctx.fillStyle = `rgba(132,120,102,${0.28 + p * 0.38})`;
+      ctx.fillRect(b.x - b.radius * 0.72, b.y - 4, b.radius * 1.44, 6);
+      drawScaffold(b);
     }
     function drawMemorial(x, y, n) {
       // En reist stein med lav, mose og innhugne tegn — én for hver syklus som er levd.

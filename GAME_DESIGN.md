@@ -484,11 +484,13 @@ Rapporter: `docs/opus-12/` (`REPORT.md`, `VISUAL_QA.md`, `ECONOMY_AND_SETTLEMENT
 - **Hver bosetting eier sitt lager.** Sanking, åkre, foredling og møller bruker og fyller bosettingens eget lager. Varer flyttes bare på bestilling (prosjekt, vedlikehold, import til hovedstaden under lavvann, matstøtte) med bærere, lastebil eller tog, og bevares i transitt. Tog og lastebil går ikke uten bestilling.
 - **Bosettinger utvikler seg etter sted.** Skog gir sagbruk, stein gir steinhoggeri, malm gir gruve; arbeidsplasser avgjør hvor mange hus og bolighus en satellitt bygger; folk spiser, og en sulten bosetting vokser ikke. Folk flytter én og én dit det finnes bolig, mat og arbeid. Bosettingene får identitet (Gruveby, Skogsby, Steinbrudd …) av det de driver med.
 - **Variert arkitektur.** Bygård (3–5 etasjer, tegl/puss/stein, flatt tak/saltak/mansard, balkonger) og moderne blokk (4–8 etasjer, betong/glass/tegl/panel, flatt/terrasse/pulttak/loft) tegnes etter en deterministisk byggeplan; høyden følger grunnens verdi (sentrum, tetthet, folketall, trinn).
+- **OPUS-12C.2 · byen kan omforme seg selv.** I en moden og belastet bosetting kan folket gjenoppføre et ordinært, ikke-vernet hjem på en bedre gateparsell. Det gamle hjemmet står til den lokale, ressurs- og arbeidbetalte erstatningen er ferdig; deretter flyttes beboernes hjemreferanser og litt tre/stein berges én gang. Gater og faktiske bygg er autoritative, mens sentrum, frontklynger og ledige fronttomter er deterministisk avledet og mellomlagret. Dette er ikke spillerstyrt plassering eller sonering.
 
 ### Antakelser — åpne
 
 - Alle nye tall (`BALANCE.trade`, `.migration`, `.human.foodPerPersonSecond`, `.foodStore`, veiarbeidets kostnader i `streets.js`, arbeidsplasser i `growth.js`) er provisoriske.
 - **OPUS-12B:** redevelopment kan også, ved reelt boligpress, konsolidere to tette og ikke-vernede hytter til én bygård. Det er autonomt, trinnvis og ressursbetalt; beboere og boligplass bevares. Dette er en begrenset tomteregel, ikke spillerstyrt sonering eller rivingsverktøy.
+- **OPUS-12C.2:** terskler, ombyggingskostnad, bergingsmengde, arbeidstid og korridorutvidelse er provisoriske. Bilder og målinger viser bedre frontklynger, men den arvede vide geometrien er fortsatt bare delvis løst; se `docs/opus-12c/SETTLEMENT_RESTRUCTURING_REPORT.md`.
 - Mineraler kan fortsatt hentes fra årer av satellittens folk uten at gruven står i samme bosetting; gruvebygget er i praksis en arbeidsplass.
 - Fjerne land (regioner utenfor hjemmekartet) har fortsatt oppsummerte bilder (ingen gater/industri).
 

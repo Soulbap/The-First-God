@@ -4,18 +4,26 @@ Alle merkbare prosjektendringer dokumenteres her av AI-en som utfører endringen
 
 ## [Unreleased]
 
-### OPUS-12C · urban fabric & autonomous densification (pågår, gren `feature/opus-12c-urban-fabric`)
+### OPUS-12C.2 · bosettingsomstrukturering og organisk byvekst (gren `feature/opus-12c-urban-fabric`)
 
 #### Added
 - **Avledet byvev** (`src/sim/urban-fabric.js`): et deterministisk, hurtigbufret lag av gatefronter og utviklingsbare fronttomter basert på den autoritative gatenettgeometrien. Modne bosettinger velger gatefront før ringtomter; nye boliger får lagret gateorientering uten å gi spilleren bygg- eller veiplassering.
-- **Byformdiagnose** (`tools/urban-metrics.mjs`): reproduserbar måling av bebyggelse, gater, tetthet, avstand, gateadgang, frontklynger og ombygging fra ekte botkjøring.
+- **Autonom omstrukturering** (`src/sim/renovation.js`): en moden, belastet bosetting kan gjenoppføre et ordinært, ikke-vernet hjem på en bedre gateparsell. Arbeidet bruker lokalt lager, lokale hender og tid; gammelt hjem og boligplass bevares til erstatningen er ferdig, hjemreferanser flyttes atomisk og en fast liten berging krediteres én gang.
+- **Byformdiagnose** (`tools/urban-metrics.mjs`): reproduserbar flerfrømåling av bebyggelse, gater, kjerne-/boligtetthet, avstand, faktisk front, klynger, ledige tomter, historiske bygg, ombyggingsårsaker, materialer, arbeid og planleggerkostnad fra ekte botkjøring.
+- **Visuell verifikasjon** (`tools/capture-gui.mjs`, `docs/opus-12c/shots/restructuring/`): reproduserbare scener for baseline, moderne by, boligområde, historisk kjerne, gatefront, kompakt klynge, industri, utkant, områdevisning og samme naturlige ombygging før/under/etter.
 
 #### Changed
 - Boligtomter i by/storby følger etterspørsel og kan fylle flere gatefronter ved reelt folketall; bygging beholder eksisterende ressurs-, arbeids- og tidskrav.
 - Autonom konsolidering kan vurdere ordinære, ikke-vernede boliger til og med trinn 3, slik at mekanismen ikke forsvinner straks gamle hytter er oppgradert.
+- Modne boliger får tettere, men fortsatt ikke-overlappende klaring som reserverer senere maksimal boligstørrelse. Vegetasjon kan ryddes av den faktiske byggingen; stein, vann, gater, jernbane og rom rundt offentlige/industrielle bygg er fortsatt sperrer.
+- Omstruktureringsfundamentet dybdesorteres på sin faktiske målparsell, slik at det gamle bebodde huset og det nye arbeidet kan leses samtidig.
+
+#### Docs
+- Nye rapporter for rotårsak/arkitektur, målinger, åttefrøprogresjon, kontrollert ytelse og bilde-for-bilde-kritikk. `GAME_DESIGN.md` og `PLAYTEST.md` beskriver den nye atferden og de provisoriske balansetallene.
 
 #### Tests
-- `tests/opus12-world.test.js`: ny test for gyldig gatefront, orientering og målbar fronttilknytning. Målrettet kjøring: 18/18 bestått.
+- `tests/opus12-world.test.js`: tester gyldig gatefront, orientering, lesbar ny parsell, bevaring av mennesker/boligplass, lokalt materialtrekk, arbeid, engangsberging, vern, determinisme og lagre/lese midt i omstruktureringen.
+- Sluttkontroll: 20/20 målrettede OPUS-12-tester og 234/234 tester totalt bestod. GUI-røykprøven bestod 33/33 uten konsollfeil; 8/8 naturlige frø nådde Institutt og fullførte til sammen 35 omstruktureringer. Renderer målte 3,99 ms per ramme; moderne simuleringsytelse er dokumentert som PARTIAL.
 
 ### OPUS-12B · urban struktur og ytelse (PARTIAL)
 

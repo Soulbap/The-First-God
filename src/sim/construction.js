@@ -27,13 +27,33 @@ export function siteIsValid(state, type, x, y, settlementId = null, ignoreIds = 
   // mens verksteder og offentlige bygg trenger plass til aktivitet og inngang.
   const space = (t) => ({ field: 18, well: 24, market: 34, hall: 32, warehouse: 30, commons: 22, park: 26, sawmill: 28, mason: 28, sanctuary: 26 }[t] ?? 16);
   const sp = space(type), extra = settlementId ? stageGap(state, settlementId) : 0;
+  const S = settlementId && state.settlements.find((q) => q.id === settlementId);
+  const denseHome = !!S && stageRank(S.stage || 'Leir') >= stageRank('Tidlig by') && (type === 'hut' || type === 'townhouse');
   for (const b of state.buildings) {
     if (ignoreIds?.has(b.id)) continue;
     const same = settlementId && (b.settlementId || 'first') === settlementId;
-    const need = r + b.radius + Math.max(sp, space(b.type)) + (same ? extra : 0), dx = x - b.x, dy = y - b.y;
+    const pairOfHomes = denseHome && same && (b.type === 'hut' || b.type === 'townhouse');
+    // I en moden gate er fotavtrykkene grunne og kan dele et lite gårdsrom.
+    // Tidlige bygder og alle arbeids-/samfunnsbygg beholder den romslige klaringen.
+    const clearance = pairOfHomes ? 4 : Math.max(sp, space(b.type)) + (same ? extra : 0);
+    const ar = pairOfHomes ? Math.max(r, B.renovation.radius[5] || r) : r;
+    const br = pairOfHomes ? Math.max(b.radius, B.renovation.radius[5] || b.radius) : b.radius;
+    const need = ar + br + clearance, dx = x - b.x, dy = y - b.y;
+    if (dx * dx + dy * dy < need * need) return false;
+  }
+  // En omstrukturering bygger på en ny tomt mens det gamle hjemmet fremdeles
+  // står. Målparsellen er derfor en reell, reservert byggeplass selv om den
+  // ennå ikke finnes som eget bygg i den autoritative listen.
+  for (const b of state.buildings) {
+    const q = b.renovation;
+    if (q?.kind !== 'restructuring' || ignoreIds?.has(b.id)) continue;
+    const need = r + B.building.townhouse.radius + 6, dx = x - q.x, dy = y - q.y;
     if (dx * dx + dy * dy < need * need) return false;
   }
   for (const n of state.nodes) {
+    // Modne boligtomter kan velges før vegetasjonen er ryddet. Trærne felles
+    // først når det ressursbetalte bygge-/ombyggingsarbeidet faktisk starter.
+    if (denseHome && n.kind === 'tree') continue;
     const need = n.kind === 'tree' ? r + 22 : r + n.radius + 10, dx = x - n.x, dy = y - n.y;
     if (dx * dx + dy * dy < need * need) return false;
   }
@@ -256,7 +276,7 @@ export function startConstruction(state, type, { onComplete = null, source = nul
   const S = state.settlements.find((q) => q.id === settlementId);
   if (S && zoneOf(type) === 'home') {
     const front = forcedSite?.frontage ? { x: 0, y: 0, ...forcedSite.frontage } : frontageOf(state, S, b.x, b.y);
-    if (front && front.distance == null || front?.distance < 58) b.frontage = { nx: front.nx, ny: front.ny, street: front.index };
+    if (front && (front.distance == null || front.distance < 58)) b.frontage = { nx: front.nx, ny: front.ny, street: front.index, side: front.side, along: front.along };
   }
   if (B.production[type]) { b.cycle = 0; b.active = false; b.idle = null; b.made = 0; }
   state.buildings.push(b);

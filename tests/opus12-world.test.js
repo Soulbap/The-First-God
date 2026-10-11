@@ -11,9 +11,9 @@ import { districtProfile, recognizedDistricts, districtOf } from '../src/sim/dis
 import { makeArch, planArchitecture } from '../src/sim/architecture.js';
 import { tenementWindows, modernWindows } from '../src/render/housing.js';
 import { dayPhase } from '../src/view/daylight.js';
-import { tierOf, consolidationPlan, stepRenovation } from '../src/sim/renovation.js';
-import { frontageOf, frontageSites, urbanFabric } from '../src/sim/urban-fabric.js';
-import { findBuildSite, startConstruction } from '../src/sim/construction.js';
+import { tierOf, consolidationPlan, restructuringAnalysis, restructuringCost, stepRenovation } from '../src/sim/renovation.js';
+import { frontageOf, frontageSites, urbanFabric, urbanMetrics } from '../src/sim/urban-fabric.js';
+import { findBuildSite, siteIsValid, startConstruction } from '../src/sim/construction.js';
 import { reached, addBuilding, addPeople } from './support.js';
 
 const settled = () => reached('connected_realm', 777);
@@ -115,6 +115,56 @@ test('tomtekonsolidering bevarer folk og boligplass, betaler lokalt og overlever
   assert.ok(mid.humans.filter((h) => h.homeId === home.id).length === 4, 'beboere på parsellen får det nye hjemmet');
   assert.ok(housingOf(home, mid) >= 4, 'boligplassen går ikke ned');
   assert.ok(mid.resources.wood < 300 && mid.resources.cutstone < 80, 'materialer ble trukket fra lokal beholdning');
+});
+
+test('omstrukturering gjenoppfører en isolert bolig ved gaten uten å miste folk, boligplass eller ressurser', () => {
+  const s = createGame(12032), S = s.settlements[0]; S.stage = 'By'; s.nodes = [];
+  addBuilding(s, 'fire', 'first', 1000, 700, { radius: 14 });
+  const homes = [
+    addBuilding(s, 'hut', 'first', 880, 760, { radius: 30, tier: 3 }),
+    addBuilding(s, 'hut', 'first', 1060, 760, { radius: 30, tier: 3 }),
+    addBuilding(s, 'hut', 'first', 880, 910, { radius: 30, tier: 3 }),
+    addBuilding(s, 'hut', 'first', 1060, 910, { radius: 30, tier: 3 }),
+  ];
+  addPeople(s, 'first', 12);
+  for (let i = 0; i < s.humans.length; i++) s.humans[i].homeId = homes[i % homes.length].id;
+  s.upgrades.construction_methods = 1; growStreets(s, S);
+  s.resources = { ...s.resources, wood: 500, stone: 500, planks: 100, cutstone: 100 };
+  const beforePeople = s.humans.map((h) => h.id), beforeHousing = homes.reduce((n, b) => n + housingOf(b, s), 0);
+  const analysis = restructuringAnalysis(s, S);
+  assert.ok(analysis.plan && analysis.plan.frontage, 'en bedre gateparsell finnes fra faktisk gatenett');
+  assert.ok(Math.hypot(analysis.plan.x - analysis.plan.source.x, analysis.plan.y - analysis.plan.source.y) >= 96, 'gjenoppføringen er en visuelt lesbar ny parsell');
+  const cost = restructuringCost(analysis.plan.to), oldId = analysis.plan.source.id;
+  assert.equal(stepRenovation(s, 0), true, 'arbeidet starter autonomt');
+  assert.ok(s.buildings.some((b) => b.id === oldId), 'det bebodde huset står mens erstatningen bygges');
+  assert.equal(siteIsValid(s, 'townhouse', analysis.plan.x, analysis.plan.y, 'first'), false, 'den aktive målparsellen er reservert');
+  assert.equal(s.resources.wood, 500 - cost.wood, 'lokale materialer trekkes ved byggestart');
+  const mid = deserialize(serialize(s)); stepRenovation(mid, 96);
+  const rebuilt = mid.buildings.find((b) => b.restructured && b.redevelopedFrom?.includes(oldId));
+  assert.ok(rebuilt && rebuilt.frontage, 'ferdig erstatning står på gatefronten');
+  assert.deepEqual(mid.humans.map((h) => h.id), beforePeople, 'ingen mennesker slettes eller dupliseres');
+  assert.ok(mid.humans.every((h) => h.homeId !== oldId), 'ingen ugyldige hjemreferanser står igjen');
+  assert.ok(housingOf(rebuilt, mid) >= beforeHousing / homes.length, 'boligplassen på parsellen går ikke ned');
+  assert.equal(mid.resources.wood, 500 - cost.wood + 4, 'berging skjer én gang ved ferdig riving');
+  assert.equal(mid.renovation.restructured, 1); assert.ok(mid.renovation.labor > 0);
+});
+
+test('omstrukturering er deterministisk og skaper målbar gatefront uten å røre minnestedet', () => {
+  const setup = () => {
+    const s = createGame(12033), S = s.settlements[0]; S.stage = 'By'; s.nodes = [];
+    addBuilding(s, 'fire', 'first', 1000, 700, { radius: 14 });
+    const homes = [[880, 760], [1060, 760], [880, 910], [1060, 910]].map(([x, y]) => addBuilding(s, 'hut', 'first', x, y, { radius: 30, tier: 3 }));
+    homes[0].heritage = true; addPeople(s, 'first', 12); for (let i = 0; i < 12; i++) s.humans[i].homeId = homes[i % 4].id;
+    s.upgrades.construction_methods = 1; s.resources = { ...s.resources, wood: 500, stone: 500, planks: 100, cutstone: 100 }; growStreets(s, S);
+    return s;
+  };
+  const a = setup(), b = setup(), heritageId = a.buildings.find((q) => q.heritage).id;
+  stepRenovation(a, 0); stepRenovation(b, 0); stepRenovation(a, 96); stepRenovation(b, 48);
+  const roundtrip = deserialize(serialize(b)); stepRenovation(roundtrip, 48);
+  const sig = (s) => JSON.stringify(s.buildings.map((q) => [q.id, q.type, Math.round(q.x), Math.round(q.y), q.tier, !!q.restructured]));
+  assert.equal(sig(a), sig(roundtrip), 'lagre/lese midt i arbeidet gir samme resultat');
+  assert.ok(a.buildings.some((q) => q.id === heritageId && q.heritage), 'minnestedet er urørt');
+  assert.ok(urbanMetrics(a, a.settlements[0]).frontageBuildings >= 1, 'ny gatefront registreres med samme definisjon som rapporten');
 });
 
 test('menneskenes bevegelser er deterministiske (to kjøringer og lagre/lese gir samme tilstand)', () => {

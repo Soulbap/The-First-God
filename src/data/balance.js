@@ -148,6 +148,14 @@ export const BALANCE = {
       5: { cost: { planks: 14, cutstone: 12, copper: 1 }, seconds: 90 },
     },
     radius: { 3: 34, 4: 36, 5: 38 },
+    // OPUS-12C.2: et eksisterende, ikke-vernet hjem kan gjenoppføres på en
+    // bedre gateparsell. Det gamle står til arbeidet er ferdig; litt materiale
+    // berges ved kontrollert riving. Tallene er provisoriske.
+    restructuring: {
+      minOccupancy: 0.66, minScore: 18, seconds: 96,
+      cost: { wood: 24, stone: 22, planks: 6, cutstone: 5 },
+      salvage: { wood: 4, stone: 4 },
+    },
   },
   // OPUS-11: ekstra luft mellom bygg i samme bosetting etter trinn (Leir, Grend, Landsby, Voksende landsby, Tidlig by, By, Storby).
   // Landsbyen beholder luft; fra tidlig by fylles tomter langs eksisterende gater tettere.

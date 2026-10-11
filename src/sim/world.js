@@ -146,7 +146,7 @@ export function createWorld(seed = 20261009, biome = 'skog', { remote = false } 
     trade: { orders: {}, flows: {}, modes: {} }, // OPUS-12: handelsregnskap (statistikk)
     migration: { done: 0, byRoute: {}, nextAt: 0 }, // OPUS-12: flytting mellom bosettinger
     urban: { enabled: false, nextAt: 0, built: 0 }, // OPUS-02: Byplan
-    renovation: { done: 0, consolidated: 0 }, // OPUS-11/12C: ombygde og sammenslåtte boliger
+    renovation: { done: 0, consolidated: 0, attempted: 0, restructured: 0, capacityGained: 0, landEfficiencyGain: 0, labor: 0, materialsSpent: {}, rejected: {} }, // OPUS-11/12C.2
     chronicle: createChronicle(),
     globe: createGlobe(seed),
     civilization: { foodUnlocked: false, exchangeUnlocked: false, nextFoodAt: Infinity, nextPopulationAt: Infinity, foodHarvests: 0, exchangeDeliveries: 0, festivalUntil: -Infinity, nextFestivalAt: 0, festivals: 0 },

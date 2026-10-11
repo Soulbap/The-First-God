@@ -201,7 +201,32 @@ const OPUS_12_SCENES = [
   { name: '16b-redevelopment-after', w: 1920, h: 1080, js: `${L12('institute')} toPhase(0.45); calm(); T.view(C.x + 40, C.y + 10, 760); close(); settle(1.5);` },
   ...[['a1-morning', 0.28], ['a2-work', 0.4], ['a3-midday-transport', 0.52], ['a4-social', 0.66], ['a5-evening', 0.8], ['a6-night', 0.96]].map(([n, p]) => ({ name: `act-${n}`, w: 1920, h: 1080, js: `${L12('institute')} toPhase(${p}); calm(); T.view(C.x + 20, C.y + 20, 760); close(); settle(0.8);` })),
 ];
-const SCENES = process.env.OPUS_12 === '1' ? OPUS_12_SCENES : process.env.OPUS_11 === '1' ? OPUS_11_SCENES : process.env.OPUS_01 === 'sizes' ? OPUS_01_SIZES : process.env.OPUS_01 === '1' ? OPUS_01_SCENES : process.env.OPUS_01 === 'transition' ? OPUS_01_TRANSITION : process.env.GAMEPLAY_07_10 === '1' ? GAMEPLAY_07_10_SCENES : process.env.GAMEPLAY_06 === '1' ? GAMEPLAY_06_SCENES : process.env.GAMEPLAY_05 === '1' ? GAMEPLAY_05_SCENES : process.env.GAMEPLAY_04 === '1' ? GAMEPLAY_04_SCENES : process.env.GAMEPLAY_03 === '1' ? GAMEPLAY_03_SCENES : process.env.GAMEPLAY_02 === '1' ? GAMEPLAY_02_SCENES : DEFAULT_SCENES;
+// OPUS-12C.2: samme legitime botforløp, med to sjekkpunkter på hver side av
+// den første naturlige omstruktureringen. Ingen ressurser eller bygg injiseres.
+const L12C2 = (k) => `${BOT} ${PHASE} if (!T.loadFrom('o12c2-${k}')) throw new Error('mangler sjekkpunkt o12c2-${k}'); T.state.unlocks.zoomArea = true;`;
+const OPUS_12C2_SCENES = [
+  { name: '00-prepare', w: 1920, h: 1080, js: `${BOT12}
+      to('city_rises'); T.advance(240); T.saveAs('o12c2-city');
+      for (let i = 0; i < 900 && !(T.state.renovation.attempted > 0); i++) { T.saveAs('o12c2-redevelopment-before'); T.advance(6); bot.act(T.state); }
+      if (!(T.state.renovation.attempted > 0)) throw new Error('ingen naturlig omstrukturering startet');
+      { const h=T.state.buildings.find(b=>b.renovation?.kind==='restructuring'); const r=h?.renovation; if (!r) throw new Error('omstrukturering mangler mål'); localStorage.setItem('o12c2-focus',JSON.stringify({x:r.x,y:r.y})); }
+      T.saveAs('o12c2-redevelopment-active');
+      to((s) => (s.renovation.restructured || 0) >= 1); T.saveAs('o12c2-redevelopment-after');
+      to((s) => s.buildings.some((b) => b.type === 'research_institute' && b.complete)); T.advance(900); T.saveAs('o12c2-modern');
+      camp(); calm();` },
+  { name: '02-modern-city-after', w: 1920, h: 1080, js: `${L12C2('modern')} toPhase(0.45); calm(); T.view(C.x, C.y + 10, 1000); close(); settle(1.5);` },
+  { name: '03-residential-district-after', w: 1920, h: 1080, js: `${L12C2('modern')} toPhase(0.45); const hs=T.state.buildings.filter(b=>b.restructured); const h=hs.at(-1)||first('townhouse'); calm(); T.view(h.x,h.y,520); close(); settle(1.5);` },
+  { name: '04-historical-center', w: 1920, h: 1080, js: `${L12C2('modern')} toPhase(0.45); const h=T.state.buildings.find(b=>b.heritage&&(b.settlementId||'first')==='first')||first('shelter'); calm(); T.view(h.x,h.y,520); close(); settle(1.5);` },
+  { name: '05-developed-street-frontage', w: 1920, h: 1080, js: `${L12C2('modern')} toPhase(0.45); const h=T.state.buildings.find(b=>b.restructured)||first('townhouse'); calm(); T.view(h.x,h.y,420); close(); settle(1.5);` },
+  { name: '06-coherent-block', w: 1920, h: 1080, js: `${L12C2('modern')} toPhase(0.45); const {urbanFabric}=await import('/src/sim/urban-fabric.js'); const f=urbanFabric(T.state,T.state.settlements[0]); const c=f.clusters.sort((a,b)=>b.size-a.size)[0]; const bs=(c?.ids||[]).map(id=>T.state.buildings.find(b=>b.id===id)).filter(Boolean); const x=bs.length?bs.reduce((n,b)=>n+b.x,0)/bs.length:C.x, y=bs.length?bs.reduce((n,b)=>n+b.y,0)/bs.length:C.y; calm(); T.view(x,y,520); close(); settle(1.5);` },
+  { name: '07-industrial-district', w: 1920, h: 1080, js: `${L12C2('modern')} toPhase(0.45); const d=first('metalworks')||first('refinery'); calm(); T.view(d.x,d.y,650); close(); settle(1.5);` },
+  { name: '08-settlement-outskirts', w: 1920, h: 1080, js: `${L12C2('modern')} toPhase(0.45); const hs=T.state.buildings.filter(b=>b.complete&&(b.settlementId||'first')==='first'); const h=hs.sort((a,b)=>Math.hypot(b.x-C.x,b.y-C.y)-Math.hypot(a.x-C.x,a.y-C.y))[0]; calm(); T.view(h.x,h.y,780); close(); settle(1.5);` },
+  { name: '09-redevelopment-before', w: 1920, h: 1080, js: `${L12C2('redevelopment-before')} toPhase(0.45); const f=JSON.parse(localStorage.getItem('o12c2-focus')); calm(); T.view(f.x,f.y,460); close(); settle(1.5);` },
+  { name: '10-redevelopment-active', w: 1920, h: 1080, js: `${L12C2('redevelopment-active')} toPhase(0.45); const f=JSON.parse(localStorage.getItem('o12c2-focus')); calm(); T.view(f.x,f.y,460); close(); settle(1.5);` },
+  { name: '11-redevelopment-after', w: 1920, h: 1080, js: `${L12C2('redevelopment-after')} toPhase(0.45); const f=JSON.parse(localStorage.getItem('o12c2-focus')); calm(); T.view(f.x,f.y,460); close(); settle(1.5);` },
+  { name: '12-wide-city-overview', w: 1920, h: 1080, js: `${L12C2('modern')} toPhase(0.45); calm(); T.view(C.x,C.y,1500); close(); settle(1.5);` },
+];
+const SCENES = process.env.OPUS_12C_2 === '1' ? OPUS_12C2_SCENES : process.env.OPUS_12 === '1' ? OPUS_12_SCENES : process.env.OPUS_11 === '1' ? OPUS_11_SCENES : process.env.OPUS_01 === 'sizes' ? OPUS_01_SIZES : process.env.OPUS_01 === '1' ? OPUS_01_SCENES : process.env.OPUS_01 === 'transition' ? OPUS_01_TRANSITION : process.env.GAMEPLAY_07_10 === '1' ? GAMEPLAY_07_10_SCENES : process.env.GAMEPLAY_06 === '1' ? GAMEPLAY_06_SCENES : process.env.GAMEPLAY_05 === '1' ? GAMEPLAY_05_SCENES : process.env.GAMEPLAY_04 === '1' ? GAMEPLAY_04_SCENES : process.env.GAMEPLAY_03 === '1' ? GAMEPLAY_03_SCENES : process.env.GAMEPLAY_02 === '1' ? GAMEPLAY_02_SCENES : DEFAULT_SCENES;
 const ACTIVE_SCENES = process.env.CAPTURE_SCENES
   ? SCENES.filter((s) => process.env.CAPTURE_SCENES.split(',').some((name) => s.name.startsWith(name.trim())))
   : SCENES;
