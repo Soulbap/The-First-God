@@ -9,6 +9,7 @@
 - [ ] Er de moderne boligene varierte nok (høyde, tak, fasade) uten å se ut som ulike stilarter? Er skyline-forskjellen mellom hovedstaden og en liten satellitt lesbar?
 - [ ] Lagre midt i et veiarbeid, en flytting og en levering, last igjen og bekreft at ingenting dobles eller forsvinner. Ragnarok skal gi en by uten gater og uten handelshistorikk.
 - [ ] **OPUS-12B:** i en moden, boligpresset by: står moderne boliger tydeligere ved gaten, og blir et tett par gamle, ikke-vernede hytter eventuelt erstattet av én bygård uten at innbyggere eller boligplass forsvinner? Er minnestedet bevart?
+- [ ] **OPUS-12C:** følg en moden hovedstad fra område- til nærzoom: fylles ledige gatefronter med ekte, ressursbetalte boliger, og leses minst én sammenhengende gatevegg eller liten gårdsform uten å fortrenge park, torg eller minnested?
 
 ## OPUS-07 · damp og industri
 

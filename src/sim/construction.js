@@ -9,6 +9,7 @@ import { stageRank } from './settlements.js';
 import { streetSegments, distToStreet } from './streets.js';
 import { planArchitecture } from './architecture.js';
 import { railSegments } from './rails.js';
+import { frontageOf, frontageSites } from './urban-fabric.js';
 
 // Luft mellom bygg etter bosettingens trinn (OPUS-11): leirer og grender har rom mellom skur, stier og felles plasser;
 // tettere by først når bosettingen er blitt en by. Gjelder bare bygg i samme bosetting; kollisjon er alltid forbudt.
@@ -214,6 +215,19 @@ function searchBuildSite(state, type, settlementId, maxRing) {
   // ser lenger, slik at de når kanten av en tett skog i stedet for å stoppe ved første ledige plass på feil side (OPUS-11).
   const reach = ctx.dir ? 280 : zone === 'field' ? 150 : zone === 'work' ? 120 : 70;
   let best = null, firstRing = null;
+  // Fra «Tidlig by» velger boliger først reelle ledige fronttomter langs gater.
+  // Ring-søket under er fortsatt reserve for leirer, nye bosettinger og utkanter.
+  if (zone === 'home' && Sx && stageRank(Sx.stage || 'Leir') >= 4 && ctx.segs.length) {
+    for (const candidate of frontageSites(state, Sx, def.radius)) {
+      const { x, y } = candidate;
+      if (!siteIsValid(state, type, x, y, settlementId)) continue;
+      const ring = Math.hypot(x - anchor.x, y - anchor.y);
+      if (ring > maxRing + 120) continue;
+      const score = siteScore(state, type, x, y, ring, anchor, ctx) + 48;
+      if (!best || score > best.score + 1e-9) best = { x, y, score, frontage: candidate.frontage };
+    }
+    if (best) return { x: best.x, y: best.y, frontage: best.frontage };
+  }
   for (let ring = minRing; ring <= maxRing; ring += 10) {
     if (firstRing != null && ring > firstRing + reach) break;
     const steps = Math.max(12, Math.round(ring / 8));
@@ -239,6 +253,11 @@ export function startConstruction(state, type, { onComplete = null, source = nul
     progress: 0, work: 0, workNeeded: def.work, complete: false, divine: !!def.divine,
     builders: [], onComplete, source, startedAt: state.time, settlementId,
   };
+  const S = state.settlements.find((q) => q.id === settlementId);
+  if (S && zoneOf(type) === 'home') {
+    const front = forcedSite?.frontage ? { x: 0, y: 0, ...forcedSite.frontage } : frontageOf(state, S, b.x, b.y);
+    if (front && front.distance == null || front?.distance < 58) b.frontage = { nx: front.nx, ny: front.ny, street: front.index };
+  }
   if (B.production[type]) { b.cycle = 0; b.active = false; b.idle = null; b.made = 0; }
   state.buildings.push(b);
   // Også hovedstaden rydder tomter. Klareringen matcher tre-regelen og hindrer gjenvekst ved dør og gårdsrom.

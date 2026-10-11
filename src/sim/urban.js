@@ -21,9 +21,12 @@ export const URBAN_PLAN = [
   { type: 'warehouse', scope: 'capital', targets: [['By', 1], ['Storby', 2]], cost: { wood: 60, stone: 40, planks: 10, cutstone: 4 } },
 ];
 
-export const urbanTarget = (item, stage) => {
+export const urbanTarget = (item, stage, population = 0) => {
   let n = 0;
   for (const [st, t] of item.targets) if (stageRank(stage) >= stageRank(st)) n = t;
+  // OPUS-12C: når sentrum er fullt, blir en ubrukt gatefront en ekte
+  // infill-tomt. Dette er etterspørselsstyrt (ikke en fast bykvote).
+  if (item.type === 'townhouse' && stageRank(stage) >= stageRank('By')) n = Math.max(n, Math.min(16, Math.ceil(population / 4)));
   return n;
 };
 
@@ -35,7 +38,7 @@ export function nextUrban(state, S) {
   for (const item of URBAN_PLAN) {
     if (item.scope === 'capital' && S.id !== 'first') continue;
     if (item.scope === 'satellite' && S.id === 'first') continue;
-    if (count(state, S.id, item.type) < urbanTarget(item, S.stage)) return item;
+    if (count(state, S.id, item.type) < urbanTarget(item, S.stage, S.population.length)) return item;
   }
   return null;
 }

@@ -4,6 +4,19 @@ Alle merkbare prosjektendringer dokumenteres her av AI-en som utfører endringen
 
 ## [Unreleased]
 
+### OPUS-12C · urban fabric & autonomous densification (pågår, gren `feature/opus-12c-urban-fabric`)
+
+#### Added
+- **Avledet byvev** (`src/sim/urban-fabric.js`): et deterministisk, hurtigbufret lag av gatefronter og utviklingsbare fronttomter basert på den autoritative gatenettgeometrien. Modne bosettinger velger gatefront før ringtomter; nye boliger får lagret gateorientering uten å gi spilleren bygg- eller veiplassering.
+- **Byformdiagnose** (`tools/urban-metrics.mjs`): reproduserbar måling av bebyggelse, gater, tetthet, avstand, gateadgang, frontklynger og ombygging fra ekte botkjøring.
+
+#### Changed
+- Boligtomter i by/storby følger etterspørsel og kan fylle flere gatefronter ved reelt folketall; bygging beholder eksisterende ressurs-, arbeids- og tidskrav.
+- Autonom konsolidering kan vurdere ordinære, ikke-vernede boliger til og med trinn 3, slik at mekanismen ikke forsvinner straks gamle hytter er oppgradert.
+
+#### Tests
+- `tests/opus12-world.test.js`: ny test for gyldig gatefront, orientering og målbar fronttilknytning. Målrettet kjøring: 18/18 bestått.
+
 ### OPUS-12B · urban struktur og ytelse (PARTIAL)
 
 #### Docs

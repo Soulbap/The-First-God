@@ -44,10 +44,12 @@ const CONSOLIDATION_COST = { wood: 26, stone: 24, planks: 5, cutstone: 6 };
 // kapasiteten bevares eller øker, beboere flyttes til det nye huset, materialene betales og arbeidet tar tid.
 export function consolidationPlan(state, S) {
   if (stageRank(S.stage || 'Leir') < 5) return null;
-  const homes = homesOf(state, S.id).filter((b) => !b.heritage && b.type === 'hut' && tierOf(b) <= 2 && !b.renovation).sort((a, b) => a.id - b.id);
+  // Vanlige, foreldede steinhus kan også erstattes. Minnesteder og nyere blokker
+  // er fortsatt fredet; dette gjør ombygging mulig etter at hytter har blitt få.
+  const homes = homesOf(state, S.id).filter((b) => !b.heritage && tierOf(b) >= 1 && tierOf(b) <= 3 && !b.renovation).sort((a, b) => a.id - b.id);
   for (let i = 0; i < homes.length; i++) for (let j = i + 1; j < homes.length; j++) {
     const a = homes[i], b = homes[j], d = Math.hypot(a.x - b.x, a.y - b.y);
-    if (d > 118) continue;
+    if (d > 132) continue;
     const x = (a.x + b.x) / 2, y = (a.y + b.y) / 2, ignored = new Set([a.id, b.id]);
     if (!siteIsValid(state, 'townhouse', x, y, S.id, ignored)) continue;
     const oldCapacity = housingOf(a, state) + housingOf(b, state);

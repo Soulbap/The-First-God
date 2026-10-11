@@ -12,6 +12,8 @@ import { makeArch, planArchitecture } from '../src/sim/architecture.js';
 import { tenementWindows, modernWindows } from '../src/render/housing.js';
 import { dayPhase } from '../src/view/daylight.js';
 import { tierOf, consolidationPlan, stepRenovation } from '../src/sim/renovation.js';
+import { frontageOf, frontageSites, urbanFabric } from '../src/sim/urban-fabric.js';
+import { findBuildSite, startConstruction } from '../src/sim/construction.js';
 import { reached, addBuilding, addPeople } from './support.js';
 
 const settled = () => reached('connected_realm', 777);
@@ -222,6 +224,25 @@ test('bygg overlapper aldri: fotavtrykkene i samme bosetting holder avstand', ()
     if ((a.settlementId || 'first') !== (b.settlementId || 'first')) continue;
     assert.ok(Math.hypot(a.x - b.x, a.y - b.y) >= (a.radius + b.radius) * 0.85, `${a.type}#${a.id} og ${b.type}#${b.id} overlapper`);
   }
+});
+
+test('byvev: modne boliger velger ledig gatefront, får orientering og danner målbare frontklynger', () => {
+  const s = createGame(1203), S = s.settlements[0]; S.stage = 'By'; s.nodes = [];
+  const fire = addBuilding(s, 'fire', 'first', 1000, 700, { radius: 14 });
+  const a = addBuilding(s, 'hut', 'first', 900, 760, { radius: 24, tier: 2 });
+  const b = addBuilding(s, 'hut', 'first', 1060, 760, { radius: 24, tier: 2 });
+  assert.ok(growStreets(s, S), 'en faktisk gate finnes før tomten velges');
+  const sites = frontageSites(s, S, 30);
+  assert.ok(sites.length > 0, 'gaten gir utviklingsbare fronttomter');
+  const f = frontageOf(s, S, a.x, a.y);
+  assert.ok(f && Number.isFinite(f.distance), 'eksisterende hus kan måles mot gatefront');
+  const site = findBuildSite(s, 'townhouse', 'first');
+  assert.ok(site && site.frontage, 'mature boligbygging prioriterer en gatefront');
+  const built = startConstruction(s, 'townhouse', { settlementId: 'first', site });
+  assert.ok(built.frontage && Number.isFinite(built.frontage.nx), 'bygget beholder sin gateorientering');
+  built.complete = true; growStreets(s, S);
+  assert.ok(urbanFabric(s, S).fronts.length >= 3, 'byvevet har målbare gatevendte boliger');
+  void fire; void b;
 });
 
 test('det eldste hjemmet og det første lyet bevares som minnesteder når byen bygges om', () => {
