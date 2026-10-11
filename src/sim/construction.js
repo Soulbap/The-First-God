@@ -7,6 +7,7 @@ import { storyBuilt } from './story.js';
 import { clearTrees } from './nature.js';
 import { stageRank } from './settlements.js';
 import { streetSegments, distToStreet } from './streets.js';
+import { planArchitecture } from './architecture.js';
 
 // Luft mellom bygg etter bosettingens trinn (OPUS-11): leirer og grender har rom mellom skur, stier og felles plasser;
 // tettere by først når bosettingen er blitt en by. Gjelder bare bygg i samme bosetting; kollisjon er alltid forbudt.
@@ -253,6 +254,7 @@ function completeBuilding(state, b) {
     state.buildings.push(fire);
     stampWear(state, fire.x, fire.y, 16, 0.2);
   }
+  if (b.type === 'townhouse') { const S = state.settlements.find((q) => q.id === (b.settlementId || 'first')); if (S) b.arch = planArchitecture(state, b, S, 3); }
   if (b.onComplete && b.onComplete.spawnHumans) spawnHumans(state, b.onComplete.spawnHumans, { at: 'edge', building: b, settlementId: b.settlementId });
   if (b.onComplete?.regionalPopulation) state.region.nextPopulationAt = Math.min(state.region.nextPopulationAt, state.time + 5);
 }

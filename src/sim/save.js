@@ -2,7 +2,7 @@
 // Bevisst valg (prosjektansvarlig): ingen offline-fremgang. En lastet verden fortsetter nøyaktig der den ble lagret.
 import { createWorld } from './world.js';
 
-export const SAVE_VERSION = 11;
+export const SAVE_VERSION = 12;
 
 // JSON kan ikke uttrykke Infinity/NaN eller typede arrays; de kodes som små merkeobjekter.
 function replacer(key, v) {
@@ -60,6 +60,10 @@ export function deserialize(text, { seed } = {}) {
     if (r.extracted == null) r.extracted = 0;
     if (r.aerial == null) r.aerial = false;
   }
+  // v12 (OPUS-12): gatenett (`S.net`), handelsregnskap, flytting og menneskenes hjem/arbeidssted er nye felt som fylles ved bruk
+  // (fillDefaults gir `trade` og `migration`; resten oppstår av simuleringen). Eldre leveranser og tog uten avsender/mottaker leses som hovedstaden.
+  for (const d of s.region?.deliveries || []) if (d.source == null) d.source = 'first';
+  for (const q of s.industrial?.shipments || []) if (q.rail && q.to == null) { q.from = q.from ?? 'first'; q.to = q.to ?? 'first'; }
   s.events = [];
   return s;
 }

@@ -1,6 +1,7 @@
 // OPUS-12 · Funksjonelle områder og økonomisk identitet. Rene spørringer på tilstanden — ingen soneplanlegging fra spilleren:
 // områdene er bare navn på det byggene og aktiviteten faktisk har blitt, og identiteten er det en bosetting ender som ut fra geografi og handel.
 import { isHome, stageRank } from './settlements.js';
+import { jobsOf } from './growth.js';
 
 export const DISTRICTS = ['bolig', 'jordbruk', 'handel', 'industri', 'sivilt', 'transport', 'forskning'];
 export const DISTRICT_NAME = { bolig: 'Boligstrøk', jordbruk: 'Jordbruk', handel: 'Handel', industri: 'Industri', sivilt: 'Sivilt', transport: 'Transport', forskning: 'Forskning' };
@@ -73,5 +74,6 @@ export function refreshDistricts(state) {
     if (S.state !== 'active') continue;
     S.districts = districtProfile(state, S);
     S.identity = identityOf(state, S);
+    S.jobs = jobsOf(state, S);
   }
 }

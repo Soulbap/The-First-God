@@ -241,7 +241,7 @@ function chooseTask(state, h) {
     if (pick) { h.state = 'toFire'; h.tx = pick.x; h.ty = pick.y; return; }
   }
   // Folk i en ung bosetting bruker annenhver runde på livet i bygda i stedet for å sanke (OPUS-12: ved bosettingens egne steder).
-  if (h.settlementId !== 'first' && state.expansion.founded && h.deliveries % 2 === 0 && goLeisure(state, h)) return;
+  if (h.settlementId !== 'first' && state.expansion.founded && h.deliveries % 2 === 0 && !state.region?.projects?.[h.settlementId] && goLeisure(state, h)) return;
   if (maybeExplore(state, h)) return;
   // 2) Sanking.
   const kind = chooseResourceKind(state, h);
@@ -446,7 +446,7 @@ export function stepHuman(state, h, dt) {
         if (allThere && !state.buildings.some((b) => b.source === 'founding')) {
           const S = settlementSite(state);
           state.settlements.push({ id: 'second', name: 'Lysningen', x: S.x, y: S.y, state: 'founding', population: [...state.expansion.founders], kind: 'farm', projectsDone: 0, role: 'Skogbygd', stage: 'Leir', stock: {} });
-          for (const id of state.expansion.founders) { const q = state.humans.find((z) => z.id === id); q.settlementId = 'second'; q.state = 'idle'; q.timer = 0.1; }
+          for (const id of state.expansion.founders) { const q = state.humans.find((z) => z.id === id); q.settlementId = 'second'; q.state = 'idle'; q.timer = 0.1; q.homeId = null; q.workId = null; q.destId = null; q.slot = null; }
           const first = state.settlements.find((s) => s.id === 'first');
           if (first) first.population = first.population.filter((id) => !state.expansion.founders.includes(id));
           startConstruction(state, 'hut', { source: 'founding', site: S, settlementId: 'second' });

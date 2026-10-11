@@ -5,6 +5,7 @@
 import { mulberry, paintSprite, dab, taper, jitter, rgba, clamp, smooth } from './paint.js';
 import { box, gableRoof, contact, groundPatch, stoneBlocks, stage, DX, DY } from './city.js';
 import { tenementWindows, modernWindows } from './housing.js';
+import { archOf } from '../sim/architecture.js';
 
 // Vinduer (i spritens ankerkoordinater, verdensenheter) som får lys i skumringen. Brukes av dagslys-laget.
 export const WINDOWS = {
@@ -22,6 +23,8 @@ export const WINDOWS = {
 };
 export const ELECTRIC_LIT = { generator: 'generator', research_institute: 'research_institute', electronics_works: 'clean_works', precision_works: 'clean_works', aircraft_works: 'clean_works' };
 // Vindusnøkkel for et bolighus etter trinn (OPUS-11).
+// Vinduene for et konkret hus (OPUS-12): bygård og moderne blokk følger byggeplanen (etasjer og akser), de andre har faste vinduer.
+export const windowsFor = (b, tier) => (b.type === 'hut' || b.type === 'townhouse') && tier >= 4 ? (tier >= 5 ? modernWindows(archOf(b, 5)) : tenementWindows(archOf(b, 4))) : WINDOWS[windowKey(b, tier)];
 export const windowKey = (b, tier) => (b.type === 'hut' || b.type === 'townhouse' ? (tier >= 5 ? 'modern' : tier === 4 ? 'tenement' : tier === 3 || b.type === 'townhouse' ? 'townhouse' : tier === 2 ? 'cottage' : 'hut') : b.type);
 
 // ---------- Brønn ----------

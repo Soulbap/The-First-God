@@ -7,6 +7,7 @@
 import { BALANCE as B } from '../data/balance.js';
 import { stageRank, isHome } from './settlements.js';
 import { landLink } from './regional.js';
+import { planArchitecture } from './architecture.js';
 
 export const MAX_TIER = 5;
 
@@ -76,6 +77,7 @@ export function stepRenovation(state, dt) {
         active.tier = to; active.renovation = null; active.renovatedAt = state.time;
         if (to >= 2) active.renovated = true; // eldre kode og lagringer leser `renovated`
         growRadius(state, active, to);
+        if (to >= 3) active.arch = planArchitecture(state, active, S, to); // byggeplan: etasjer, tak, fasade (OPUS-12)
         state.renovation.done = (state.renovation.done || 0) + 1;
         state.events.push({ type: 'renovated', id: active.id, buildingType: active.type, tier: to, x: active.x, y: active.y });
       }

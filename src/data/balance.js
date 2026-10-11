@@ -231,7 +231,7 @@ export const BALANCE = {
   festival: { minFood: 30, base: 10, perPerson: 0.8, interval: 110, duration: 28, prayerMultiplier: 2, joinChance: 0.7 },
   settlement: { clearRadius: 150, localHomeCapacity: 2 },
   // OPUS-12 · Flytting: sjekkes jevnlig; bare ledig bolig og mat trekker, og bare trangboddhet eller langvarig sult presser.
-  migration: { checkSeconds: 24, maxInFlight: 2, hungerSeconds: 90, minFoodToReceive: 8, maxDistance: 1700 },
+  migration: { cooldown: 900, joblessMargin: 4, checkSeconds: 24, maxInFlight: 2, hungerSeconds: 90, minFoodToReceive: 8, maxDistance: 1700 },
   // OPUS-12 · Handel: hovedstaden importerer under `capitalLow`; en satellitt eksporterer bare over `satelliteKeep` (mineraler: alt).
   // Mat fra hovedstaden til en sultende satellitt først når hovedstaden har minst `capitalFoodSurplus`.
   trade: { checkSeconds: 4, maxQueued: 10, minBatch: 2, capitalLow: { wood: 100, stone: 80, planks: 16, cutstone: 12, food: 20 }, satelliteKeep: { wood: 120, stone: 90, planks: 20, cutstone: 14, food: 16 }, capitalFoodSurplus: 40, satelliteFoodLow: 6 },

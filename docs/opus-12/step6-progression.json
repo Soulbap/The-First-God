@@ -1,0 +1,2475 @@
+[
+ {
+  "seed": 5,
+  "wallS": 117.8,
+  "simH": 3.717,
+  "simHPerWallS": 0.032,
+  "steps": 802800,
+  "firstAt": {
+   "industry": 3750,
+   "steam": 3840,
+   "metalworks": 4080,
+   "oilWell": 4140,
+   "refinery": 5070,
+   "generator": 5310,
+   "combustion": 6210,
+   "precision": 7590,
+   "aircraft": 9150,
+   "airfield": 9660,
+   "survey": 9720,
+   "electricity": 10230,
+   "electronics": 11460,
+   "telegraph": 12540,
+   "institute": 13380
+  },
+  "unreached": [],
+  "firstUnreached": null,
+  "topIdle": [
+   "sawmill:fullt×9",
+   "mason:råvare×8",
+   "locomotive_workshop:fullt lager×7",
+   "metalworks:fullt lager×6"
+  ],
+  "population": 234,
+  "settlements": [
+   "first:Storby:94",
+   "second:Tidlig by:49",
+   "third:By:49",
+   "fourth:Tidlig by:42"
+  ],
+  "housing": [
+   94,
+   49,
+   49,
+   42
+  ],
+  "buildings": 112,
+  "tiers": {
+   "t0H": 1,
+   "t1H": 1,
+   "t5": 10,
+   "t4": 20
+  },
+  "renovationsDone": 72,
+  "res": {
+   "wood": 1897,
+   "stone": 1874,
+   "coal": 70,
+   "iron": 11,
+   "copper": 2,
+   "ironOre": 43,
+   "copperOre": 21,
+   "crudeOil": 2,
+   "fuel": 170,
+   "planks": 122,
+   "industrialMachinery": 7,
+   "electronics": 5
+  },
+  "veins": {
+   "copperOre": "0/343 (3 årer)",
+   "tinOre": "225/290 (2 årer)",
+   "ironOre": "21/816 (5 årer)",
+   "coal": "1780/2195 (3 årer)",
+   "oil": "44/507 (2 årer)"
+  },
+  "outposts": [
+   {
+    "id": "r10",
+    "biome": "slette",
+    "pop": 8,
+    "homes": 2,
+    "extracted": 293,
+    "stock": {
+     "food": 0,
+     "wood": 9,
+     "tinOre": 166
+    }
+   },
+   {
+    "id": "r11",
+    "biome": "fjell",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 611,
+    "stock": {
+     "stone": 25,
+     "cutstone": 10,
+     "ironOre": 180,
+     "coal": 180
+    }
+   },
+   {
+    "id": "r41",
+    "biome": "kyst",
+    "pop": 6,
+    "homes": 1,
+    "extracted": 257,
+    "stock": {
+     "food": 43,
+     "knowledge": 0,
+     "copperOre": 72,
+     "crudeOil": 1
+    }
+   },
+   {
+    "id": "r12",
+    "biome": "dal",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 542,
+    "stock": {
+     "wood": 0,
+     "stone": 25,
+     "knowledge": 0,
+     "copperOre": 131,
+     "coal": 124
+    }
+   },
+   {
+    "id": "r32",
+    "biome": "dal",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 509,
+    "stock": {
+     "wood": 0,
+     "stone": 23,
+     "knowledge": 0,
+     "copperOre": 102,
+     "coal": 130
+    }
+   }
+  ],
+  "caravans": 88,
+  "maritime": 0,
+  "discovered": 14,
+  "rails": 1,
+  "roadTrips": 35,
+  "fuelBurned": 46,
+  "flights": 14,
+  "surveys": 14,
+  "lit": [
+   "first"
+  ],
+  "electronics": 15,
+  "research": 5,
+  "siteSearches": 1325,
+  "siteSkipped": 544128,
+  "trade": {
+   "orders": {
+    "project": 194,
+    "import": 114,
+    "relief": 2
+   },
+   "flows": {
+    "first>second|stone": 82.60000000000002,
+    "first>second|wood": 93,
+    "second>first|food": 25,
+    "first>second|planks": 23,
+    "first>second|cutstone": 122,
+    "second>first|planks": 171,
+    "first>second|mechanicalComponents": 3,
+    "first>third|wood": 102.44999999999996,
+    "first>third|stone": 190.27,
+    "second>third|food": 16,
+    "first>third|planks": 23,
+    "second>first|coal": 31,
+    "first>third|mechanicalComponents": 3,
+    "first>fourth|stone": 60.61999999999999,
+    "first>fourth|wood": 91.26999999999998,
+    "second>fourth|food": 20,
+    "first>fourth|planks": 15,
+    "first>fourth|mechanicalComponents": 3,
+    "first>fourth|cutstone": 100,
+    "fourth>first|planks": 4,
+    "first>second|iron": 7,
+    "second>first|ironOre": 48,
+    "first>third|cutstone": 5,
+    "first>third|iron": 7,
+    "first>fourth|iron": 6,
+    "second>first|copperOre": 39,
+    "third>first|food": 2
+   },
+   "modes": {
+    "carrier": 1052.2099999999996,
+    "rail": 161,
+    "truck": 80
+   }
+  },
+  "stocks": {
+   "first": {
+    "wood": 1897,
+    "stone": 1874,
+    "food": 92,
+    "planks": 122,
+    "cutstone": 104,
+    "copperOre": 21,
+    "ironOre": 43,
+    "coal": 70
+   },
+   "second": {
+    "stone": 542,
+    "wood": 725,
+    "food": 765,
+    "planks": 150,
+    "coal": 59,
+    "ironOre": 24,
+    "copperOre": 23
+   },
+   "third": {
+    "stone": 20,
+    "food": 765,
+    "wood": 508,
+    "planks": 100,
+    "cutstone": 55
+   },
+   "fourth": {
+    "wood": 653,
+    "food": 667,
+    "stone": 538,
+    "planks": 100
+   }
+  },
+  "sett": [
+   {
+    "id": "first",
+    "stage": "Storby",
+    "identity": "Hovedstad · Industriby",
+    "role": "Kunnskapssete",
+    "pop": 94,
+    "housing": 94,
+    "types": {
+     "shelter": 1,
+     "fire": 1,
+     "hut": 3,
+     "storage": 1,
+     "hearth": 1,
+     "field": 1,
+     "sawmill": 1,
+     "mason": 1,
+     "townhouse": 8,
+     "market": 1,
+     "mine": 1,
+     "charcoal_kiln": 1,
+     "smelter": 1,
+     "sanctuary": 6,
+     "well": 2,
+     "commons": 1,
+     "park": 2,
+     "hall": 1,
+     "windmill": 1,
+     "coal_mine": 1,
+     "steam_engine": 1,
+     "metalworks": 1,
+     "oil_well": 1,
+     "locomotive_workshop": 1,
+     "warehouse": 2,
+     "refinery": 1,
+     "generator": 1,
+     "rail_terminal": 1,
+     "combustion_engine": 1,
+     "motor_depot": 1,
+     "precision_works": 1,
+     "aircraft_works": 1,
+     "airfield": 1,
+     "grid_station": 1,
+     "electronics_works": 1,
+     "telegraph": 1,
+     "research_institute": 1
+    },
+    "districts": {
+     "bolig": 12,
+     "sivilt": 14,
+     "handel": 4,
+     "jordbruk": 2,
+     "industri": 16,
+     "transport": 4,
+     "forskning": 2
+    },
+    "hungry": 0
+   },
+   {
+    "id": "second",
+    "stage": "Tidlig by",
+    "identity": "Gruveby",
+    "role": "Sagbruksbygd",
+    "pop": 49,
+    "housing": 49,
+    "types": {
+     "hut": 5,
+     "fire": 1,
+     "storage": 1,
+     "hearth": 1,
+     "field": 2,
+     "workshop": 1,
+     "well": 2,
+     "commons": 1,
+     "sawmill": 1,
+     "market": 1,
+     "townhouse": 2,
+     "mine": 1,
+     "windmill": 1,
+     "warehouse": 1,
+     "rail_terminal": 1
+    },
+    "districts": {
+     "bolig": 7,
+     "sivilt": 5,
+     "handel": 3,
+     "jordbruk": 3,
+     "industri": 3,
+     "transport": 1
+    },
+    "hungry": 0
+   },
+   {
+    "id": "third",
+    "stage": "By",
+    "identity": "Gruveby",
+    "role": "Bysenter",
+    "pop": 49,
+    "housing": 49,
+    "types": {
+     "hut": 5,
+     "fire": 1,
+     "storage": 1,
+     "mason": 1,
+     "well": 2,
+     "commons": 1,
+     "field": 1,
+     "windmill": 1,
+     "sawmill": 1,
+     "workshop": 1,
+     "market": 1,
+     "townhouse": 2,
+     "park": 1,
+     "mine": 1
+    },
+    "districts": {
+     "bolig": 7,
+     "sivilt": 5,
+     "handel": 2,
+     "industri": 4,
+     "jordbruk": 2
+    },
+    "hungry": 0
+   },
+   {
+    "id": "fourth",
+    "stage": "Tidlig by",
+    "identity": "Skogsby",
+    "role": "Sagbruksbygd",
+    "pop": 42,
+    "housing": 42,
+    "types": {
+     "hut": 4,
+     "fire": 1,
+     "storage": 1,
+     "sawmill": 1,
+     "well": 2,
+     "commons": 1,
+     "field": 1,
+     "windmill": 1,
+     "workshop": 1,
+     "townhouse": 2,
+     "market": 1
+    },
+    "districts": {
+     "bolig": 6,
+     "sivilt": 4,
+     "handel": 2,
+     "industri": 2,
+     "jordbruk": 2
+    },
+    "hungry": 0
+   }
+  ],
+  "migration": {
+   "done": 42,
+   "byRoute": {
+    "first>second": 7,
+    "second>first": 9,
+    "second>fourth": 9,
+    "fourth>second": 3,
+    "first>third": 3,
+    "fourth>first": 11
+   },
+   "nextAt": 13386.983333223025
+  },
+  "roads": [
+   "first:[2,0,0,67]",
+   "second:[20,8,0,0]",
+   "third:[0,0,0,26]",
+   "fourth:[11,7,0,0]"
+  ]
+ },
+ {
+  "seed": 77,
+  "wallS": 131.8,
+  "simH": 3.808,
+  "simHPerWallS": 0.029,
+  "steps": 822600,
+  "firstAt": {
+   "industry": 3690,
+   "steam": 3810,
+   "metalworks": 4080,
+   "oilWell": 4170,
+   "refinery": 4890,
+   "generator": 5100,
+   "combustion": 5490,
+   "electricity": 7530,
+   "precision": 7950,
+   "aircraft": 9660,
+   "airfield": 10140,
+   "survey": 10200,
+   "electronics": 11700,
+   "telegraph": 12780,
+   "institute": 13710
+  },
+  "unreached": [],
+  "firstUnreached": null,
+  "topIdle": [
+   "sawmill:fullt×10",
+   "refinery:råvare×10",
+   "locomotive_workshop:fullt lager×9",
+   "mason:fullt×6"
+  ],
+  "population": 240,
+  "settlements": [
+   "first:Storby:94",
+   "second:Tidlig by:48",
+   "third:By:56",
+   "fourth:Tidlig by:42"
+  ],
+  "housing": [
+   94,
+   49,
+   56,
+   42
+  ],
+  "buildings": 115,
+  "tiers": {
+   "t0H": 1,
+   "t1H": 1,
+   "t5": 10,
+   "t4": 21
+  },
+  "renovationsDone": 77,
+  "res": {
+   "wood": 1860,
+   "stone": 1723,
+   "coal": 72,
+   "iron": 14,
+   "copper": 2,
+   "ironOre": 58,
+   "copperOre": 44,
+   "crudeOil": 2,
+   "fuel": 142,
+   "planks": 120,
+   "industrialMachinery": 7,
+   "electronics": 5
+  },
+  "veins": {
+   "copperOre": "0/370 (3 årer)",
+   "tinOre": "160/240 (2 årer)",
+   "ironOre": "5/749 (5 årer)",
+   "coal": "1434/1948 (3 årer)",
+   "oil": "58/536 (2 årer)"
+  },
+  "outposts": [
+   {
+    "id": "r10",
+    "biome": "dal",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 532,
+    "stock": {
+     "wood": 0,
+     "stone": 33,
+     "knowledge": 0,
+     "copperOre": 165,
+     "coal": 129
+    }
+   },
+   {
+    "id": "r20",
+    "biome": "kyst",
+    "pop": 6,
+    "homes": 1,
+    "extracted": 416,
+    "stock": {
+     "food": 0,
+     "knowledge": 0,
+     "copperOre": 97,
+     "crudeOil": 1
+    }
+   },
+   {
+    "id": "r11",
+    "biome": "fjell",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 586,
+    "stock": {
+     "stone": 9,
+     "cutstone": 1,
+     "ironOre": 180,
+     "coal": 180
+    }
+   },
+   {
+    "id": "r12",
+    "biome": "slette",
+    "pop": 8,
+    "homes": 2,
+    "extracted": 313,
+    "stock": {
+     "food": 11,
+     "wood": 12,
+     "tinOre": 180
+    }
+   },
+   {
+    "id": "r22",
+    "biome": "fjell",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 600,
+    "stock": {
+     "stone": 10,
+     "cutstone": 14,
+     "ironOre": 180,
+     "coal": 180
+    }
+   },
+   {
+    "id": "r42",
+    "biome": "kyst",
+    "pop": 3,
+    "homes": 1,
+    "extracted": 8,
+    "stock": {
+     "food": 2,
+     "knowledge": 0,
+     "copperOre": 2,
+     "crudeOil": 1
+    }
+   }
+  ],
+  "caravans": 116,
+  "maritime": 0,
+  "discovered": 14,
+  "rails": 1,
+  "roadTrips": 114,
+  "fuelBurned": 126,
+  "flights": 14,
+  "surveys": 14,
+  "lit": [
+   "first"
+  ],
+  "electronics": 15,
+  "research": 2,
+  "siteSearches": 2167,
+  "siteSkipped": 586697,
+  "trade": {
+   "orders": {
+    "project": 158,
+    "import": 139,
+    "relief": 2
+   },
+   "flows": {
+    "first>second|wood": 74.39999999999993,
+    "first>second|stone": 49.79999999999999,
+    "second>first|food": 5,
+    "first>second|planks": 15,
+    "second>first|wood": 6,
+    "first>second|cutstone": 122,
+    "second>first|planks": 170,
+    "first>second|mechanicalComponents": 3,
+    "first>third|wood": 45.349999999999945,
+    "first>third|stone": 66.53000000000006,
+    "second>third|food": 16,
+    "first>third|planks": 64,
+    "first>fourth|wood": 115.21999999999997,
+    "first>fourth|stone": 83.25999999999999,
+    "second>fourth|food": 20,
+    "first>third|mechanicalComponents": 3,
+    "first>fourth|planks": 18,
+    "second>first|ironOre": 17,
+    "first>fourth|mechanicalComponents": 3,
+    "first>fourth|cutstone": 108,
+    "third>first|cutstone": 57,
+    "fourth>first|planks": 94,
+    "first>second|iron": 7,
+    "first>third|iron": 8,
+    "third>first|planks": 3,
+    "first>fourth|iron": 6,
+    "second>first|coal": 14,
+    "third>first|ironOre": 35,
+    "third>first|copperOre": 27,
+    "fourth>first|coal": 2
+   },
+   "modes": {
+    "carrier": 982.5599999999998,
+    "truck": 259,
+    "rail": 16
+   }
+  },
+  "stocks": {
+   "first": {
+    "wood": 1860,
+    "stone": 1723,
+    "food": 181,
+    "planks": 120,
+    "cutstone": 102,
+    "copperOre": 44,
+    "ironOre": 58,
+    "coal": 72
+   },
+   "second": {
+    "wood": 581,
+    "stone": 568,
+    "food": 765,
+    "planks": 150,
+    "ironOre": 1,
+    "coal": 31
+   },
+   "third": {
+    "wood": 533,
+    "food": 864,
+    "stone": 40,
+    "planks": 150,
+    "cutstone": 108,
+    "ironOre": 1
+   },
+   "fourth": {
+    "wood": 719,
+    "food": 668,
+    "stone": 515,
+    "planks": 150,
+    "coal": 52
+   }
+  },
+  "sett": [
+   {
+    "id": "first",
+    "stage": "Storby",
+    "identity": "Hovedstad · Industriby",
+    "role": "Kunnskapssete",
+    "pop": 94,
+    "housing": 94,
+    "types": {
+     "shelter": 1,
+     "fire": 1,
+     "hut": 3,
+     "storage": 1,
+     "hearth": 1,
+     "field": 1,
+     "sawmill": 1,
+     "mason": 1,
+     "townhouse": 8,
+     "market": 1,
+     "mine": 1,
+     "sanctuary": 6,
+     "charcoal_kiln": 1,
+     "smelter": 1,
+     "well": 2,
+     "commons": 1,
+     "hall": 1,
+     "park": 2,
+     "coal_mine": 1,
+     "steam_engine": 1,
+     "metalworks": 1,
+     "locomotive_workshop": 1,
+     "oil_well": 1,
+     "refinery": 1,
+     "warehouse": 2,
+     "generator": 1,
+     "combustion_engine": 1,
+     "dock": 1,
+     "motor_depot": 1,
+     "grid_station": 1,
+     "precision_works": 1,
+     "windmill": 1,
+     "aircraft_works": 1,
+     "airfield": 1,
+     "electronics_works": 1,
+     "telegraph": 1,
+     "research_institute": 1
+    },
+    "districts": {
+     "bolig": 12,
+     "sivilt": 14,
+     "handel": 4,
+     "jordbruk": 2,
+     "industri": 16,
+     "transport": 4,
+     "forskning": 2
+    },
+    "hungry": 0
+   },
+   {
+    "id": "second",
+    "stage": "Tidlig by",
+    "identity": "Gruveby",
+    "role": "Sagbruksbygd",
+    "pop": 48,
+    "housing": 49,
+    "types": {
+     "hut": 5,
+     "fire": 1,
+     "storage": 1,
+     "hearth": 1,
+     "field": 2,
+     "workshop": 1,
+     "well": 2,
+     "commons": 1,
+     "sawmill": 1,
+     "market": 1,
+     "townhouse": 2,
+     "warehouse": 1,
+     "windmill": 1,
+     "mine": 1,
+     "rail_terminal": 1
+    },
+    "districts": {
+     "bolig": 7,
+     "sivilt": 5,
+     "handel": 3,
+     "jordbruk": 3,
+     "industri": 3,
+     "transport": 1
+    },
+    "hungry": 0
+   },
+   {
+    "id": "third",
+    "stage": "By",
+    "identity": "Gruveby",
+    "role": "Bysenter",
+    "pop": 56,
+    "housing": 56,
+    "types": {
+     "hut": 6,
+     "fire": 1,
+     "storage": 1,
+     "mason": 1,
+     "well": 2,
+     "commons": 1,
+     "field": 1,
+     "windmill": 1,
+     "mine": 1,
+     "workshop": 1,
+     "market": 1,
+     "townhouse": 2,
+     "sawmill": 1,
+     "park": 1,
+     "warehouse": 1
+    },
+    "districts": {
+     "bolig": 8,
+     "sivilt": 5,
+     "handel": 3,
+     "industri": 4,
+     "jordbruk": 2
+    },
+    "hungry": 0
+   },
+   {
+    "id": "fourth",
+    "stage": "Tidlig by",
+    "identity": "Skogsby",
+    "role": "Sagbruksbygd",
+    "pop": 42,
+    "housing": 42,
+    "types": {
+     "hut": 5,
+     "fire": 1,
+     "storage": 1,
+     "sawmill": 1,
+     "well": 2,
+     "commons": 1,
+     "field": 1,
+     "windmill": 1,
+     "workshop": 1,
+     "market": 1,
+     "townhouse": 1,
+     "warehouse": 1
+    },
+    "districts": {
+     "bolig": 6,
+     "sivilt": 4,
+     "handel": 3,
+     "industri": 2,
+     "jordbruk": 2
+    },
+    "hungry": 0
+   }
+  ],
+  "migration": {
+   "done": 53,
+   "byRoute": {
+    "second>first": 15,
+    "first>second": 5,
+    "first>third": 6,
+    "fourth>first": 11,
+    "first>fourth": 5,
+    "third>fourth": 1,
+    "second>fourth": 3,
+    "fourth>third": 5,
+    "third>first": 2
+   },
+   "nextAt": 13712.883333218282
+  },
+  "roads": [
+   "first:[0,0,0,59]",
+   "second:[17,8,0,0]",
+   "third:[0,0,0,29]",
+   "fourth:[14,7,0,0]"
+  ]
+ },
+ {
+  "seed": 701,
+  "wallS": 116.5,
+  "simH": 3.567,
+  "simHPerWallS": 0.031,
+  "steps": 770400,
+  "firstAt": {
+   "industry": 3810,
+   "steam": 3960,
+   "metalworks": 4200,
+   "oilWell": 4260,
+   "refinery": 4980,
+   "generator": 5130,
+   "combustion": 5580,
+   "electricity": 6840,
+   "precision": 7320,
+   "aircraft": 8940,
+   "airfield": 9420,
+   "survey": 9480,
+   "electronics": 10980,
+   "telegraph": 12030,
+   "institute": 12840
+  },
+  "unreached": [],
+  "firstUnreached": null,
+  "topIdle": [
+   "sawmill:råvare×10",
+   "sawmill:fullt×9",
+   "locomotive_workshop:fullt lager×8",
+   "metalworks:fullt lager×7"
+  ],
+  "population": 210,
+  "settlements": [
+   "first:Storby:94",
+   "second:Tidlig by:30",
+   "third:By:56",
+   "fourth:Tidlig by:30"
+  ],
+  "housing": [
+   94,
+   30,
+   56,
+   30
+  ],
+  "buildings": 112,
+  "tiers": {
+   "t0H": 1,
+   "t1H": 1,
+   "t5": 10,
+   "t3": 12,
+   "t4": 8
+  },
+  "renovationsDone": 60,
+  "res": {
+   "wood": 1923,
+   "stone": 1959,
+   "coal": 70,
+   "iron": 13,
+   "copper": 2,
+   "ironOre": 68,
+   "copperOre": 23,
+   "crudeOil": 2,
+   "fuel": 251,
+   "planks": 119,
+   "industrialMachinery": 7,
+   "electronics": 5
+  },
+  "veins": {
+   "copperOre": "0/343 (3 årer)",
+   "tinOre": "116/166 (2 årer)",
+   "ironOre": "14/676 (5 årer)",
+   "coal": "2353/2743 (3 årer)",
+   "oil": "0/428 (2 årer)"
+  },
+  "outposts": [
+   {
+    "id": "r10",
+    "biome": "fjell",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 640,
+    "stock": {
+     "stone": 38,
+     "cutstone": 7,
+     "ironOre": 180,
+     "coal": 180
+    }
+   },
+   {
+    "id": "r20",
+    "biome": "fjell",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 608,
+    "stock": {
+     "stone": 55,
+     "cutstone": 5,
+     "ironOre": 180,
+     "coal": 180
+    }
+   },
+   {
+    "id": "r31",
+    "biome": "kyst",
+    "pop": 6,
+    "homes": 1,
+    "extracted": 474,
+    "stock": {
+     "food": 9,
+     "knowledge": 1,
+     "copperOre": 92,
+     "crudeOil": 1
+    }
+   },
+   {
+    "id": "r02",
+    "biome": "kyst",
+    "pop": 6,
+    "homes": 1,
+    "extracted": 240,
+    "stock": {
+     "food": 53,
+     "knowledge": 1,
+     "copperOre": 56,
+     "crudeOil": 2
+    }
+   },
+   {
+    "id": "r22",
+    "biome": "slette",
+    "pop": 8,
+    "homes": 2,
+    "extracted": 277,
+    "stock": {
+     "food": 10,
+     "wood": 5,
+     "tinOre": 180
+    }
+   }
+  ],
+  "caravans": 145,
+  "maritime": 125,
+  "discovered": 14,
+  "rails": 1,
+  "roadTrips": 9,
+  "fuelBurned": 20,
+  "flights": 14,
+  "surveys": 14,
+  "lit": [
+   "first"
+  ],
+  "electronics": 15,
+  "research": 0,
+  "siteSearches": 1547,
+  "siteSkipped": 412784,
+  "trade": {
+   "orders": {
+    "project": 161,
+    "import": 75,
+    "relief": 2
+   },
+   "flows": {
+    "first>second|wood": 84.35999999999996,
+    "first>second|stone": 76.64000000000001,
+    "second>first|food": 3,
+    "first>second|planks": 24,
+    "first>second|cutstone": 48,
+    "second>first|planks": 150,
+    "second>first|copperOre": 18,
+    "first>third|wood": 129.83999999999986,
+    "first>third|stone": 206.7700000000001,
+    "second>third|food": 20,
+    "first>third|planks": 23,
+    "first>second|mechanicalComponents": 3,
+    "second>fourth|food": 20,
+    "first>fourth|wood": 75.09999999999998,
+    "first>fourth|stone": 59.260000000000005,
+    "first>third|mechanicalComponents": 3,
+    "first>fourth|planks": 10,
+    "third>first|cutstone": 4,
+    "first>fourth|mechanicalComponents": 3,
+    "first>fourth|cutstone": 44,
+    "fourth>first|planks": 123,
+    "first>third|iron": 8
+   },
+   "modes": {
+    "carrier": 1124.9699999999998,
+    "truck": 10,
+    "rail": 1
+   }
+  },
+  "stocks": {
+   "first": {
+    "wood": 1923,
+    "stone": 1959,
+    "food": 109,
+    "planks": 119,
+    "cutstone": 101,
+    "copperOre": 23,
+    "ironOre": 68,
+    "coal": 70
+   },
+   "second": {
+    "wood": 26,
+    "stone": 325,
+    "food": 500,
+    "planks": 57
+   },
+   "third": {
+    "wood": 569,
+    "food": 863,
+    "stone": 138,
+    "planks": 100,
+    "cutstone": 72
+   },
+   "fourth": {
+    "wood": 88,
+    "food": 500,
+    "stone": 334,
+    "planks": 150
+   }
+  },
+  "sett": [
+   {
+    "id": "first",
+    "stage": "Storby",
+    "identity": "Hovedstad · Industriby",
+    "role": "Kunnskapssete",
+    "pop": 94,
+    "housing": 94,
+    "types": {
+     "shelter": 1,
+     "fire": 1,
+     "hut": 3,
+     "storage": 1,
+     "hearth": 1,
+     "field": 1,
+     "sawmill": 1,
+     "mason": 1,
+     "townhouse": 8,
+     "market": 1,
+     "mine": 1,
+     "charcoal_kiln": 1,
+     "smelter": 1,
+     "sanctuary": 6,
+     "well": 2,
+     "commons": 1,
+     "hall": 1,
+     "park": 2,
+     "coal_mine": 1,
+     "steam_engine": 1,
+     "metalworks": 1,
+     "oil_well": 1,
+     "locomotive_workshop": 1,
+     "dock": 1,
+     "refinery": 1,
+     "generator": 1,
+     "warehouse": 2,
+     "combustion_engine": 1,
+     "motor_depot": 1,
+     "grid_station": 1,
+     "precision_works": 1,
+     "windmill": 1,
+     "aircraft_works": 1,
+     "airfield": 1,
+     "electronics_works": 1,
+     "telegraph": 1,
+     "research_institute": 1
+    },
+    "districts": {
+     "bolig": 12,
+     "sivilt": 14,
+     "handel": 4,
+     "jordbruk": 2,
+     "industri": 16,
+     "transport": 4,
+     "forskning": 2
+    },
+    "hungry": 0
+   },
+   {
+    "id": "second",
+    "stage": "Tidlig by",
+    "identity": "Skogsby",
+    "role": "Sagbruksbygd",
+    "pop": 30,
+    "housing": 30,
+    "types": {
+     "hut": 5,
+     "fire": 1,
+     "storage": 1,
+     "hearth": 1,
+     "field": 2,
+     "workshop": 1,
+     "well": 2,
+     "commons": 1,
+     "sawmill": 1,
+     "market": 1,
+     "townhouse": 1,
+     "warehouse": 1,
+     "windmill": 1
+    },
+    "districts": {
+     "bolig": 6,
+     "sivilt": 5,
+     "handel": 3,
+     "jordbruk": 3,
+     "industri": 2
+    },
+    "hungry": 0
+   },
+   {
+    "id": "third",
+    "stage": "By",
+    "identity": "Steinbrudd",
+    "role": "Bysenter",
+    "pop": 56,
+    "housing": 56,
+    "types": {
+     "hut": 5,
+     "fire": 1,
+     "storage": 1,
+     "mason": 1,
+     "well": 2,
+     "commons": 1,
+     "field": 1,
+     "watermill": 1,
+     "sawmill": 1,
+     "mine": 1,
+     "workshop": 1,
+     "market": 1,
+     "townhouse": 3,
+     "park": 1,
+     "rail_terminal": 1
+    },
+    "districts": {
+     "bolig": 8,
+     "sivilt": 5,
+     "handel": 2,
+     "industri": 4,
+     "jordbruk": 2,
+     "transport": 1
+    },
+    "hungry": 0
+   },
+   {
+    "id": "fourth",
+    "stage": "Tidlig by",
+    "identity": "Skogsby",
+    "role": "Sagbruksbygd",
+    "pop": 30,
+    "housing": 30,
+    "types": {
+     "hut": 4,
+     "fire": 1,
+     "storage": 1,
+     "sawmill": 1,
+     "well": 2,
+     "commons": 1,
+     "field": 1,
+     "windmill": 1,
+     "workshop": 1,
+     "townhouse": 2,
+     "market": 1,
+     "warehouse": 1
+    },
+    "districts": {
+     "bolig": 6,
+     "sivilt": 4,
+     "handel": 3,
+     "industri": 2,
+     "jordbruk": 2
+    },
+    "hungry": 0
+   }
+  ],
+  "migration": {
+   "done": 34,
+   "byRoute": {
+    "first>third": 4,
+    "third>first": 22,
+    "second>fourth": 8
+   },
+   "nextAt": 12855.516666564092
+  },
+  "roads": [
+   "first:[2,0,0,62]",
+   "second:[19,6,0,0]",
+   "third:[0,0,0,30]",
+   "fourth:[17,6,0,0]"
+  ]
+ },
+ {
+  "seed": 909,
+  "wallS": 109.3,
+  "simH": 3.908,
+  "simHPerWallS": 0.036,
+  "steps": 844200,
+  "firstAt": {
+   "industry": 4110,
+   "steam": 4200,
+   "metalworks": 4380,
+   "oilWell": 4860,
+   "refinery": 5160,
+   "combustion": 6270,
+   "precision": 7740,
+   "aircraft": 9300,
+   "airfield": 9780,
+   "survey": 9840,
+   "generator": 10650,
+   "electricity": 10950,
+   "electronics": 11940,
+   "telegraph": 13020,
+   "institute": 14070
+  },
+  "unreached": [],
+  "firstUnreached": null,
+  "topIdle": [
+   "sawmill:fullt×10",
+   "locomotive_workshop:fullt lager×9",
+   "metalworks:fullt lager×7",
+   "motor_depot:fullt lager×7"
+  ],
+  "population": 232,
+  "settlements": [
+   "first:Storby:93",
+   "second:Tidlig by:49",
+   "third:Tidlig by:49",
+   "fourth:Tidlig by:41"
+  ],
+  "housing": [
+   94,
+   49,
+   49,
+   42
+  ],
+  "buildings": 111,
+  "tiers": {
+   "t0H": 1,
+   "t1H": 1,
+   "t5": 10,
+   "t4": 20
+  },
+  "renovationsDone": 72,
+  "res": {
+   "wood": 1850,
+   "stone": 1863,
+   "coal": 75,
+   "iron": 11,
+   "copper": 2,
+   "ironOre": 68,
+   "copperOre": 42,
+   "crudeOil": 1,
+   "fuel": 102,
+   "planks": 81,
+   "industrialMachinery": 7,
+   "electronics": 5
+  },
+  "veins": {
+   "copperOre": "0/346 (3 årer)",
+   "tinOre": "186/251 (2 årer)",
+   "ironOre": "51/766 (5 årer)",
+   "coal": "1832/2262 (3 årer)",
+   "oil": "18/479 (2 årer)"
+  },
+  "outposts": [
+   {
+    "id": "r00",
+    "biome": "dal",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 507,
+    "stock": {
+     "wood": 10,
+     "stone": 9,
+     "knowledge": 1,
+     "copperOre": 137,
+     "coal": 132
+    }
+   },
+   {
+    "id": "r10",
+    "biome": "slette",
+    "pop": 8,
+    "homes": 2,
+    "extracted": 273,
+    "stock": {
+     "food": 0,
+     "wood": 4,
+     "tinOre": 165
+    }
+   },
+   {
+    "id": "r30",
+    "biome": "dal",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 487,
+    "stock": {
+     "wood": 0,
+     "stone": 25,
+     "knowledge": 0,
+     "copperOre": 75,
+     "coal": 153
+    }
+   },
+   {
+    "id": "r02",
+    "biome": "dal",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 311,
+    "stock": {
+     "wood": 5,
+     "stone": 1,
+     "knowledge": 1,
+     "copperOre": 99,
+     "coal": 75
+    }
+   },
+   {
+    "id": "r12",
+    "biome": "fjell",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 613,
+    "stock": {
+     "stone": 20,
+     "cutstone": 4,
+     "ironOre": 180,
+     "coal": 180
+    }
+   },
+   {
+    "id": "r32",
+    "biome": "fjell",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 625,
+    "stock": {
+     "stone": 43,
+     "cutstone": 7,
+     "ironOre": 180,
+     "coal": 180
+    }
+   }
+  ],
+  "caravans": 87,
+  "maritime": 0,
+  "discovered": 14,
+  "rails": 1,
+  "roadTrips": 70,
+  "fuelBurned": 82,
+  "flights": 14,
+  "surveys": 14,
+  "lit": [
+   "first"
+  ],
+  "electronics": 15,
+  "research": 3,
+  "siteSearches": 173,
+  "siteSkipped": 7010,
+  "trade": {
+   "orders": {
+    "project": 194,
+    "import": 71,
+    "relief": 3
+   },
+   "flows": {
+    "first>second|wood": 108.56999999999961,
+    "first>second|stone": 79.78,
+    "second>first|food": 3,
+    "first>second|planks": 24,
+    "first>second|cutstone": 122,
+    "second>first|planks": 164,
+    "first>second|mechanicalComponents": 3,
+    "first>third|wood": 139.57999999999996,
+    "second>third|food": 36,
+    "first>third|stone": 56.639999999999986,
+    "first>third|planks": 10,
+    "first>fourth|stone": 93.39999999999999,
+    "second>fourth|food": 20,
+    "first>fourth|wood": 118.60999999999999,
+    "first>third|mechanicalComponents": 3,
+    "first>fourth|planks": 24,
+    "first>third|cutstone": 118,
+    "first>fourth|mechanicalComponents": 3,
+    "first>fourth|cutstone": 104,
+    "third>first|planks": 2,
+    "first>second|iron": 7,
+    "second>first|ironOre": 38,
+    "first>third|iron": 7,
+    "first>fourth|iron": 6,
+    "fourth>first|copperOre": 33
+   },
+   "modes": {
+    "carrier": 1061.5799999999995,
+    "rail": 82,
+    "truck": 180
+   }
+  },
+  "stocks": {
+   "first": {
+    "wood": 1850,
+    "stone": 1863,
+    "food": 87,
+    "planks": 81,
+    "cutstone": 24,
+    "copperOre": 42,
+    "ironOre": 68,
+    "coal": 75
+   },
+   "second": {
+    "wood": 595,
+    "stone": 808,
+    "food": 765,
+    "planks": 150,
+    "ironOre": 16
+   },
+   "third": {
+    "wood": 625,
+    "food": 765,
+    "stone": 697,
+    "planks": 100
+   },
+   "fourth": {
+    "wood": 569,
+    "food": 668,
+    "stone": 511,
+    "planks": 150,
+    "copperOre": 12
+   }
+  },
+  "sett": [
+   {
+    "id": "first",
+    "stage": "Storby",
+    "identity": "Hovedstad · Industriby",
+    "role": "Kunnskapssete",
+    "pop": 93,
+    "housing": 94,
+    "types": {
+     "shelter": 1,
+     "fire": 1,
+     "hut": 3,
+     "storage": 1,
+     "hearth": 1,
+     "field": 1,
+     "sawmill": 1,
+     "mason": 1,
+     "townhouse": 8,
+     "market": 1,
+     "mine": 1,
+     "charcoal_kiln": 1,
+     "sanctuary": 6,
+     "smelter": 1,
+     "well": 2,
+     "commons": 1,
+     "park": 2,
+     "hall": 1,
+     "watermill": 1,
+     "coal_mine": 1,
+     "steam_engine": 1,
+     "metalworks": 1,
+     "locomotive_workshop": 1,
+     "warehouse": 2,
+     "dock": 1,
+     "oil_well": 1,
+     "refinery": 1,
+     "rail_terminal": 1,
+     "combustion_engine": 1,
+     "motor_depot": 1,
+     "precision_works": 1,
+     "aircraft_works": 1,
+     "airfield": 1,
+     "generator": 1,
+     "grid_station": 1,
+     "electronics_works": 1,
+     "telegraph": 1,
+     "research_institute": 1
+    },
+    "districts": {
+     "bolig": 12,
+     "sivilt": 14,
+     "handel": 4,
+     "jordbruk": 2,
+     "industri": 16,
+     "transport": 5,
+     "forskning": 2
+    },
+    "hungry": 0
+   },
+   {
+    "id": "second",
+    "stage": "Tidlig by",
+    "identity": "Gruveby",
+    "role": "Sagbruksbygd",
+    "pop": 49,
+    "housing": 49,
+    "types": {
+     "hut": 5,
+     "fire": 1,
+     "storage": 1,
+     "hearth": 1,
+     "field": 2,
+     "workshop": 1,
+     "well": 2,
+     "commons": 1,
+     "sawmill": 1,
+     "market": 1,
+     "townhouse": 2,
+     "windmill": 1,
+     "warehouse": 1,
+     "mine": 1,
+     "rail_terminal": 1
+    },
+    "districts": {
+     "bolig": 7,
+     "sivilt": 5,
+     "handel": 3,
+     "jordbruk": 3,
+     "industri": 3,
+     "transport": 1
+    },
+    "hungry": 0
+   },
+   {
+    "id": "third",
+    "stage": "Tidlig by",
+    "identity": "Skogsby",
+    "role": "Sagbruksbygd",
+    "pop": 49,
+    "housing": 49,
+    "types": {
+     "hut": 5,
+     "fire": 1,
+     "storage": 1,
+     "sawmill": 1,
+     "well": 2,
+     "commons": 1,
+     "field": 1,
+     "windmill": 1,
+     "workshop": 1,
+     "market": 1,
+     "townhouse": 2
+    },
+    "districts": {
+     "bolig": 7,
+     "sivilt": 4,
+     "handel": 2,
+     "industri": 2,
+     "jordbruk": 2
+    },
+    "hungry": 0
+   },
+   {
+    "id": "fourth",
+    "stage": "Tidlig by",
+    "identity": "Gruveby",
+    "role": "Sagbruksbygd",
+    "pop": 41,
+    "housing": 42,
+    "types": {
+     "hut": 4,
+     "fire": 1,
+     "storage": 1,
+     "sawmill": 1,
+     "well": 2,
+     "commons": 1,
+     "field": 1,
+     "windmill": 1,
+     "workshop": 1,
+     "townhouse": 2,
+     "market": 1,
+     "warehouse": 1
+    },
+    "districts": {
+     "bolig": 6,
+     "sivilt": 4,
+     "handel": 3,
+     "industri": 2,
+     "jordbruk": 2
+    },
+    "hungry": 0
+   }
+  ],
+  "migration": {
+   "done": 60,
+   "byRoute": {
+    "first>second": 6,
+    "second>first": 17,
+    "fourth>first": 23,
+    "second>third": 2,
+    "first>third": 1,
+    "first>fourth": 4,
+    "second>fourth": 3,
+    "third>first": 3,
+    "third>second": 1
+   },
+   "nextAt": 14071.883333213058
+  },
+  "roads": [
+   "first:[1,2,46,19]",
+   "second:[22,8,0,0]",
+   "third:[14,7,0,0]",
+   "fourth:[15,6,0,0]"
+  ]
+ },
+ {
+  "seed": 4242,
+  "wallS": 131.3,
+  "simH": 3.958,
+  "simHPerWallS": 0.03,
+  "steps": 855000,
+  "firstAt": {
+   "industry": 3960,
+   "steam": 4050,
+   "metalworks": 4350,
+   "oilWell": 4380,
+   "refinery": 5100,
+   "generator": 5250,
+   "combustion": 5640,
+   "electricity": 7980,
+   "precision": 8460,
+   "aircraft": 10170,
+   "airfield": 10680,
+   "survey": 10740,
+   "electronics": 12330,
+   "telegraph": 13380,
+   "institute": 14250
+  },
+  "unreached": [],
+  "firstUnreached": null,
+  "topIdle": [
+   "sawmill:fullt×9",
+   "mason:råvare×7",
+   "locomotive_workshop:fullt lager×7",
+   "motor_depot:fullt lager×6"
+  ],
+  "population": 248,
+  "settlements": [
+   "first:Storby:94",
+   "second:Tidlig by:49",
+   "third:By:56",
+   "fourth:Tidlig by:49"
+  ],
+  "housing": [
+   94,
+   49,
+   56,
+   49
+  ],
+  "buildings": 117,
+  "tiers": {
+   "t0H": 1,
+   "t1H": 1,
+   "t5": 10,
+   "t4": 22
+  },
+  "renovationsDone": 76,
+  "res": {
+   "wood": 1897,
+   "stone": 1742,
+   "coal": 82,
+   "iron": 10,
+   "copper": 2,
+   "ironOre": 55,
+   "copperOre": 28,
+   "crudeOil": 2,
+   "fuel": 217,
+   "planks": 125,
+   "industrialMachinery": 7,
+   "electronics": 0
+  },
+  "veins": {
+   "copperOre": "0/260 (3 årer)",
+   "tinOre": "206/271 (2 årer)",
+   "ironOre": "14/811 (5 årer)",
+   "coal": "1814/2264 (3 årer)",
+   "oil": "0/470 (2 årer)"
+  },
+  "outposts": [
+   {
+    "id": "r10",
+    "biome": "kyst",
+    "pop": 6,
+    "homes": 1,
+    "extracted": 451,
+    "stock": {
+     "food": 1,
+     "knowledge": 0,
+     "copperOre": 50,
+     "crudeOil": 0
+    }
+   },
+   {
+    "id": "r30",
+    "biome": "fjell",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 670,
+    "stock": {
+     "stone": 39,
+     "cutstone": 0,
+     "ironOre": 180,
+     "coal": 180
+    }
+   },
+   {
+    "id": "r01",
+    "biome": "kyst",
+    "pop": 6,
+    "homes": 1,
+    "extracted": 467,
+    "stock": {
+     "food": 1,
+     "knowledge": 1,
+     "copperOre": 120,
+     "crudeOil": 0
+    }
+   },
+   {
+    "id": "r31",
+    "biome": "fjell",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 606,
+    "stock": {
+     "stone": 40,
+     "cutstone": 4,
+     "ironOre": 180,
+     "coal": 180
+    }
+   },
+   {
+    "id": "r12",
+    "biome": "slette",
+    "pop": 8,
+    "homes": 2,
+    "extracted": 294,
+    "stock": {
+     "food": 0,
+     "wood": 8,
+     "tinOre": 180
+    }
+   },
+   {
+    "id": "r42",
+    "biome": "kyst",
+    "pop": 6,
+    "homes": 1,
+    "extracted": 301,
+    "stock": {
+     "food": 46,
+     "knowledge": 0,
+     "copperOre": 95,
+     "crudeOil": 3
+    }
+   }
+  ],
+  "caravans": 248,
+  "maritime": 0,
+  "discovered": 14,
+  "rails": 1,
+  "roadTrips": 144,
+  "fuelBurned": 157,
+  "flights": 14,
+  "surveys": 14,
+  "lit": [
+   "first"
+  ],
+  "electronics": 16,
+  "research": 9,
+  "siteSearches": 1823,
+  "siteSkipped": 400713,
+  "trade": {
+   "orders": {
+    "project": 205,
+    "import": 136,
+    "relief": 2
+   },
+   "flows": {
+    "first>second|wood": 62.169999999999476,
+    "first>second|stone": 20.299999999999997,
+    "second>first|food": 4,
+    "first>second|planks": 17,
+    "first>second|cutstone": 122,
+    "second>first|planks": 244,
+    "first>third|wood": 136.18999999999994,
+    "first>third|stone": 189.02999999999997,
+    "second>third|food": 16,
+    "first>third|planks": 32,
+    "first>second|mechanicalComponents": 3,
+    "first>third|mechanicalComponents": 3,
+    "first>fourth|wood": 111.39999999999995,
+    "first>fourth|stone": 180.69,
+    "second>fourth|food": 20,
+    "first>fourth|planks": 16,
+    "first>fourth|mechanicalComponents": 3,
+    "first>fourth|cutstone": 122,
+    "third>first|ironOre": 22,
+    "first>third|cutstone": 9,
+    "first>second|iron": 7,
+    "third>first|cutstone": 51,
+    "first>third|iron": 8,
+    "first>fourth|iron": 7,
+    "fourth>first|ironOre": 19,
+    "second>first|ironOre": 21,
+    "fourth>first|copperOre": 33,
+    "third>first|copperOre": 17
+   },
+   "modes": {
+    "carrier": 1148.7799999999995,
+    "truck": 332,
+    "rail": 15
+   }
+  },
+  "stocks": {
+   "first": {
+    "wood": 1897,
+    "stone": 1742,
+    "food": 81,
+    "planks": 125,
+    "cutstone": 106,
+    "copperOre": 28,
+    "ironOre": 55,
+    "coal": 82
+   },
+   "second": {
+    "stone": 563,
+    "wood": 582,
+    "food": 765,
+    "planks": 150,
+    "ironOre": 24
+   },
+   "third": {
+    "wood": 631,
+    "food": 863,
+    "stone": 19,
+    "planks": 150,
+    "cutstone": 106,
+    "ironOre": 26,
+    "copperOre": 1
+   },
+   "fourth": {
+    "wood": 433,
+    "food": 765,
+    "stone": 568,
+    "planks": 150,
+    "ironOre": 26,
+    "copperOre": 1
+   }
+  },
+  "sett": [
+   {
+    "id": "first",
+    "stage": "Storby",
+    "identity": "Hovedstad · Industriby",
+    "role": "Kunnskapssete",
+    "pop": 94,
+    "housing": 94,
+    "types": {
+     "shelter": 1,
+     "fire": 1,
+     "hut": 3,
+     "storage": 1,
+     "hearth": 1,
+     "field": 1,
+     "sawmill": 1,
+     "mason": 1,
+     "townhouse": 8,
+     "market": 1,
+     "sanctuary": 6,
+     "mine": 1,
+     "charcoal_kiln": 1,
+     "smelter": 1,
+     "well": 2,
+     "commons": 1,
+     "hall": 1,
+     "park": 2,
+     "coal_mine": 1,
+     "steam_engine": 1,
+     "metalworks": 1,
+     "oil_well": 1,
+     "locomotive_workshop": 1,
+     "dock": 1,
+     "refinery": 1,
+     "generator": 1,
+     "warehouse": 2,
+     "combustion_engine": 1,
+     "motor_depot": 1,
+     "windmill": 1,
+     "grid_station": 1,
+     "precision_works": 1,
+     "aircraft_works": 1,
+     "airfield": 1,
+     "electronics_works": 1,
+     "telegraph": 1,
+     "research_institute": 1
+    },
+    "districts": {
+     "bolig": 12,
+     "sivilt": 14,
+     "handel": 4,
+     "jordbruk": 2,
+     "industri": 16,
+     "transport": 4,
+     "forskning": 2
+    },
+    "hungry": 0
+   },
+   {
+    "id": "second",
+    "stage": "Tidlig by",
+    "identity": "Skogsby",
+    "role": "Sagbruksbygd",
+    "pop": 49,
+    "housing": 49,
+    "types": {
+     "hut": 5,
+     "fire": 1,
+     "storage": 1,
+     "hearth": 1,
+     "field": 2,
+     "workshop": 1,
+     "well": 2,
+     "commons": 1,
+     "sawmill": 1,
+     "market": 1,
+     "townhouse": 2,
+     "warehouse": 1,
+     "windmill": 1,
+     "mine": 1,
+     "rail_terminal": 1
+    },
+    "districts": {
+     "bolig": 7,
+     "sivilt": 5,
+     "handel": 3,
+     "jordbruk": 3,
+     "industri": 3,
+     "transport": 1
+    },
+    "hungry": 0
+   },
+   {
+    "id": "third",
+    "stage": "By",
+    "identity": "Gruveby",
+    "role": "Bysenter",
+    "pop": 56,
+    "housing": 56,
+    "types": {
+     "hut": 5,
+     "fire": 1,
+     "storage": 1,
+     "mason": 1,
+     "well": 2,
+     "commons": 1,
+     "field": 1,
+     "windmill": 1,
+     "sawmill": 1,
+     "mine": 1,
+     "workshop": 1,
+     "market": 1,
+     "townhouse": 3,
+     "park": 1,
+     "warehouse": 1
+    },
+    "districts": {
+     "bolig": 8,
+     "sivilt": 5,
+     "handel": 3,
+     "industri": 4,
+     "jordbruk": 2
+    },
+    "hungry": 0
+   },
+   {
+    "id": "fourth",
+    "stage": "Tidlig by",
+    "identity": "Gruveby",
+    "role": "Sagbruksbygd",
+    "pop": 49,
+    "housing": 49,
+    "types": {
+     "hut": 5,
+     "fire": 1,
+     "storage": 1,
+     "sawmill": 1,
+     "well": 2,
+     "commons": 1,
+     "field": 1,
+     "windmill": 1,
+     "mine": 1,
+     "workshop": 1,
+     "market": 1,
+     "townhouse": 2,
+     "warehouse": 1
+    },
+    "districts": {
+     "bolig": 7,
+     "sivilt": 4,
+     "handel": 3,
+     "industri": 3,
+     "jordbruk": 2
+    },
+    "hungry": 0
+   }
+  ],
+  "migration": {
+   "done": 71,
+   "byRoute": {
+    "first>second": 10,
+    "second>first": 26,
+    "first>third": 7,
+    "third>fourth": 2,
+    "fourth>third": 2,
+    "first>fourth": 4,
+    "third>first": 3,
+    "fourth>first": 17
+   },
+   "nextAt": 14256.39999987704
+  },
+  "roads": [
+   "first:[0,0,0,54]",
+   "second:[19,7,0,0]",
+   "third:[0,0,0,29]",
+   "fourth:[17,7,0,0]"
+  ]
+ },
+ {
+  "seed": 20261009,
+  "wallS": 130,
+  "simH": 3.892,
+  "simHPerWallS": 0.03,
+  "steps": 840600,
+  "firstAt": {
+   "industry": 3720,
+   "steam": 3900,
+   "metalworks": 4350,
+   "oilWell": 4680,
+   "refinery": 5400,
+   "combustion": 6360,
+   "precision": 7680,
+   "aircraft": 9270,
+   "airfield": 9780,
+   "survey": 9840,
+   "generator": 10620,
+   "electricity": 10950,
+   "electronics": 12060,
+   "telegraph": 13170,
+   "institute": 14010
+  },
+  "unreached": [],
+  "firstUnreached": null,
+  "topIdle": [
+   "mason:råvare×10",
+   "locomotive_workshop:fullt lager×9",
+   "sawmill:fullt×9",
+   "metalworks:fullt lager×7"
+  ],
+  "population": 248,
+  "settlements": [
+   "first:Storby:94",
+   "second:Tidlig by:49",
+   "third:By:56",
+   "fourth:By:49"
+  ],
+  "housing": [
+   94,
+   49,
+   56,
+   49
+  ],
+  "buildings": 119,
+  "tiers": {
+   "t0H": 1,
+   "t1H": 1,
+   "t5": 10,
+   "t4": 22
+  },
+  "renovationsDone": 80,
+  "res": {
+   "wood": 1869,
+   "stone": 1825,
+   "coal": 59,
+   "iron": 7,
+   "copper": 3,
+   "ironOre": 40,
+   "copperOre": 26,
+   "crudeOil": 2,
+   "fuel": 134,
+   "planks": 118,
+   "industrialMachinery": 7,
+   "electronics": 0
+  },
+  "veins": {
+   "copperOre": "0/284 (3 årer)",
+   "tinOre": "166/236 (2 årer)",
+   "ironOre": "0/827 (5 årer)",
+   "coal": "2023/2433 (3 årer)",
+   "oil": "23/491 (2 årer)"
+  },
+  "outposts": [
+   {
+    "id": "r10",
+    "biome": "slette",
+    "pop": 6,
+    "homes": 1,
+    "extracted": 306,
+    "stock": {
+     "food": 0,
+     "wood": 26,
+     "tinOre": 180
+    }
+   },
+   {
+    "id": "r20",
+    "biome": "dal",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 506,
+    "stock": {
+     "wood": 1,
+     "stone": 23,
+     "knowledge": 1,
+     "copperOre": 174,
+     "coal": 107
+    }
+   },
+   {
+    "id": "r30",
+    "biome": "dal",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 490,
+    "stock": {
+     "wood": 1,
+     "stone": 13,
+     "knowledge": 1,
+     "copperOre": 143,
+     "coal": 114
+    }
+   },
+   {
+    "id": "r02",
+    "biome": "fjell",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 558,
+    "stock": {
+     "stone": 15,
+     "cutstone": 7,
+     "ironOre": 180,
+     "coal": 180
+    }
+   },
+   {
+    "id": "r22",
+    "biome": "dal",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 535,
+    "stock": {
+     "wood": 7,
+     "stone": 17,
+     "knowledge": 1,
+     "copperOre": 150,
+     "coal": 150
+    }
+   }
+  ],
+  "caravans": 105,
+  "maritime": 97,
+  "discovered": 14,
+  "rails": 1,
+  "roadTrips": 35,
+  "fuelBurned": 47,
+  "flights": 14,
+  "surveys": 14,
+  "lit": [
+   "first"
+  ],
+  "electronics": 16,
+  "research": 10,
+  "siteSearches": 163,
+  "siteSkipped": 4917,
+  "trade": {
+   "orders": {
+    "project": 159,
+    "import": 93,
+    "relief": 2
+   },
+   "flows": {
+    "first>second|wood": 46,
+    "first>second|stone": 48,
+    "second>first|food": 5,
+    "first>second|planks": 12,
+    "first>second|cutstone": 122,
+    "first>third|stone": 127.29999999999998,
+    "first>third|wood": 63.15999999999988,
+    "second>third|food": 16,
+    "first>third|planks": 25,
+    "second>first|planks": 155,
+    "first>second|mechanicalComponents": 3,
+    "first>third|mechanicalComponents": 3,
+    "first>fourth|wood": 78.20999999999992,
+    "first>fourth|stone": 196.04999999999995,
+    "second>fourth|food": 20,
+    "first>fourth|planks": 28,
+    "first>fourth|mechanicalComponents": 3,
+    "fourth>first|planks": 22,
+    "third>first|planks": 18,
+    "fourth>first|cutstone": 2,
+    "third>first|cutstone": 1,
+    "first>second|iron": 7,
+    "third>first|ironOre": 35,
+    "second>first|ironOre": 34,
+    "first>third|iron": 8,
+    "first>fourth|cutstone": 3,
+    "first>fourth|iron": 7
+   },
+   "modes": {
+    "carrier": 959.7199999999996,
+    "rail": 78,
+    "truck": 50
+   }
+  },
+  "stocks": {
+   "first": {
+    "wood": 1869,
+    "stone": 1825,
+    "food": 196,
+    "planks": 118,
+    "cutstone": 104,
+    "copperOre": 26,
+    "ironOre": 40,
+    "coal": 59
+   },
+   "second": {
+    "wood": 745,
+    "stone": 802,
+    "food": 765,
+    "planks": 150,
+    "ironOre": 11
+   },
+   "third": {
+    "wood": 193,
+    "food": 863,
+    "stone": 20,
+    "planks": 150,
+    "cutstone": 4,
+    "ironOre": 10
+   },
+   "fourth": {
+    "wood": 555,
+    "food": 765,
+    "stone": 85,
+    "planks": 150,
+    "cutstone": 108
+   }
+  },
+  "sett": [
+   {
+    "id": "first",
+    "stage": "Storby",
+    "identity": "Hovedstad · Industriby",
+    "role": "Kunnskapssete",
+    "pop": 94,
+    "housing": 94,
+    "types": {
+     "shelter": 1,
+     "fire": 1,
+     "hut": 3,
+     "storage": 1,
+     "hearth": 1,
+     "field": 1,
+     "sawmill": 1,
+     "mason": 1,
+     "townhouse": 8,
+     "market": 1,
+     "sanctuary": 6,
+     "well": 2,
+     "commons": 1,
+     "park": 2,
+     "hall": 1,
+     "mine": 1,
+     "charcoal_kiln": 1,
+     "smelter": 1,
+     "watermill": 1,
+     "coal_mine": 1,
+     "steam_engine": 1,
+     "metalworks": 1,
+     "dock": 1,
+     "oil_well": 1,
+     "warehouse": 2,
+     "locomotive_workshop": 1,
+     "refinery": 1,
+     "rail_terminal": 1,
+     "combustion_engine": 1,
+     "motor_depot": 1,
+     "precision_works": 1,
+     "aircraft_works": 1,
+     "airfield": 1,
+     "generator": 1,
+     "grid_station": 1,
+     "electronics_works": 1,
+     "telegraph": 1,
+     "research_institute": 1
+    },
+    "districts": {
+     "bolig": 12,
+     "sivilt": 14,
+     "handel": 4,
+     "jordbruk": 2,
+     "industri": 16,
+     "transport": 5,
+     "forskning": 2
+    },
+    "hungry": 0
+   },
+   {
+    "id": "second",
+    "stage": "Tidlig by",
+    "identity": "Gruveby",
+    "role": "Sagbruksbygd",
+    "pop": 49,
+    "housing": 49,
+    "types": {
+     "hut": 5,
+     "fire": 1,
+     "storage": 1,
+     "hearth": 1,
+     "field": 2,
+     "workshop": 1,
+     "well": 2,
+     "commons": 1,
+     "sawmill": 1,
+     "market": 1,
+     "townhouse": 2,
+     "windmill": 1,
+     "warehouse": 1,
+     "rail_terminal": 1
+    },
+    "districts": {
+     "bolig": 7,
+     "sivilt": 5,
+     "handel": 3,
+     "jordbruk": 3,
+     "industri": 2,
+     "transport": 1
+    },
+    "hungry": 0
+   },
+   {
+    "id": "third",
+    "stage": "By",
+    "identity": "Gruveby",
+    "role": "Bysenter",
+    "pop": 56,
+    "housing": 56,
+    "types": {
+     "hut": 6,
+     "fire": 1,
+     "storage": 1,
+     "mason": 1,
+     "well": 2,
+     "commons": 1,
+     "field": 1,
+     "windmill": 1,
+     "sawmill": 1,
+     "workshop": 1,
+     "market": 1,
+     "townhouse": 2,
+     "park": 1,
+     "mine": 1,
+     "warehouse": 1
+    },
+    "districts": {
+     "bolig": 8,
+     "sivilt": 5,
+     "handel": 3,
+     "industri": 4,
+     "jordbruk": 2
+    },
+    "hungry": 0
+   },
+   {
+    "id": "fourth",
+    "stage": "By",
+    "identity": "Skogsby",
+    "role": "Bysenter",
+    "pop": 49,
+    "housing": 49,
+    "types": {
+     "hut": 6,
+     "fire": 1,
+     "storage": 1,
+     "mason": 1,
+     "well": 2,
+     "commons": 1,
+     "field": 1,
+     "windmill": 1,
+     "sawmill": 1,
+     "workshop": 1,
+     "market": 1,
+     "townhouse": 1,
+     "park": 1,
+     "warehouse": 1,
+     "mine": 1
+    },
+    "districts": {
+     "bolig": 7,
+     "sivilt": 5,
+     "handel": 3,
+     "industri": 4,
+     "jordbruk": 2
+    },
+    "hungry": 0
+   }
+  ],
+  "migration": {
+   "done": 56,
+   "byRoute": {
+    "first>second": 5,
+    "third>second": 1,
+    "first>third": 2,
+    "first>fourth": 2,
+    "third>first": 3,
+    "second>first": 17,
+    "fourth>first": 22,
+    "second>third": 2,
+    "second>fourth": 2
+   },
+   "nextAt": 14012.716666547252
+  },
+  "roads": [
+   "first:[0,1,0,75]",
+   "second:[21,7,0,0]",
+   "third:[0,0,2,27]",
+   "fourth:[0,0,0,26]"
+  ]
+ }
+]

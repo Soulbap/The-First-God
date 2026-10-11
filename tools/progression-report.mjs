@@ -33,6 +33,8 @@ function measure(seed, seconds, until) {
     lit: s.industrial.litSettlements, electronics: s.totals.electronics, research: Math.round(s.science.researchKnowledge || 0),
     siteSearches: siteStats.searches, siteSkipped: siteStats.skipped,
     trade: s.trade, stocks: Object.fromEntries(s.settlements.map((q) => [q.id, Object.fromEntries(Object.entries(q.id === 'first' ? s.resources : q.stock || {}).filter(([k, v]) => ['wood', 'stone', 'food', 'planks', 'cutstone', 'coal', 'ironOre', 'copperOre'].includes(k) && v >= 1).map(([k, v]) => [k, Math.round(v)]))])),
+    sett: s.settlements.map((q) => { const types = {}; for (const b of s.buildings) if ((b.settlementId || 'first') === q.id && b.complete) types[b.type] = (types[b.type] || 0) + 1; return { id: q.id, stage: q.stage, identity: q.identity, role: q.role, pop: q.population.length, housing: housingCapacity(s, q.id), types, districts: Object.fromEntries(Object.entries(q.districts || {}).map(([k, v]) => [k, v.n])), hungry: q.hungry || 0 }; }),
+    migration: s.migration,
     roads: s.settlements.map((q) => `${q.id}:${JSON.stringify(roadStats(q).levels)}`),
   };
 }

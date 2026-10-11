@@ -20,7 +20,7 @@ export const WORK_TYPES = WORK;
 export const isWorkplace = (b) => WORK.has(b.type);
 export const isGatheringPlace = (b) => !!KINDS[b.type];
 
-const capOf = (b, state) => (isHome(b) ? Math.max(2, Math.min(4, Math.ceil(housingOf(b, state) / 2))) : isWorkplace(b) ? (b.type === 'field' ? 4 : 3) : KINDS[b.type]?.cap || 3);
+export const capOf = (b, state) => (isHome(b) ? Math.max(2, Math.min(4, Math.ceil(housingOf(b, state) / 2))) : isWorkplace(b) ? (b.type === 'field' ? 4 : 3) : KINDS[b.type]?.cap || 3);
 
 // Mellomlager per tilstandsobjekt (ikke lagret): bygg etter bosetting, og belegg per steg.
 const cache = new WeakMap();

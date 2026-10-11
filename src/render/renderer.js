@@ -22,7 +22,7 @@ import { BALANCE as B } from '../data/balance.js';
 import { propsFor, lantern } from './yards.js';
 import { activityOf, homeOf } from '../sim/activity.js';
 import { dayPhase, lightAt, tintAt } from '../view/daylight.js';
-import { WINDOWS, windowKey, ELECTRIC_LIT } from './civic.js';
+import { WINDOWS, windowKey, windowsFor, ELECTRIC_LIT } from './civic.js';
 import { tierOf } from '../sim/renovation.js';
 import { landLink } from '../sim/regional.js';
 import { nameOf } from '../sim/chronicle.js';
@@ -848,12 +848,14 @@ export function createRenderer(canvas) {
       };
       for (const b of state.buildings) {
         if (!b.complete || !inView(b.x, b.y, 80, 80)) continue;
-        const key = windowKey(b, variantOf(b));
-        const wins = WINDOWS[key];
+        const wins = windowsFor(b, variantOf(b));
+        // Moderne blokker (elektrisk lys) lyser bare der nettet leverer strøm; uten strøm brenner bare noen få lamper (OPUS-12).
+        const modernDark = (b.type === 'hut' || b.type === 'townhouse') && variantOf(b) >= 5 && !litSet.has(b.settlementId || 'first');
         if (wins) wins.forEach(([wx, wy, ww, wh], wi) => {
           // I høye hus lyser ikke alle vinduer samtidig (deterministisk per bygg og vindu), og lyset er dempet.
           const many = wins.length > 8;
           if (many && ((b.id * 7 + wi * 13) % 5 === 0)) return;
+          if (modernDark && (b.id * 3 + wi * 11) % 4 !== 0) return;
           ctx.fillStyle = `rgba(255,200,118,${((many ? 0.62 : 0.8) * k).toFixed(3)})`; ctx.fillRect(b.x + wx, b.y + wy, ww, wh);
           warm(b.x + wx + ww / 2, b.y + wy + wh / 2 + 2, many ? 9 : 11, many ? 0.18 : 0.32);
         });

@@ -6,6 +6,7 @@ import { BALANCE as B } from '../data/balance.js';
 import { stageRank, isHome, settlementById } from './settlements.js';
 import { invGet, invTake } from './inventory.js';
 import { refreshDistricts } from './districts.js';
+import { nextGrowth } from './growth.js';
 
 export const NODE_TYPES = new Set(['hut', 'townhouse', 'shelter', 'market', 'hall', 'hearth', 'fire', 'well', 'warehouse', 'sawmill', 'mason', 'workshop', 'storage', 'sanctuary', 'commons', 'park', 'mine', 'coal_mine', 'smelter', 'charcoal_kiln', 'watermill', 'windmill', 'steam_engine', 'metalworks', 'locomotive_workshop', 'rail_terminal', 'generator', 'grid_station', 'oil_well', 'refinery', 'combustion_engine', 'motor_depot', 'precision_works', 'electronics_works', 'aircraft_works', 'research_institute', 'telegraph', 'dock', 'boatyard', 'field', 'airfield']);
 export const doorOf = (b) => ({ x: b.x, y: b.y + Math.max(3, b.radius * 0.18) });
@@ -18,6 +19,8 @@ const blocks = (b, x, y) => {
   const dx = (x - b.x) / rx, dy = (y - (b.y - b.radius * 0.12)) / ry;
   return dx * dx + dy * dy < 1;
 };
+// Bygget som en gate (mellom to punkter) går gjennom, eller null. Brukes av nettverksbyggingen og av testene.
+export const blockedBy = (buildings, a, b, skip = new Set()) => { const n = Math.max(3, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / 8)); for (let i = 1; i < n; i++) { const x = a.x + (b.x - a.x) * (i / n), y = a.y + (b.y - a.y) * (i / n); for (const q of buildings) if (!skip.has(q.id) && blocks(q, x, y)) return q; } return null; };
 function crosses(buildings, a, b, skip) {
   const n = Math.max(3, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / 8));
   for (let i = 1; i < n; i++) {
@@ -184,6 +187,9 @@ export function stepRoadworks(state, S) {
   if (S.state !== 'active' || !S.net?.edges.length || S.roadJob || S.population.length < 4) return false;
   const maxLv = maxRoadLevel(state, S);
   if (maxLv < 1) return false;
+  // En satellitt legger bedre dekke først når den ikke har noe viktigere å bygge (ingen aktivt prosjekt og ingen vekstpost som mangler): veiene bruker overskudd.
+  const sat = S.id !== 'first';
+  if (sat && (state.region?.projects?.[S.id] || nextGrowth(state, S))) return false;
   const byId = new Map(state.buildings.filter((b) => (b.settlementId || 'first') === S.id).map((b) => [b.id, b]));
   // Neste gate: den viktigste som ikke har fått dekket vi nå kan lage. Én rangering lavere først: ingen hopper fra sti rett til brolegging mens andre står igjen.
   const lvls = S.net.edges.map((e) => e.lv);
@@ -191,7 +197,7 @@ export function stepRoadworks(state, S) {
   const cands = S.net.edges.filter((e) => e.lv < maxLv && e.lv <= floor + 1).sort((p, q) => edgePriority(state, q, byId) - edgePriority(state, p, byId) || p.a - q.a || p.b - q.b);
   for (const e of cands.slice(0, 6)) {
     const to = e.lv + 1, cost = roadCost(to, e.len);
-    if (!Object.entries(cost).every(([k, n]) => invGet(state, S.id, k) >= n + (ROAD_RESERVE[k] || 0))) continue;
+    if (!Object.entries(cost).every(([k, n]) => invGet(state, S.id, k) >= n + (sat ? 0 : ROAD_RESERVE[k] || 0))) continue;
     for (const [k, n] of Object.entries(cost)) invTake(state, S.id, k, n);
     S.roadJob = { a: e.a, b: e.b, to, total: roadSeconds(to, e.len), left: roadSeconds(to, e.len), workers: [] };
     return true;

@@ -11,15 +11,19 @@ export const migrantsInFlight = (state) => state.humans.filter((h) => h.state ==
 // Hvor presset en bosetting er (høyere = flere ønsker å dra). Trangboddhet er fullt hus; sult er tomt matlager over tid.
 function pressure(state, S) {
   const pop = S.population.length, cap = housingCapacity(state, S.id);
-  const crowded = pop >= cap && pop > 4 ? 1 + (pop - cap) * 0.5 : 0;
+  // Fullt hus er ikke nok til å dra (det ga pendling mellom like fulle bosettinger): det må i tillegg mangle arbeid å gi flere.
+  const crowded = pop >= cap && pop > 4 && (S.jobs ?? 99) - pop < 1 ? 1 + (pop - cap) * 0.5 : 0;
   const hungry = (S.hungry || 0) >= B.migration.hungerSeconds && pop > 4 ? 2 : 0;
-  return crowded + hungry;
+  // Arbeidsløshet: flere folk enn arbeidsplasser (en tømt gruve, en felt skog) driver folk bort.
+  const jobless = S.jobs != null && pop > S.jobs + B.migration.joblessMargin && pop > 4 ? 1.5 : 0;
+  return crowded + hungry + jobless;
 }
 // Hvor attraktiv: ledig bolig og mat (en bosetting uten bolig eller mat tiltrekker ingen).
 function pull(state, S) {
   const free = housingCapacity(state, S.id) - S.population.length - migrantsInFlight(state).filter((h) => h.migrateTo === S.id).length;
-  if (free < 1 || invGet(state, S.id, 'food') < B.migration.minFoodToReceive || (S.hungry || 0) > 0) return 0;
-  return free * 1 + Math.min(3, invGet(state, S.id, 'food') / 20);
+  const slack = (S.jobs ?? 99) - S.population.length;
+  if (free < 1 || slack < 2 || invGet(state, S.id, 'food') < B.migration.minFoodToReceive || (S.hungry || 0) > 0) return 0;
+  return free * 1 + Math.min(3, invGet(state, S.id, 'food') / 20) + Math.min(3, slack / 4);
 }
 const connected = (state, a, b) => landLink(state, a.id, b.id, B.migration.maxDistance) || (state.industrial?.rails || []).some((r) => (r.a === a.id && r.b === b.id) || (r.a === b.id && r.b === a.id));
 
@@ -40,7 +44,7 @@ export function stepMigration(state, dt) {
     }
     if (!best) continue;
     // En som er ledig (ikke bærer, bygger eller er sendt ut) og har bodd en stund på stedet.
-    const h = state.humans.filter((q) => q.settlementId === from.id && (q.state === 'idle' || q.state === 'wander' || q.state === 'linger') && !q.carry.amount && q.partyId == null && q.missionId == null && state.time - q.born > 120).sort((a, b) => a.id - b.id)[0];
+    const h = state.humans.filter((q) => q.settlementId === from.id && (q.state === 'idle' || q.state === 'wander' || q.state === 'linger') && !q.carry.amount && q.partyId == null && q.missionId == null && state.time - q.born > 120 && state.time - (q.movedAt ?? -Infinity) > B.migration.cooldown).sort((a, b) => a.id - b.id)[0];
     if (!h) continue;
     h.state = 'toMigrate'; h.migrateTo = best.id; h.targetId = null; h.destId = null; h.slot = null; h.waypoints = null; h.at = null;
     h.tx = best.x + ((h.id % 5) - 2) * 12; h.ty = best.y + 26 + (h.id % 3) * 6;
@@ -57,7 +61,7 @@ export function arriveMigrant(state, h) {
   if (!to || !from || to.state !== 'active') { h.state = 'idle'; h.timer = 0.5; return; }
   from.population = from.population.filter((id) => id !== h.id);
   if (!to.population.includes(h.id)) to.population.push(h.id);
-  h.settlementId = to.id; h.homeId = null; h.workId = null; h.deliveries = 0;
+  h.movedAt = state.time; h.settlementId = to.id; h.homeId = null; h.workId = null; h.deliveries = 0;
   const M = state.migration, key = `${from.id}>${to.id}`;
   M.done++; M.byRoute[key] = (M.byRoute[key] || 0) + 1;
   state.events.push({ type: 'migrated', from: from.id, to: to.id, x: h.x, y: h.y });

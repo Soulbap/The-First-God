@@ -3,6 +3,7 @@ import { mulberry, paintSprite, dab, taper, jitter, rgba, clamp, smooth, lerp } 
 import { paintTownhouse, paintSawmill, paintMason, paintMarket, paintHall } from './city.js';
 import { paintWell, paintWarehouse, paintCottage, paintSanctuary, paintCommons, paintPark } from './civic.js';
 import { paintTenement, paintModern } from './housing.js';
+import { archOf } from '../sim/architecture.js';
 import { paintDerrick, paintRefinery, paintGenerator, paintGridStation, paintAirfield, paintInstitute, paintTelegraph, paintMineHead, paintEngineHouse, paintStation, paintGarage, paintCleanWorks } from './industry.js';
 
 const STEPS = 48; // kvantisering av byggefremdrift for mellomlagring
@@ -490,9 +491,9 @@ function paintFactory(seed, p, tall = false) {
 }
 
 // Bolighus etter trinn (OPUS-11): 1 halmhytte, 2 tømmerstue, 3 steinhus, 4 bygård, 5 moderne blokk.
-function homeSprite(type, tier, seed, p) {
-  if (tier >= 5) return paintModern(seed, p);
-  if (tier === 4) return paintTenement(seed, p);
+function homeSprite(type, tier, seed, p, b) {
+  if (tier >= 5) return paintModern(seed, p, archOf(b, 5));
+  if (tier === 4) return paintTenement(seed, p, archOf(b, 4));
   if (tier === 3 || type === 'townhouse') return paintTownhouse(seed, p);
   return tier === 2 ? paintCottage(seed, p) : paintHut(seed, p);
 }
@@ -502,11 +503,12 @@ const cache = new Map();
 export function buildingSprite(b, variant = 0) {
   const level = b.complete ? STEPS : Math.floor(b.progress * STEPS);
   const entry = cache.get(b.id);
-  if (entry && entry.level === level && entry.variant === variant) return entry.sprite;
+  const asig = b.arch?.sig || '';
+  if (entry && entry.level === level && entry.variant === variant && entry.asig === asig) return entry.sprite;
   const p = level / STEPS;
   const seed = b.id * 101 + 7;
   const sprite = b.type === 'shelter' ? (b.heritage ? paintCottage(seed + 701, p) : paintShelter(seed, p))
-    : (b.type === 'hut' || b.type === 'townhouse') ? homeSprite(b.type, variant, seed, p)
+    : (b.type === 'hut' || b.type === 'townhouse') ? homeSprite(b.type, variant, seed, p, b)
       : b.type === 'well' ? paintWell(seed, p)
       : b.type === 'commons' ? paintCommons(seed, p)
       : b.type === 'park' ? paintPark(seed, p)
@@ -537,7 +539,7 @@ export function buildingSprite(b, variant = 0) {
               : b.type === 'mason' ? paintMason(seed, p)
                 : b.type === 'market' ? paintMarket(seed, p)
                     : b.type === 'hall' ? paintHall(seed, p) : paintFirePit(seed, p);
-  cache.set(b.id, { level, variant, sprite });
+  cache.set(b.id, { level, variant, asig, sprite });
   return sprite;
 }
 

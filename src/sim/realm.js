@@ -145,7 +145,7 @@ function foundSettlement(state, party, members) {
   state.settlements.push(S);
   const first = settlementById(state, 'first');
   first.population = first.population.filter((hid) => !S.population.includes(hid));
-  for (const m of members) { m.settlementId = id; m.partyId = null; m.state = 'idle'; m.timer = 0.1; }
+  for (const m of members) { m.settlementId = id; m.partyId = null; m.state = 'idle'; m.timer = 0.1; m.homeId = null; m.workId = null; m.destId = null; m.slot = null; }
   Rm.party = null; Rm.lastFoundedAt = state.time; Rm.foundedCount++;
   startConstruction(state, 'hut', { source: `founding:${id}`, site, settlementId: id });
   state.events.push({ type: 'settlementFounded', id, name, x: site.x, y: site.y, kind: site.kind });

@@ -1,0 +1,667 @@
+[
+ {
+  "seed": 701,
+  "wallS": 86.3,
+  "simH": 3.85,
+  "simHPerWallS": 0.045,
+  "steps": 831600,
+  "firstAt": {
+   "industry": 4020,
+   "steam": 4140,
+   "metalworks": 4530,
+   "oilWell": 4770,
+   "refinery": 5490,
+   "combustion": 6360,
+   "precision": 7440,
+   "aircraft": 9060,
+   "airfield": 9510,
+   "survey": 9570,
+   "generator": 10350,
+   "electricity": 10710,
+   "electronics": 11820,
+   "telegraph": 12960,
+   "institute": 13860
+  },
+  "unreached": [],
+  "firstUnreached": null,
+  "topIdle": [
+   "sawmill:råvare×12",
+   "mason:råvare×10",
+   "locomotive_workshop:fullt lager×10",
+   "metalworks:fullt lager×9"
+  ],
+  "population": 235,
+  "settlements": [
+   "first:Storby:94",
+   "second:Tidlig by:35",
+   "third:By:50",
+   "fourth:Tidlig by:56"
+  ],
+  "housing": [
+   94,
+   35,
+   50,
+   56
+  ],
+  "buildings": 117,
+  "tiers": {
+   "t0H": 1,
+   "t1H": 1,
+   "t5": 10,
+   "t3": 17,
+   "t4": 8
+  },
+  "renovationsDone": 66,
+  "res": {
+   "wood": 1878,
+   "stone": 1741,
+   "coal": 66,
+   "iron": 7,
+   "copper": 2,
+   "ironOre": 42,
+   "copperOre": 23,
+   "crudeOil": 1,
+   "fuel": 284,
+   "planks": 125,
+   "industrialMachinery": 7,
+   "electronics": 0
+  },
+  "veins": {
+   "copperOre": "0/343 (3 årer)",
+   "tinOre": "91/166 (2 årer)",
+   "ironOre": "49/676 (5 årer)",
+   "coal": "2323/2743 (3 årer)",
+   "oil": "0/428 (2 årer)"
+  },
+  "outposts": [
+   {
+    "id": "r10",
+    "biome": "fjell",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 625,
+    "stock": {
+     "stone": 38,
+     "cutstone": 12,
+     "ironOre": 180,
+     "coal": 180
+    }
+   },
+   {
+    "id": "r20",
+    "biome": "fjell",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 608,
+    "stock": {
+     "stone": 55,
+     "cutstone": 0,
+     "ironOre": 180,
+     "coal": 180
+    }
+   },
+   {
+    "id": "r31",
+    "biome": "kyst",
+    "pop": 6,
+    "homes": 1,
+    "extracted": 474,
+    "stock": {
+     "food": 0,
+     "knowledge": 1,
+     "copperOre": 54,
+     "crudeOil": 1
+    }
+   },
+   {
+    "id": "r02",
+    "biome": "kyst",
+    "pop": 6,
+    "homes": 1,
+    "extracted": 392,
+    "stock": {
+     "food": 52,
+     "knowledge": 1,
+     "copperOre": 131,
+     "crudeOil": 2
+    }
+   },
+   {
+    "id": "r22",
+    "biome": "slette",
+    "pop": 8,
+    "homes": 2,
+    "extracted": 277,
+    "stock": {
+     "food": 1,
+     "wood": 5,
+     "tinOre": 180
+    }
+   }
+  ],
+  "caravans": 176,
+  "maritime": 156,
+  "discovered": 14,
+  "rails": 1,
+  "roadTrips": 0,
+  "fuelBurned": 11,
+  "flights": 14,
+  "surveys": 14,
+  "lit": [
+   "first"
+  ],
+  "electronics": 16,
+  "research": 7,
+  "siteSearches": 535,
+  "siteSkipped": 32088,
+  "trade": {
+   "orders": {
+    "project": 1090,
+    "relief": 3,
+    "import": 27
+   },
+   "flows": {
+    "first>second|wood": 1487,
+    "first>second|stone": 516,
+    "first>second|planks": 23,
+    "second>third|food": 36,
+    "first>third|wood": 1142.9,
+    "first>third|stone": 979.9,
+    "second>first|planks": 84,
+    "first>third|planks": 66,
+    "first>second|mechanicalComponents": 3,
+    "first>second|cutstone": 52,
+    "first>fourth|stone": 542.55,
+    "second>fourth|food": 20,
+    "first>fourth|wood": 1100.55,
+    "first>third|mechanicalComponents": 3,
+    "first>third|cutstone": 7,
+    "first>fourth|planks": 48,
+    "second>first|food": 36,
+    "first>fourth|mechanicalComponents": 3,
+    "third>first|cutstone": 1,
+    "first>fourth|cutstone": 136,
+    "first>fourth|iron": 8
+   },
+   "modes": {
+    "carrier": 4605.9,
+    "rail": 1689
+   }
+  },
+  "stocks": {
+   "first": {
+    "wood": 1878,
+    "stone": 1741,
+    "food": 123,
+    "planks": 125,
+    "cutstone": 106,
+    "copperOre": 23,
+    "ironOre": 42,
+    "coal": 66
+   },
+   "second": {
+    "food": 569,
+    "planks": 130
+   },
+   "third": {
+    "food": 779,
+    "planks": 92,
+    "cutstone": 68
+   },
+   "fourth": {
+    "food": 863
+   }
+  },
+  "roads": [
+   "first:[1,0,0,62]",
+   "second:[26,0,0,0]",
+   "third:[28,0,0,0]",
+   "fourth:[28,0,0,0]"
+  ]
+ },
+ {
+  "seed": 4242,
+  "wallS": 105.5,
+  "simH": 4.3,
+  "simHPerWallS": 0.041,
+  "steps": 928800,
+  "firstAt": {
+   "industry": 4290,
+   "steam": 4350,
+   "metalworks": 4800,
+   "oilWell": 5160,
+   "refinery": 6450,
+   "combustion": 6900,
+   "precision": 9000,
+   "aircraft": 10800,
+   "airfield": 11310,
+   "survey": 11370,
+   "generator": 12210,
+   "electricity": 12510,
+   "electronics": 13590,
+   "telegraph": 14670,
+   "institute": 15480
+  },
+  "unreached": [],
+  "firstUnreached": null,
+  "topIdle": [
+   "sawmill:råvare×13",
+   "mason:råvare×11",
+   "locomotive_workshop:fullt lager×11",
+   "metalworks:fullt lager×9"
+  ],
+  "population": 262,
+  "settlements": [
+   "first:Storby:94",
+   "second:Tidlig by:49",
+   "third:By:70",
+   "fourth:Tidlig by:49"
+  ],
+  "housing": [
+   94,
+   49,
+   70,
+   49
+  ],
+  "buildings": 118,
+  "tiers": {
+   "t0H": 1,
+   "t1H": 1,
+   "t5": 10,
+   "t4": 24
+  },
+  "renovationsDone": 80,
+  "res": {
+   "wood": 1976,
+   "stone": 1741,
+   "coal": 69,
+   "iron": 10,
+   "copper": 2,
+   "ironOre": 76,
+   "copperOre": 32,
+   "crudeOil": 0,
+   "fuel": 158,
+   "planks": 121,
+   "industrialMachinery": 6,
+   "electronics": 0
+  },
+  "veins": {
+   "copperOre": "0/260 (3 årer)",
+   "tinOre": "206/271 (2 årer)",
+   "ironOre": "44/811 (5 årer)",
+   "coal": "1809/2264 (3 årer)",
+   "oil": "0/470 (2 årer)"
+  },
+  "outposts": [
+   {
+    "id": "r10",
+    "biome": "kyst",
+    "pop": 6,
+    "homes": 1,
+    "extracted": 451,
+    "stock": {
+     "food": 0,
+     "knowledge": 0,
+     "copperOre": 100,
+     "crudeOil": 1
+    }
+   },
+   {
+    "id": "r20",
+    "biome": "dal",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 481,
+    "stock": {
+     "wood": 0,
+     "stone": 30,
+     "knowledge": 0,
+     "copperOre": 41,
+     "coal": 139
+    }
+   },
+   {
+    "id": "r30",
+    "biome": "fjell",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 644,
+    "stock": {
+     "stone": 43,
+     "cutstone": 9,
+     "ironOre": 180,
+     "coal": 180
+    }
+   },
+   {
+    "id": "r01",
+    "biome": "kyst",
+    "pop": 6,
+    "homes": 1,
+    "extracted": 467,
+    "stock": {
+     "food": 23,
+     "knowledge": 1,
+     "copperOre": 166,
+     "crudeOil": 0
+    }
+   },
+   {
+    "id": "r31",
+    "biome": "fjell",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 624,
+    "stock": {
+     "stone": 40,
+     "cutstone": 4,
+     "ironOre": 176,
+     "coal": 180
+    }
+   }
+  ],
+  "caravans": 188,
+  "maritime": 0,
+  "discovered": 14,
+  "rails": 1,
+  "roadTrips": 166,
+  "fuelBurned": 179,
+  "flights": 14,
+  "surveys": 14,
+  "lit": [
+   "first"
+  ],
+  "electronics": 16,
+  "research": 6,
+  "siteSearches": 772,
+  "siteSkipped": 30860,
+  "trade": {
+   "orders": {
+    "project": 1332,
+    "relief": 4,
+    "import": 27
+   },
+   "flows": {
+    "first>second|wood": 1630,
+    "first>second|stone": 534,
+    "first>second|planks": 12,
+    "first>third|stone": 1071.9,
+    "first>third|wood": 1343.9,
+    "second>third|food": 36,
+    "first>third|planks": 43,
+    "second>first|planks": 106,
+    "first>third|mechanicalComponents": 3,
+    "first>second|mechanicalComponents": 3,
+    "first>fourth|wood": 1045,
+    "first>fourth|stone": 468.79999999999995,
+    "first>third|cutstone": 18,
+    "second>fourth|food": 40,
+    "first>fourth|planks": 22,
+    "first>fourth|mechanicalComponents": 3,
+    "fourth>first|planks": 10,
+    "first>fourth|cutstone": 118,
+    "first>second|cutstone": 122,
+    "first>fourth|iron": 7,
+    "first>third|iron": 10,
+    "first>second|iron": 7
+   },
+   "modes": {
+    "carrier": 4963.6,
+    "rail": 1193,
+    "truck": 497
+   }
+  },
+  "stocks": {
+   "first": {
+    "wood": 1976,
+    "stone": 1741,
+    "food": 136,
+    "planks": 121,
+    "cutstone": 104,
+    "copperOre": 32,
+    "ironOre": 76,
+    "coal": 69
+   },
+   "second": {
+    "food": 765,
+    "planks": 46
+   },
+   "third": {
+    "food": 1058
+   },
+   "fourth": {
+    "food": 765
+   }
+  },
+  "roads": [
+   "first:[2,0,0,54]",
+   "second:[29,0,0,0]",
+   "third:[31,0,0,0]",
+   "fourth:[23,0,0,0]"
+  ]
+ },
+ {
+  "seed": 20261009,
+  "wallS": 104.7,
+  "simH": 4.167,
+  "simHPerWallS": 0.04,
+  "steps": 900000,
+  "firstAt": {
+   "industry": 3990,
+   "steam": 4140,
+   "metalworks": 4560,
+   "oilWell": 4920,
+   "refinery": 5640,
+   "combustion": 6510,
+   "precision": 7950,
+   "aircraft": 9990,
+   "airfield": 10590,
+   "survey": 10650,
+   "generator": 11580,
+   "electricity": 11910,
+   "electronics": 13140,
+   "telegraph": 14160,
+   "institute": 15000
+  },
+  "unreached": [],
+  "firstUnreached": null,
+  "topIdle": [
+   "mason:råvare×11",
+   "sawmill:råvare×11",
+   "locomotive_workshop:fullt lager×10",
+   "refinery:råvare×10"
+  ],
+  "population": 283,
+  "settlements": [
+   "first:Storby:94",
+   "second:Tidlig by:49",
+   "third:By:63",
+   "fourth:By:77"
+  ],
+  "housing": [
+   94,
+   49,
+   63,
+   77
+  ],
+  "buildings": 123,
+  "tiers": {
+   "t0H": 1,
+   "t1H": 1,
+   "t5": 10,
+   "t4": 27
+  },
+  "renovationsDone": 85,
+  "res": {
+   "wood": 1903,
+   "stone": 1853,
+   "coal": 73,
+   "iron": 7,
+   "copper": 1,
+   "ironOre": 41,
+   "copperOre": 20,
+   "crudeOil": 1,
+   "fuel": 46,
+   "planks": 125,
+   "industrialMachinery": 6,
+   "electronics": 1
+  },
+  "veins": {
+   "copperOre": "0/284 (3 årer)",
+   "tinOre": "166/236 (2 årer)",
+   "ironOre": "0/827 (5 årer)",
+   "coal": "1978/2433 (3 årer)",
+   "oil": "0/491 (2 årer)"
+  },
+  "outposts": [
+   {
+    "id": "r10",
+    "biome": "slette",
+    "pop": 6,
+    "homes": 1,
+    "extracted": 306,
+    "stock": {
+     "food": 0,
+     "wood": 26,
+     "tinOre": 180
+    }
+   },
+   {
+    "id": "r20",
+    "biome": "dal",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 506,
+    "stock": {
+     "wood": 4,
+     "stone": 20,
+     "knowledge": 1,
+     "copperOre": 156,
+     "coal": 113
+    }
+   },
+   {
+    "id": "r30",
+    "biome": "dal",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 480,
+    "stock": {
+     "wood": 1,
+     "stone": 13,
+     "knowledge": 1,
+     "copperOre": 175,
+     "coal": 114
+    }
+   },
+   {
+    "id": "r02",
+    "biome": "fjell",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 612,
+    "stock": {
+     "stone": 15,
+     "cutstone": 7,
+     "ironOre": 180,
+     "coal": 180
+    }
+   },
+   {
+    "id": "r22",
+    "biome": "dal",
+    "pop": 12,
+    "homes": 5,
+    "extracted": 535,
+    "stock": {
+     "wood": 7,
+     "stone": 17,
+     "knowledge": 1,
+     "copperOre": 120,
+     "coal": 150
+    }
+   }
+  ],
+  "caravans": 114,
+  "maritime": 106,
+  "discovered": 14,
+  "rails": 1,
+  "roadTrips": 134,
+  "fuelBurned": 147,
+  "flights": 14,
+  "surveys": 14,
+  "lit": [
+   "first"
+  ],
+  "electronics": 17,
+  "research": 10,
+  "siteSearches": 303,
+  "siteSkipped": 9018,
+  "trade": {
+   "orders": {
+    "project": 1556,
+    "relief": 4,
+    "import": 44
+   },
+   "flows": {
+    "first>second|wood": 1744,
+    "first>second|stone": 516,
+    "first>second|planks": 19,
+    "first>third|stone": 1010.9,
+    "first>third|wood": 1275.9,
+    "second>third|food": 36,
+    "first>third|planks": 45,
+    "first>second|mechanicalComponents": 3,
+    "second>first|planks": 170,
+    "first>fourth|stone": 1102,
+    "second>fourth|food": 40,
+    "first>fourth|wood": 1338.55,
+    "second>first|food": 10,
+    "first>fourth|planks": 92,
+    "first>third|mechanicalComponents": 3,
+    "first>third|cutstone": 11,
+    "first>fourth|cutstone": 56,
+    "first>fourth|mechanicalComponents": 3,
+    "first>second|cutstone": 122,
+    "first>fourth|iron": 11,
+    "first>third|iron": 9,
+    "first>second|iron": 7
+   },
+   "modes": {
+    "carrier": 6152.35,
+    "rail": 1066,
+    "truck": 406
+   }
+  },
+  "stocks": {
+   "first": {
+    "wood": 1903,
+    "stone": 1853,
+    "food": 129,
+    "planks": 125,
+    "cutstone": 103,
+    "copperOre": 20,
+    "ironOre": 41,
+    "coal": 73
+   },
+   "second": {
+    "food": 766,
+    "planks": 40
+   },
+   "third": {
+    "food": 962,
+    "planks": 20,
+    "cutstone": 8
+   },
+   "fourth": {
+    "food": 1158
+   }
+  },
+  "roads": [
+   "first:[0,1,0,72]",
+   "second:[27,0,0,0]",
+   "third:[30,0,0,0]",
+   "fourth:[34,0,0,0]"
+  ]
+ }
+]
