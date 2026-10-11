@@ -14,15 +14,15 @@ Grunnlaget (`62b738c`, uncommittet OPUS-08..10-arbeid fra før) er målt i en eg
 
 | Frø | Før: 4 t spilltid | Før: nådde | Etter: 4 t spilltid | Etter: nådde |
 |---|---:|---|---:|---|
-| 701 | 36 s | industri, damp, metallverk, oljebrønn, raffineri | 57 s | alt til telegraf (institutt ved 4,00 t) |
-| 4242 | 36 s | industri, damp, metallverk | 57 s | hele kjeden (institutt ved 3,77 t) |
-| 20261009 | **270 s** | bare industri | 59 s | alt til telegraf (institutt ved 4,00 t) |
+| 701 | 36 s | industri, damp, metallverk, oljebrønn, raffineri | 62 s | hele kjeden (institutt ved 3,72 t) |
+| 4242 | 36 s | industri, damp, metallverk | 59 s | alt til telegraf (institutt ved 4,16 t, like etter 4 timer) |
+| 20261009 | **270 s** | bare industri | 61 s | hele kjeden (institutt ved 3,88 t) |
 
 Det er altså mer simulert innhold til lavere veggtid, og kjeden er nå **faktisk gjennomførbar**: før stoppet alle frø midt i kjeden (malmårene tomme, kull og olje bortkastet, tomtesøk som gjentok seg).
 
 ## Hvorfor kjeden stoppet, og hva som ble gjort
 
-Diagnosene er funnet ved å kjøre kjeden og lese inaktivitetsgrunnene (`metalworks:råvare`, `refinery:råvare`, …) og ved å spore forbruket av hver vare (en `Proxy` på lageret som loggget hvem som trakk varen).
+Diagnosene er funnet ved å kjøre kjeden og lese inaktivitetsgrunnene (`metalworks:råvare`, `refinery:råvare`, …) og ved å spore forbruket av hver vare (en `Proxy` på lageret som loggførte hvem som trakk varen).
 
 | Funn (målt) | Rotårsak | Endring |
 |---|---|---|
@@ -40,54 +40,54 @@ Kjøring: 21600 s spilltid per frø, ekte bot, kanonisk steg 1/60 s.
 
 | Frø | veggtid | spilltid/veggsek | folk | bosettinger | bygg | ombygde hjem | utposter | karavaner (hav) |
 |---|---:|---:|---:|---|---:|---:|---:|---:|
-| 2 | 137.1 s | 158 s | 164 | first:Storby:94, second:Tidlig by:10, third:Tidlig by:25, fourth:Tidlig by:35 | 83 | 51 | 6 | 195 (0) |
-| 5 | 135.1 s | 160 s | 189 | first:Storby:94, second:Tidlig by:35, third:Tidlig by:35, fourth:Tidlig by:25 | 84 | 64 | 6 | 205 (183) |
-| 77 | 142.6 s | 151 s | 199 | first:Storby:94, second:Tidlig by:35, third:Tidlig by:35, fourth:Tidlig by:35 | 84 | 69 | 6 | 195 (0) |
-| 701 | 140.5 s | 154 s | 189 | first:Storby:94, second:Tidlig by:35, third:Tidlig by:35, fourth:Tidlig by:25 | 84 | 64 | 6 | 247 (207) |
-| 909 | 142.7 s | 151 s | 189 | first:Storby:94, second:Tidlig by:35, third:Tidlig by:35, fourth:Tidlig by:25 | 84 | 64 | 6 | 98 (0) |
-| 4242 | 142.6 s | 151 s | 179 | first:Storby:94, second:Tidlig by:35, third:Tidlig by:25, fourth:Tidlig by:25 | 84 | 59 | 6 | 265 (0) |
-| 31337 | 145.9 s | 148 s | 189 | first:Storby:94, second:Tidlig by:35, third:Tidlig by:35, fourth:Tidlig by:25 | 84 | 64 | 5 | 222 (211) |
-| 20261009 | 140.7 s | 154 s | 199 | first:Storby:94, second:Tidlig by:35, third:Tidlig by:35, fourth:Tidlig by:35 | 84 | 69 | 6 | 165 (159) |
+| 2 | 142.6 s | 151 s | 189 | first:Storby:94, second:Tidlig by:35, third:Tidlig by:25, fourth:Tidlig by:35 | 83 | 64 | 6 | 197 (0) |
+| 5 | 147 s | 147 s | 199 | first:Storby:94, second:Tidlig by:35, third:Tidlig by:35, fourth:Tidlig by:35 | 84 | 69 | 6 | 189 (160) |
+| 77 | 144.7 s | 149 s | 199 | first:Storby:94, second:Tidlig by:35, third:Tidlig by:35, fourth:Tidlig by:35 | 83 | 69 | 6 | 192 (0) |
+| 701 | 142.5 s | 152 s | 189 | first:Storby:94, second:Tidlig by:35, third:Tidlig by:25, fourth:Tidlig by:35 | 82 | 64 | 6 | 231 (197) |
+| 909 | 151.2 s | 143 s | 199 | first:Storby:94, second:Tidlig by:35, third:Tidlig by:35, fourth:Tidlig by:35 | 84 | 69 | 6 | 97 (0) |
+| 4242 | 148.3 s | 146 s | 199 | first:Storby:94, second:Tidlig by:35, third:Tidlig by:35, fourth:Tidlig by:35 | 84 | 69 | 6 | 279 (0) |
+| 31337 | 138.2 s | 156 s | 199 | first:Storby:94, second:Tidlig by:35, third:Tidlig by:35, fourth:Tidlig by:35 | 84 | 69 | 6 | 273 (261) |
+| 20261009 | 141.6 s | 153 s | 199 | first:Storby:94, second:Tidlig by:35, third:Tidlig by:35, fourth:Tidlig by:35 | 84 | 69 | 6 | 164 (162) |
 
 **Milepæler (første gang):**
 
 | Milepæl | 2 | 5 | 77 | 701 | 909 | 4242 | 31337 | 20261009 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| industry | 1.15 t | 1.16 t | 1.09 t | 1.22 t | 1.13 t | 1.21 t | 1.20 t | 1.24 t |
-| steam | 1.18 t | 1.21 t | 1.14 t | 1.24 t | 1.16 t | 1.27 t | 1.25 t | 1.27 t |
-| metalworks | 1.23 t | 1.23 t | 1.18 t | 1.29 t | 1.26 t | 1.30 t | 1.29 t | 1.37 t |
-| oilWell | 1.38 t | 1.34 t | 1.27 t | 1.41 t | 1.47 t | 1.45 t | 1.46 t | 1.38 t |
-| refinery | 1.48 t | 1.52 t | 1.46 t | 1.63 t | 1.58 t | 1.52 t | 1.56 t | 1.73 t |
-| combustion | 1.57 t | 1.62 t | 1.78 t | 1.73 t | 1.85 t | 1.85 t | 1.72 t | 2.29 t |
-| generator | 2.93 t | 3.05 t | 1.40 t | 1.51 t | 3.06 t | 1.56 t | 1.60 t | 1.51 t |
-| electricity | 3.02 t | 3.15 t | 1.41 t | 2.27 t | 3.15 t | 1.57 t | 2.23 t | 1.53 t |
-| precision | 2.10 t | 2.21 t | 2.27 t | 2.41 t | 2.21 t | 2.14 t | 2.38 t | 1.80 t |
-| aircraft | 2.54 t | 2.67 t | 2.72 t | 2.88 t | 2.67 t | 2.65 t | 2.86 t | 2.87 t |
-| airfield | 2.68 t | 2.80 t | 2.86 t | 3.01 t | 2.79 t | 2.80 t | 3.00 t | 3.01 t |
-| survey | 2.70 t | 2.82 t | 2.88 t | 3.02 t | 2.81 t | 2.82 t | 3.02 t | 3.02 t |
-| electronics | 3.34 t | 3.46 t | 3.31 t | 3.45 t | 3.47 t | 3.23 t | 3.45 t | 3.45 t |
-| telegraph | 3.64 t | 3.77 t | 3.63 t | 3.77 t | 3.78 t | 3.53 t | 3.76 t | 3.76 t |
-| institute | 3.88 t | 4.01 t | 3.86 t | 4.00 t | 4.02 t | 3.77 t | 4.00 t | 4.00 t |
+| industry | 1.07 t | 1.09 t | 1.05 t | 1.17 t | 1.25 t | 1.19 t | 1.16 t | 1.16 t |
+| steam | 1.16 t | 1.13 t | 1.09 t | 1.21 t | 1.30 t | 1.27 t | 1.20 t | 1.21 t |
+| metalworks | 1.23 t | 1.15 t | 1.17 t | 1.24 t | 1.36 t | 1.34 t | 1.27 t | 1.23 t |
+| oilWell | 1.32 t | 1.28 t | 1.28 t | 1.35 t | 1.38 t | 1.43 t | 1.38 t | 1.34 t |
+| refinery | 1.52 t | 1.41 t | 1.38 t | 1.57 t | 1.62 t | 1.63 t | 1.57 t | 1.52 t |
+| combustion | 1.82 t | 1.57 t | 1.59 t | 1.88 t | 1.95 t | 1.93 t | 1.89 t | 1.79 t |
+| generator | 3.03 t | 1.44 t | 1.19 t | 1.58 t | 1.68 t | 3.23 t | 3.18 t | 1.45 t |
+| electricity | 3.12 t | 2.11 t | 1.23 t | 2.84 t | 2.33 t | 3.31 t | 3.28 t | 1.47 t |
+| precision | 2.18 t | 2.24 t | 2.33 t | 2.11 t | 2.48 t | 2.38 t | 2.34 t | 2.25 t |
+| aircraft | 2.63 t | 2.70 t | 2.77 t | 2.56 t | 2.93 t | 2.83 t | 2.79 t | 2.75 t |
+| airfield | 2.77 t | 2.84 t | 2.91 t | 2.67 t | 3.08 t | 2.96 t | 2.92 t | 2.89 t |
+| survey | 2.79 t | 2.86 t | 2.92 t | 2.69 t | 3.10 t | 2.98 t | 2.93 t | 2.91 t |
+| electronics | 3.44 t | 3.28 t | 3.35 t | 3.19 t | 3.52 t | 3.62 t | 3.60 t | 3.33 t |
+| telegraph | 3.74 t | 3.59 t | 3.65 t | 3.49 t | 3.82 t | 3.91 t | 3.91 t | 3.64 t |
+| institute | 3.98 t | 3.83 t | 3.90 t | 3.72 t | 4.05 t | 4.16 t | 4.15 t | 3.88 t |
 
 **Tilstand ved slutt:**
 
-- **2**: boligtrinn {"t0H":1,"t1H":1,"t5":10,"t2":2,"t1":2,"t3":5,"t4":5}; lagre {"wood":3028,"stone":2658,"coal":83,"iron":40,"copper":21,"ironOre":42,"copperOre":35,"crudeOil":0,"fuel":288,"planks":151,"industrialMachinery":8,"electronics":6}; årer igjen {"copperOre":"0/298 (3 årer)","tinOre":"96/176 (2 årer)","ironOre":"0/754 (5 årer)","coal":"1404/2059 (3 årer)","oil":"0/530 (2 årer)"}; lyse bosettinger ["first"]; flyvninger 14, luftmålinger 14, elektronikk 22, forskningskunnskap 2685; lastebilturer 35, jernbaner 1; flaskehals: ingen (hele kjeden nådd); tomtesøk 655, hoppet over 2414.
-- **5**: boligtrinn {"t0H":1,"t1H":1,"t5":10,"t4":10,"t3":5}; lagre {"wood":3124,"stone":2937,"coal":85,"iron":40,"copper":21,"ironOre":42,"copperOre":34,"crudeOil":1,"fuel":216,"planks":151,"industrialMachinery":8,"electronics":6}; årer igjen {"copperOre":"0/343 (3 årer)","tinOre":"225/290 (2 årer)","ironOre":"0/816 (5 årer)","coal":"1555/2195 (3 årer)","oil":"0/507 (2 årer)"}; lyse bosettinger ["first"]; flyvninger 14, luftmålinger 14, elektronikk 22, forskningskunnskap 2516; lastebilturer 44, jernbaner 1; flaskehals: ingen (hele kjeden nådd); tomtesøk 2494, hoppet over 2761.
-- **77**: boligtrinn {"t0H":1,"t1H":1,"t5":10,"t4":15}; lagre {"wood":3463,"stone":2992,"coal":63,"iron":40,"copper":21,"ironOre":63,"copperOre":45,"crudeOil":1,"fuel":267,"planks":151,"industrialMachinery":8,"electronics":6}; årer igjen {"copperOre":"0/370 (3 årer)","tinOre":"160/240 (2 årer)","ironOre":"0/749 (5 årer)","coal":"1308/1948 (3 årer)","oil":"0/536 (2 årer)"}; lyse bosettinger ["first"]; flyvninger 14, luftmålinger 14, elektronikk 22, forskningskunnskap 2703; lastebilturer 70, jernbaner 1; flaskehals: ingen (hele kjeden nådd); tomtesøk 2501, hoppet over 4009.
-- **701**: boligtrinn {"t0H":1,"t1H":1,"t5":10,"t4":10,"t3":5}; lagre {"wood":3260,"stone":3121,"coal":77,"iron":40,"copper":21,"ironOre":48,"copperOre":33,"crudeOil":0,"fuel":218,"planks":151,"industrialMachinery":8,"electronics":6}; årer igjen {"copperOre":"0/343 (3 årer)","tinOre":"76/166 (2 årer)","ironOre":"0/676 (5 årer)","coal":"2128/2743 (3 årer)","oil":"0/428 (2 årer)"}; lyse bosettinger ["first"]; flyvninger 14, luftmålinger 14, elektronikk 22, forskningskunnskap 2522; lastebilturer 70, jernbaner 1; flaskehals: ingen (hele kjeden nådd); tomtesøk 78, hoppet over 397.
-- **909**: boligtrinn {"t0H":1,"t1H":1,"t5":10,"t4":10,"t3":5}; lagre {"wood":2994,"stone":3360,"coal":100,"iron":40,"copper":21,"ironOre":77,"copperOre":49,"crudeOil":1,"fuel":130,"planks":150,"industrialMachinery":8,"electronics":6}; årer igjen {"copperOre":"0/346 (3 årer)","tinOre":"161/251 (2 årer)","ironOre":"0/766 (5 årer)","coal":"1592/2262 (3 årer)","oil":"0/479 (2 årer)"}; lyse bosettinger ["first"]; flyvninger 14, luftmålinger 14, elektronikk 22, forskningskunnskap 2503; lastebilturer 35, jernbaner 1; flaskehals: ingen (hele kjeden nådd); tomtesøk 641, hoppet over 1271.
-- **4242**: boligtrinn {"t0H":1,"t1H":1,"t5":10,"t4":5,"t3":10}; lagre {"wood":3248,"stone":2793,"coal":64,"iron":40,"copper":21,"ironOre":43,"copperOre":39,"crudeOil":0,"fuel":383,"planks":150,"industrialMachinery":8,"electronics":6}; årer igjen {"copperOre":"0/260 (3 årer)","tinOre":"211/271 (2 årer)","ironOre":"0/811 (5 årer)","coal":"1634/2264 (3 årer)","oil":"0/470 (2 årer)"}; lyse bosettinger ["first"]; flyvninger 14, luftmålinger 14, elektronikk 22, forskningskunnskap 2805; lastebilturer 0, jernbaner 1; flaskehals: ingen (hele kjeden nådd); tomtesøk 2494, hoppet over 2835.
-- **31337**: boligtrinn {"t0H":1,"t1H":1,"t5":10,"t4":10,"t3":5}; lagre {"wood":3176,"stone":3173,"coal":63,"iron":40,"copper":21,"ironOre":54,"copperOre":24,"crudeOil":0,"fuel":273,"planks":149,"industrialMachinery":8,"electronics":6}; årer igjen {"copperOre":"0/420 (3 årer)","tinOre":"171/251 (2 årer)","ironOre":"23/919 (5 årer)","coal":"2085/2695 (3 årer)","oil":"0/492 (2 årer)"}; lyse bosettinger ["first"]; flyvninger 14, luftmålinger 14, elektronikk 22, forskningskunnskap 2523; lastebilturer 44, jernbaner 1; flaskehals: ingen (hele kjeden nådd); tomtesøk 1887, hoppet over 2357.
-- **20261009**: boligtrinn {"t0H":1,"t1H":1,"t5":10,"t4":15}; lagre {"wood":3366,"stone":3319,"coal":76,"iron":40,"copper":21,"ironOre":41,"copperOre":29,"crudeOil":1,"fuel":103,"planks":151,"industrialMachinery":8,"electronics":6}; årer igjen {"copperOre":"0/284 (3 årer)","tinOre":"171/236 (2 årer)","ironOre":"0/827 (5 årer)","coal":"1803/2433 (3 årer)","oil":"0/491 (2 årer)"}; lyse bosettinger ["first"]; flyvninger 14, luftmålinger 14, elektronikk 22, forskningskunnskap 2522; lastebilturer 70, jernbaner 1; flaskehals: ingen (hele kjeden nådd); tomtesøk 75, hoppet over 0.
+- **2**: boligtrinn {"t0H":1,"t1H":1,"t5":10,"t4":10,"t3":5}; lagre {"wood":3074,"stone":3184,"coal":67,"iron":40,"copper":21,"ironOre":46,"copperOre":48,"crudeOil":0,"fuel":289,"planks":149,"industrialMachinery":8,"electronics":6}; årer igjen {"copperOre":"0/298 (3 årer)","tinOre":"81/176 (2 årer)","ironOre":"0/754 (5 årer)","coal":"1419/2059 (3 årer)","oil":"0/530 (2 årer)"}; lyse bosettinger ["first"]; flyvninger 14, luftmålinger 14, elektronikk 22, forskningskunnskap 2553; lastebilturer 35, jernbaner 1; flaskehals: ingen (hele kjeden nådd); tomtesøk 698, hoppet over 6705.
+- **5**: boligtrinn {"t0H":1,"t1H":1,"t5":10,"t4":15}; lagre {"wood":3277,"stone":3189,"coal":91,"iron":40,"copper":21,"ironOre":40,"copperOre":28,"crudeOil":1,"fuel":212,"planks":151,"industrialMachinery":8,"electronics":6}; årer igjen {"copperOre":"0/343 (3 årer)","tinOre":"230/290 (2 årer)","ironOre":"0/816 (5 årer)","coal":"1525/2195 (3 årer)","oil":"0/507 (2 årer)"}; lyse bosettinger ["first"]; flyvninger 14, luftmålinger 14, elektronikk 22, forskningskunnskap 2742; lastebilturer 48, jernbaner 1; flaskehals: ingen (hele kjeden nådd); tomtesøk 2129, hoppet over 11081.
+- **77**: boligtrinn {"t0H":1,"t1H":1,"t5":10,"t4":15}; lagre {"wood":3419,"stone":3331,"coal":97,"iron":40,"copper":21,"ironOre":57,"copperOre":29,"crudeOil":1,"fuel":231,"planks":151,"industrialMachinery":8,"electronics":6}; årer igjen {"copperOre":"0/370 (3 årer)","tinOre":"160/240 (2 årer)","ironOre":"0/749 (5 årer)","coal":"1273/1948 (3 årer)","oil":"0/536 (2 årer)"}; lyse bosettinger ["first"]; flyvninger 14, luftmålinger 14, elektronikk 22, forskningskunnskap 2649; lastebilturer 105, jernbaner 1; flaskehals: ingen (hele kjeden nådd); tomtesøk 1147, hoppet over 26639.
+- **701**: boligtrinn {"t0H":1,"t1H":1,"t5":10,"t4":10,"t3":5}; lagre {"wood":3324,"stone":3025,"coal":64,"iron":40,"copper":21,"ironOre":40,"copperOre":27,"crudeOil":0,"fuel":254,"planks":151,"industrialMachinery":8,"electronics":6}; årer igjen {"copperOre":"0/343 (3 årer)","tinOre":"101/166 (2 årer)","ironOre":"0/676 (5 årer)","coal":"2108/2743 (3 årer)","oil":"0/428 (2 årer)"}; lyse bosettinger ["first"]; flyvninger 14, luftmålinger 14, elektronikk 22, forskningskunnskap 2884; lastebilturer 35, jernbaner 1; flaskehals: ingen (hele kjeden nådd); tomtesøk 6077, hoppet over 2018029.
+- **909**: boligtrinn {"t0H":1,"t1H":1,"t5":10,"t4":15}; lagre {"wood":3252,"stone":3415,"coal":98,"iron":40,"copper":21,"ironOre":48,"copperOre":41,"crudeOil":1,"fuel":95,"planks":150,"industrialMachinery":8,"electronics":6}; årer igjen {"copperOre":"0/346 (3 årer)","tinOre":"161/251 (2 årer)","ironOre":"11/766 (5 årer)","coal":"1632/2262 (3 årer)","oil":"0/479 (2 årer)"}; lyse bosettinger ["first"]; flyvninger 14, luftmålinger 14, elektronikk 22, forskningskunnskap 2461; lastebilturer 70, jernbaner 1; flaskehals: ingen (hele kjeden nådd); tomtesøk 685, hoppet over 9467.
+- **4242**: boligtrinn {"t0H":1,"t1H":1,"t5":10,"t4":15}; lagre {"wood":3402,"stone":3211,"coal":68,"iron":40,"copper":21,"ironOre":44,"copperOre":35,"crudeOil":1,"fuel":312,"planks":151,"industrialMachinery":8,"electronics":6}; årer igjen {"copperOre":"0/260 (3 årer)","tinOre":"211/271 (2 årer)","ironOre":"29/811 (5 årer)","coal":"1634/2264 (3 årer)","oil":"0/470 (2 årer)"}; lyse bosettinger ["first"]; flyvninger 14, luftmålinger 14, elektronikk 22, forskningskunnskap 2328; lastebilturer 70, jernbaner 1; flaskehals: ingen (hele kjeden nådd); tomtesøk 1124, hoppet over 25643.
+- **31337**: boligtrinn {"t0H":1,"t1H":1,"t5":10,"t4":15}; lagre {"wood":3462,"stone":3323,"coal":77,"iron":40,"copper":21,"ironOre":56,"copperOre":27,"crudeOil":1,"fuel":330,"planks":151,"industrialMachinery":8,"electronics":6}; årer igjen {"copperOre":"0/420 (3 årer)","tinOre":"151/251 (2 årer)","ironOre":"13/919 (5 årer)","coal":"2063/2695 (3 årer)","oil":"0/492 (2 årer)"}; lyse bosettinger ["first"]; flyvninger 14, luftmålinger 14, elektronikk 22, forskningskunnskap 2335; lastebilturer 70, jernbaner 1; flaskehals: ingen (hele kjeden nådd); tomtesøk 2059, hoppet over 8578.
+- **20261009**: boligtrinn {"t0H":1,"t1H":1,"t5":10,"t4":15}; lagre {"wood":3469,"stone":3299,"coal":68,"iron":40,"copper":21,"ironOre":43,"copperOre":28,"crudeOil":1,"fuel":108,"planks":150,"industrialMachinery":8,"electronics":6}; årer igjen {"copperOre":"0/284 (3 årer)","tinOre":"176/236 (2 årer)","ironOre":"0/827 (5 årer)","coal":"1793/2433 (3 årer)","oil":"0/491 (2 årer)"}; lyse bosettinger ["first"]; flyvninger 14, luftmålinger 14, elektronikk 22, forskningskunnskap 2679; lastebilturer 62, jernbaner 1; flaskehals: ingen (hele kjeden nådd); tomtesøk 103, hoppet over 3735.
 
 
 ## Lesing av resultatene
 
-- **Alle åtte frø når forskningsinstituttet** (3,77–4,02 t), uten snarveier. Tidspunktene varierer med geografi og ressursstrøm: for eksempel kommer strøm ved 1,41 t (frø 77) mot 3,15 t (frø 5), fordi generatoren avhenger av jern, kobber og dampkraft i riktig rekkefølge.
+- **Alle åtte frø når forskningsinstituttet** (3,72–4,16 t), uten snarveier. Tidspunktene varierer med geografi og ressursstrøm: for eksempel kommer strøm ved 1,23 t (frø 77) mot 3,31 t (frø 4242), fordi generatoren avhenger av jern, kobber og dampkraft i riktig rekkefølge.
 - **Flaskehalser som fortsatt finnes:** kobber er knapt (alle hjemmeårer er tomme ved slutten, utpostene dekker resten) og jern likeså; kull og tinn er det mest av. Forbruket måles, ikke forstørres: ingen forekomst er uendelig.
-- **Utposter** (5–6 per frø) utvinner fra egne forekomster til egne lagre; karavaner (98–265 per kjøring) bærer det hjemmelageret mangler. Sjøfrakt brukes der kysten tillater det (0 for frø uten vannforbindelse).
-- **Lastebiler** kjører bare når en satellitt mangler varer til et prosjekt og forbindelsen er innen rekkevidde: 35–70 turer, men 0 i frø 4242 (ingen landforbindelse innen rekkevidde).
-- **Folketallet** (164–199) følger boligplassen. Bosettingenes tall varierer mellom frø, men hovedstaden ender alltid som «Storby» med 94 og satellittene som «Tidlig by». De satellittene når ikke «By».
+- **Utposter** (5–6 per frø) utvinner fra egne forekomster til egne lagre; karavaner (97–279 per kjøring) bærer det hjemmelageret mangler. Sjøfrakt brukes der kysten tillater det (0 for frø uten vannforbindelse).
+- **Lastebiler** kjører bare når en satellitt mangler varer til et prosjekt og forbindelsen er innen rekkevidde: 35–105 turer per kjøring i alle åtte frø.
+- **Folketallet** (189–199) følger boligplassen. Bosettingenes tall varierer mellom frø, men hovedstaden ender alltid som «Storby» med 94 og satellittene som «Tidlig by». Satellittene når ikke «By».
 - **Rapporten viser ikke** menneskelig spilltest; boten spiller den samme rekkefølgen av kjøp hver gang, så tidene er et mål på kjedens gjennomførbarhet, ikke på spillfølelse.
 
 ## Gjenskaping

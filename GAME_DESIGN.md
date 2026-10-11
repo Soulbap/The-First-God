@@ -458,7 +458,7 @@ Rapporter: `docs/opus-11/` (`REPORT.md`, `PROGRESSION_RESULTS.md`, `VISUAL_QA.md
 
 ### Implementert
 
-- **Hjemmeregionen er 3600 × 2400** (var 2400 × 1600), samme 3:2-forhold. Det gir plass til bosettinger som ligger som egne samfunn (minste avstand 640 enheter) og til at bygg får luft.
+- **Hjemmeregionen er 3600 × 2400** (var 2400 × 1600), samme 3:2-forhold. Det gir plass til bosettinger som ligger som egne samfunn (minste avstand 780 enheter) og til at bygg får luft.
 - **Landskap per biom** (`src/sim/landscape.js`): bekk, innsjø, steinrike høyder, enger og skogsområder genereres deterministisk per frø og biom. Et fjernt land har samme landskap hver gang det besøkes, lagres eller simuleres utenfor skjermen.
 - **Ressursgeografi**: flere begrensede årer per mineral (jern 5, kobber 3, tinn 2, kull 3, olje 2 felt), rikdom per frø, prospektering når kjente årer er under 55 %. Utposter utvinner fra egen forekomst til eget lager; karavaner bærer det hjemmelageret trenger mest. Folk sanker ikke tre og stein over et lagertak, slik at skogen ikke hogges ned.
 - **Bygg som utvikler seg**: boligtrinn 1–5 (halmhytte, tømmerstue, steinhus, bygård, moderne blokk) med krav til kunnskap, bosettingens trinn, materialer, folk og tid. Eldste hjem og første ly bevares som minnesteder. Boligplassen følger trinnet, og folketallet følger boligplassen.

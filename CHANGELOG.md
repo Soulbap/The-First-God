@@ -33,6 +33,15 @@ Bruk formatet under. Dato er lokal prosjektdato (`YYYY-MM-DD`). Ikke finn på ve
 
 ### OPUS-11 · integrasjon, verdensutvikling og kvalitet (pågår)
 
+#### Changed (fase F · landskap og avstand justert etter skjermbilder)
+- Skjermbildene (OPUS_11-sett) viste at skogen rundt en by ble hogd bort og at et større kart la lundene for langt unna. Nå plantes lunder nær leiren (260–780 enheter) først, så skogsoner, så fjerne lunder (treantallstaket rammer de fjerneste), tretaket er 520, og tidlig stein plasseres før trærne. Nærskogen er stabil (ca. 250 trær innen 800 enheter i en seks-timers kjøring).
+- Bosettingsavstand etter å ha sett to samfunn på ett skjermbilde: `minSiteSpacing` 780, `minSiteDistance` 820, `maxSiteDistance` 1500, første satellitt 800–1250 fra hovedstaden; lastebilvei rekker 1500 og jernbane 1700 (kartet er 3600 × 2400).
+- Kronikken er fortsatt begrenset til 90 poster, men de eldste hyppige postene (kartlegging, ruter, fester, arbeid) går først; grunnleggelser, byer og milepæler blir stående (14 land ga så mange kartleggingsposter at grunnleggelsene ble presset ut).
+- Hver av åtte testede frø når forskningsinstituttet etter 3,7–4,2 timer spilltid; lastebiler kjører 35–105 turer per kjøring i alle frø.
+
+#### Tests (fase F)
+- Tre tester (høstfest, byvekst, kronikk) var avhengige av tilfeldig utvikling i verdens layout og er gjort robuste (flere folk klare til å velge oppgave; steinhus teller både bolighus og ombygde hytter; kronikken beholder ankerposter). 202 tester består.
+
 #### Fixed / Changed (fase D · transport uten teleportering, motorisering som synes)
 - **Satellittene får ikke varer ved trylling**: byvekst (brønn, hytte, bolighus) og ombygging av hjem i en satellitt var tidligere betalt direkte fra hovedstadens lager. De er nå regionale prosjekter som leveres til bosettingens eget lager (bærere eller lastebil) og bygges først når lageret har alt. Bare hovedstaden betaler direkte fra hjemmelageret.
 - **Lastebiler tar over transporten** til en bosetting når motorvogner, drivstoff og landforbindelse finnes (landforbindelsen deles av vei og jernbane, `landLink`); da bestilles ingen bærere. Veiens rekkevidde er 1100 (kartet er større). Frø 701: 35–70 lastebilturer i en seks-timers kjøring (tidligere 0).
