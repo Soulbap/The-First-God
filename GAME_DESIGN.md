@@ -451,3 +451,23 @@ Rapporter: `docs/opus-02/`. Beslutningene under er **implementert** av utviklere
 - Døgnlengde, nattens mørke, Byplan-pris og reservegrense, Takkoffer-priser og PrP-skala (`BALANCE.day/urban/offering`) er provisoriske.
 - Skal verkstedene ha faktiske arbeidere (påvirker økonomien)? Skal hjemmeregionen ha en bekk som kobles til planetens elver (krever kryssing)? Ikke bestemt.
 - Lydbildet er ikke vurdert ved lytting.
+
+## 16. OPUS-11 — integrasjon, verdensutvikling og kvalitet (2026-10-11)
+
+Rapporter: `docs/opus-11/` (`REPORT.md`, `PROGRESSION_RESULTS.md`, `VISUAL_QA.md`). Beslutningene under er **implementert** av utvikleren; kartstørrelsen er **bekreftet** av prosjektansvarlig i økten («du kan godt gjøre mappet større»). Resten er implementert, men ikke spilltestet av et menneske.
+
+### Implementert
+
+- **Hjemmeregionen er 3600 × 2400** (var 2400 × 1600), samme 3:2-forhold. Det gir plass til bosettinger som ligger som egne samfunn (minste avstand 640 enheter) og til at bygg får luft.
+- **Landskap per biom** (`src/sim/landscape.js`): bekk, innsjø, steinrike høyder, enger og skogsområder genereres deterministisk per frø og biom. Et fjernt land har samme landskap hver gang det besøkes, lagres eller simuleres utenfor skjermen.
+- **Ressursgeografi**: flere begrensede årer per mineral (jern 5, kobber 3, tinn 2, kull 3, olje 2 felt), rikdom per frø, prospektering når kjente årer er under 55 %. Utposter utvinner fra egen forekomst til eget lager; karavaner bærer det hjemmelageret trenger mest. Folk sanker ikke tre og stein over et lagertak, slik at skogen ikke hogges ned.
+- **Bygg som utvikler seg**: boligtrinn 1–5 (halmhytte, tømmerstue, steinhus, bygård, moderne blokk) med krav til kunnskap, bosettingens trinn, materialer, folk og tid. Eldste hjem og første ly bevares som minnesteder. Boligplassen følger trinnet, og folketallet følger boligplassen.
+- **Regionale lagre**: utposter (`region.stock`) og satellittbosettinger (`settlement.stock`) har eget lager. Hovedstadens lager er hjemmelageret (`state.resources`). Leveranser trekkes ved avreise, er i transitt og havner i mottakerens lager.
+- **Industri og kraft synes**: egne silhuetter for oljebrønn, raffineri, generator, nettstasjon, flyplass, institutt, telegraf m.fl.; lastebiler og veier tegnes; elektrisk lys bare der nettet leverer strøm.
+
+### Antakelser — åpne
+
+- Boligtrinnenes krav, kostnader og tider (`BALANCE.renovation`), luft mellom bygg (`BALANCE.spacing`), lagertak (`BALANCE.human.stockCap`) og regionlagrenes størrelser (`BALANCE.globe`) er provisoriske.
+- Satellittbosettinger når ikke trinnet «By» i en vanlig kjøring, og hovedstaden har ett endelig bosettingsmønster (84 bygg, 4 bosettinger) uansett frø; forskjellen mellom frø ligger i geografi, ressursstrøm og tidspunkter.
+- Hovedstaden bruker fortsatt det delte hjemmelageret, og folk i satellittene leverer fortsatt det de sanker til det (de bruker ikke eget lager). Full regional økonomi (egen produksjon og forbruk i hver bosetting) er ikke gjort.
+- Jernbanen flytter kull ut av og tilbake til hjemmelageret (bevart, men uten egen nytte); trær har fortsatt bare to arter (bjørk og gran).

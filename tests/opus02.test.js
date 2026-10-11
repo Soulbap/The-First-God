@@ -10,6 +10,7 @@ import { nameOf, chronicle } from '../src/sim/chronicle.js';
 import { ragnarokAward, offeringPrp } from '../src/sim/legacy.js';
 import { URBAN_PLAN, urbanTarget } from '../src/sim/urban.js';
 import { buildStreets } from '../src/render/streets.js';
+import { tierOf } from '../src/sim/renovation.js';
 import { dist } from '../src/sim/world.js';
 import { reached } from './support.js';
 import { makeBot, playTo } from '../tools/bot.js';
@@ -41,7 +42,8 @@ test('Byvekst: bolighus, brønner og varehus reises av folket; ingen overlapp, i
   const urban = s.buildings.filter((b) => String(b.source).startsWith('urban:'));
   assert.ok(urban.length >= 3, `byen vokste (${urban.length})`);
   assert.ok(urban.some((b) => b.type === 'well'), 'brønn');
-  assert.ok(s.buildings.filter((b) => b.type === 'townhouse').length > 3, 'flere bolighus enn innsikten alene gir');
+  // OPUS-11: steinhus kommer både som nye bolighus og som ombygde hytter (boligtrinn 3+); begge er byens vekst utover innsikten alene.
+  assert.ok(s.buildings.filter((b) => b.complete && ['hut', 'townhouse'].includes(b.type) && tierOf(b) >= 3).length > 3, 'flere bolighus enn innsikten alene gir');
   for (let i = 0; i < s.buildings.length; i++) for (let j = i + 1; j < s.buildings.length; j++) {
     const a = s.buildings[i], b = s.buildings[j];
     assert.ok(dist(a.x, a.y, b.x, b.y) >= (a.type === 'fire' || b.type === 'fire' ? 0 : (a.radius + b.radius) * 0.95), `${a.type}#${a.id} overlapper ${b.type}#${b.id}`);

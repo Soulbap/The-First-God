@@ -178,3 +178,10 @@ Før design eller implementasjon etter OPUS-03 skal relevante deler av `docs/des
 - **Git:** `main` på https://github.com/Soulbap/The-First-God er referansen. Én tydelig commit per sammenhengende endring, aldri force push, og ingen hemmeligheter, `node_modules/` eller byggfiler i repoet.
 - **Nye avhengigheter** (f.eks. Electron) krever godkjenning fra prosjektansvarlig først.
 - **Neste milepæl** er spilltesting av hele forløpet fra Genesis-01 til GAMEPLAY-10 (`PLAYTEST.md`) og deretter den dedikerte visuelle/balanse-runden (se `docs/gameplay-07-10/INTEGRATION_REPORT.md`). Ikke start et nytt stort system før dette er vurdert.
+
+## 11. Verktøy fra OPUS-11
+
+- **Fremdriftsrapport:** `node tools/progression-report.mjs 701,4242,20261009 21600` kjører ekte simulering og spillerbot (ingen snarveier) per frø og skriver milepæler, folk, boligtrinn, ressurser, årer, regionlagre, transport og flaskehalser (`--json` for rådata, `--until=<milepæl>` for tidlig stopp). Bruk den før du påstår at en ny regel ikke stopper kjeden.
+- **Tomtesøk:** et mislykket søk huskes i `state.siteMisses` (lagres med spillet), utvides stadig og gjentas aldri i hvert steg. Egne tomtesøk bruker `memoSearch` i `construction.js`. Mål ytelse med `node tools/profile-sites.mjs <frø> <sekunder>`.
+- **Visuell kvalitetssikring:** `OPUS_11=1 node tools/capture-gui.mjs <url> <mappe> [suffiks]` tar 16 faste scener (ekte spill med boten); `CAPTURE_SCENES=01,05` velger scener. Sammenlign mot en `git worktree` på en eldre commit med `node tools/serve.mjs 5180`.
+- **Landskap og biom:** `createWorld(seed, biome, { remote })`; fjerne land bygges av `projectRegionScene` med samme biom og får forekomster fra regionens lager.

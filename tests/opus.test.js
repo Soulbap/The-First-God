@@ -9,7 +9,7 @@ import { festivalActive } from '../src/sim/civilization.js';
 import { ragnarokAward, buyPrestige, canBuyPrestige, applyLegacy, emptyMeta, cycleMemory } from '../src/sim/legacy.js';
 import { PRESTIGE, prestigeCost } from '../src/data/prestige.js';
 import { findBuildSite, zoneOf } from '../src/sim/construction.js';
-import { reached } from './support.js';
+import { reached, addPeople } from './support.js';
 
 function camp(seed = 20261009) {
   const s = createGame(seed);
@@ -62,6 +62,7 @@ test('velsignelse: steinens gave fornyer stein raskere; vandrerens letthet gjør
 
 test('høstfest: starter bare med matoverskudd og ildsted, bruker mat, dobler bønn og blir aldri negativ', () => {
   const s = camp();
+  addPeople(s, 'first', 4); for (const h of s.humans) h.timer = 0.1; // flere folk, og alle klare til å velge oppgave: festdeltakelse avgjøres av terning per person
   s.civilization.foodUnlocked = true; s.civilization.nextFoodAt = Infinity; s.civilization.nextPopulationAt = Infinity;
   s.resources.food = 5;
   advance(s, 5);

@@ -140,3 +140,18 @@ Ingen menneske har spilt denne versjonen. Se `docs/opus-02/PLAYTEST_REPORT.md` f
 - Er Takkoffer verdt PP-en, og påvirker det Ragnarok-valget riktig?
 - Lyden: tjern, verksted, torg, natt — **ikke lyttet til** av noen ennå.
 - Gjør hover-navn og hverdagsatferd (bøtte, kurv, bok) at folk føles som individer?
+
+# Spilltest — OPUS-11 (integrasjon og kvalitet)
+
+- [ ] **Landskap:** start et nytt spill og se ut over kartet (Område). Finn bekken, tjernene, steinutspringene, enger og skogsområder. Stemmer det at skogen ligger i flekker og at åpen mark finnes der bygda kan vokse?
+- [ ] **Tidlig stein:** hvor lang tid tar det før de første byggene har stein? Ingen start skal vente på stein.
+- [ ] **Avstand:** la riket vokse til fire bosettinger. Er de lett å skille som egne samfunn i Område-visning? Ligger de aldri tett inntil hverandre?
+- [ ] **Luft mellom bygg:** er leiren/grenda luftig (stier, felles plasser), og blir byen tettere etter hvert? Ingen overlapp?
+- [ ] **Boligtrinn:** følg et hus fra halmhytte til tømmerstue, steinhus, bygård og moderne blokk. Se stillaset under ombygging. Det eldste halmhuset skal stå igjen som minnested, og ingen telt/hytter skal være igjen i et by-strøk uten grunn.
+- [ ] **Industri:** se oljebrønn, raffineri, generator, nettstasjon, flyplass og institutt. Leses hver silhuett uten etikett?
+- [ ] **Natt og strøm:** sett natt. Bosettingen med generator skal ha elektrisk lys i gatene og lysende vinduer; en bosetting uten strøm skal ikke ha det.
+- [ ] **Lastebil og vei:** etter «Forbrenningsmotor», se grusveier og lastebiler som kjører med varer som en bosetting faktisk mangler. Ingen tomme turer.
+- [ ] **Gjenvekst:** trær skal ikke vokse tilbake på stier, i gårdsrom eller langs jernbanen, men skogen skal vokse fritt utenfor bygda.
+- [ ] **Besøk fjerne land:** gå til et oppdaget land og zoom inn. Ser du landskapet, boligene, lager og gruve? Er landet likt hver gang du kommer tilbake?
+- [ ] **Lagre og last:** lagre midt i en ombygging og midt i en lastebiltur, last igjen. Én levering, ingen dobling.
+- [ ] **Tempo:** når nås instituttet i en vanlig kjøring (modellen sier ca. 4 timer spilltid)? Føles ombyggingen for rask/treg?

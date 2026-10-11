@@ -10,7 +10,7 @@ import { rand, range } from '../core/rng.js';
 // Hvert biom har sin identitet. `groves`: antall lunder; `grove`: [min, maks] trær per lund; `outcrops`: steinutspring;
 // `meadows`: åpne enger uten trær; `lake`/`stream`: sannsynlighet for en ekstra innsjø / en bekk.
 export const PROFILES = {
-  skog: { groves: 18, grove: [8, 15], singles: 14, outcrops: 3, meadows: 2, lake: 0.4, stream: 0.75, spruce: 0.58 },
+  skog: { groves: 24, grove: [9, 16], singles: 14, outcrops: 3, meadows: 2, lake: 0.4, stream: 0.75, spruce: 0.58 },
   fjell: { groves: 4, grove: [4, 8], singles: 5, outcrops: 8, meadows: 1, lake: 0.3, stream: 0.5, spruce: 0.85 },
   slette: { groves: 3, grove: [4, 8], singles: 10, outcrops: 2, meadows: 4, lake: 0.5, stream: 0.5, spruce: 0.25 },
   kyst: { groves: 6, grove: [5, 10], singles: 8, outcrops: 4, meadows: 2, lake: 0.1, stream: 0.4, spruce: 0.4 },
@@ -125,7 +125,7 @@ export function populateLandscape(state, rng, biome, ctx) {
   const centers = [];
   for (const z of zones.filter((q) => q.kind === 'forest')) for (let i = 0; i < 4; i++) centers.push({ x: z.x + range(rng, -0.6, 0.6) * z.rx, y: z.y + range(rng, -0.6, 0.6) * z.ry, big: true });
   for (let g = 0; g < Math.round(prof.groves * B.landscape.areaScale); g++) {
-    const near = g % 2 === 0, a = rand(rng) * Math.PI * 2, d = near ? range(rng, 280, 820) : range(rng, 300, 1500); // hver andre lund nær leiren
+    const near = g % 5 < 3, a = rand(rng) * Math.PI * 2, d = near ? range(rng, 260, 780) : range(rng, 300, 1500); // tre av fem lunder nær leiren
     centers.push({ x: C.x + Math.cos(a) * d, y: C.y + Math.sin(a) * d * 0.7, big: false });
   }
   for (const c of centers) {
