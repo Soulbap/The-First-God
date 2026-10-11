@@ -2,6 +2,19 @@
 
 Alle merkbare prosjektendringer dokumenteres her av AI-en som utfører endringen. Filen er en menneskelesbar historikk, ikke en erstatning for Git-historikk eller tekniske commit-meldinger.
 
+## [Unreleased]
+
+### OPUS-12B · urban struktur og ytelse (PARTIAL)
+
+#### Added
+- Autonom, ressursbetalt tomtekonsolidering erstatter ved gyldig boligpress to tette, ikke-vernede hytter med én bygård. Beboere, boligplass, lagring og determinisme bevares.
+
+#### Changed
+- Boligtomter i byer foretrekker gatefront; moderne blokker er bredere og mindre tårnaktige; torget får mer dagaktivitet, mens sen avhengighet av bål reduseres.
+
+#### Tests
+- `npm test`: 231/231 bestått. Én ekte progressjonskjøring for frø 20261009 nådde instituttet etter 3,825 t på 93,6 s; se `docs/opus-12b/` for måling og begrensninger.
+
 ## AI-praksis (obligatorisk)
 
 Ved **hver** endring av kode, innhold, design, ressurser, konfigurasjon eller dokumentasjon skal AI:

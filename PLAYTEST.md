@@ -8,6 +8,7 @@
 - [ ] Mangler hovedstaden noe (f.eks. kull) mens en satellitt har det: kommer det med tog eller lastebil, og stopper det når behovet er dekket?
 - [ ] Er de moderne boligene varierte nok (høyde, tak, fasade) uten å se ut som ulike stilarter? Er skyline-forskjellen mellom hovedstaden og en liten satellitt lesbar?
 - [ ] Lagre midt i et veiarbeid, en flytting og en levering, last igjen og bekreft at ingenting dobles eller forsvinner. Ragnarok skal gi en by uten gater og uten handelshistorikk.
+- [ ] **OPUS-12B:** i en moden, boligpresset by: står moderne boliger tydeligere ved gaten, og blir et tett par gamle, ikke-vernede hytter eventuelt erstattet av én bygård uten at innbyggere eller boligplass forsvinner? Er minnestedet bevart?
 
 ## OPUS-07 · damp og industri
 

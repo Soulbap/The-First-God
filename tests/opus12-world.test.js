@@ -11,7 +11,7 @@ import { districtProfile, recognizedDistricts, districtOf } from '../src/sim/dis
 import { makeArch, planArchitecture } from '../src/sim/architecture.js';
 import { tenementWindows, modernWindows } from '../src/render/housing.js';
 import { dayPhase } from '../src/view/daylight.js';
-import { tierOf } from '../src/sim/renovation.js';
+import { tierOf, consolidationPlan, stepRenovation } from '../src/sim/renovation.js';
 import { reached, addBuilding, addPeople } from './support.js';
 
 const settled = () => reached('connected_realm', 777);
@@ -90,6 +90,29 @@ test('samlingsplassene følger døgnet: om natten søker folk hjem, om dagen tor
   const night = share(336), day = share(96);
   assert.ok(night.own > day.own * 2, `eget hjem: natt ${night.own} mot dag ${day.own}`);
   assert.ok(day.market > night.market, `torg: dag ${day.market} mot natt ${night.market}`);
+});
+
+test('tomtekonsolidering bevarer folk og boligplass, betaler lokalt og overlever lagring', () => {
+  const s = createGame(991);
+  const S = s.settlements[0]; S.stage = 'By';
+  // Et ryddet sentrumsparsell: to små, ikke-vernede hjem kan bli én gatevendt bygård.
+  s.nodes = [];
+  const a = addBuilding(s, 'hut', 'first', 700, 700, { radius: 30, tier: 1 }); // blir minnested
+  const b = addBuilding(s, 'hut', 'first', 790, 700, { radius: 30, tier: 1 });
+  const c = addBuilding(s, 'hut', 'first', 880, 700, { radius: 30, tier: 1 });
+  addPeople(s, 'first', 6);
+  s.humans[0].homeId = a.id; s.humans[1].homeId = a.id; s.humans[2].homeId = b.id; s.humans[3].homeId = b.id; s.humans[4].homeId = c.id; s.humans[5].homeId = c.id;
+  s.resources = { ...s.resources, wood: 300, stone: 300, planks: 80, cutstone: 80 };
+  assert.ok(consolidationPlan(s, S), 'et gyldig par små hjem finnes');
+  assert.ok(stepRenovation(s, 0), 'konsolideringen bestilles og betales');
+  const mid = deserialize(serialize(s));
+  stepRenovation(mid, 70);
+  const home = mid.buildings.find((q) => q.consolidatedFrom?.includes(b.id));
+  assert.ok(home && home.type === 'townhouse' && home.complete, 'en ferdig bygård erstatter tomtene');
+  assert.equal(mid.humans.length, 6, 'ingen innbyggere forsvinner');
+  assert.ok(mid.humans.filter((h) => h.homeId === home.id).length === 4, 'beboere på parsellen får det nye hjemmet');
+  assert.ok(housingOf(home, mid) >= 4, 'boligplassen går ikke ned');
+  assert.ok(mid.resources.wood < 300 && mid.resources.cutstone < 80, 'materialer ble trukket fra lokal beholdning');
 });
 
 test('menneskenes bevegelser er deterministiske (to kjøringer og lagre/lese gir samme tilstand)', () => {

@@ -18,7 +18,7 @@ const stageGap = (state, settlementId) => {
   return B.spacing.byStage[Math.max(0, Math.min(B.spacing.byStage.length - 1, rank))];
 };
 
-export function siteIsValid(state, type, x, y, settlementId = null) {
+export function siteIsValid(state, type, x, y, settlementId = null, ignoreIds = null) {
   const r = B.building[type].radius;
   if (!inBounds(state, x, y, 70) || inPond(state, x, y, r + 14)) return false;
   if (type !== 'field' && dist(x, y, state.stockpile.x, state.stockpile.y) < r + 34) return false;
@@ -27,6 +27,7 @@ export function siteIsValid(state, type, x, y, settlementId = null) {
   const space = (t) => ({ field: 18, well: 24, market: 34, hall: 32, warehouse: 30, commons: 22, park: 26, sawmill: 28, mason: 28, sanctuary: 26 }[t] ?? 16);
   const sp = space(type), extra = settlementId ? stageGap(state, settlementId) : 0;
   for (const b of state.buildings) {
+    if (ignoreIds?.has(b.id)) continue;
     const same = settlementId && (b.settlementId || 'first') === settlementId;
     const need = r + b.radius + Math.max(sp, space(b.type)) + (same ? extra : 0), dx = x - b.x, dy = y - b.y;
     if (dx * dx + dy * dy < need * need) return false;
@@ -138,7 +139,9 @@ function siteScore(state, type, x, y, ring, anchor, ctx) {
   // OPUS-12: nærhet til en eksisterende gate gir inngang (hus med gateadgang, verksteder med fraktadgang).
   const dStreet = ctx.segs?.length ? distToStreet(ctx.segs, x, y) : Infinity;
   const frontage = dStreet < 14 ? 0 : dStreet < 46 ? 1 - (dStreet - 14) / 32 : 0;
-  if (zone === 'home') score += Math.min(3, homesNear) * 9 + Math.min(2, coreNear) * 4 - workNear * 7 - fieldsNear * 6 + streetBonus(ctx, x, y, anchor) + frontage * 10;
+  // I en by er inngang mot en eksisterende gate viktigere enn bare avstand til bålet.
+  // Dette lar hus fylle lesbare fronter uten å gjøre tidlige bygder rutenettaktige.
+  if (zone === 'home') score += Math.min(3, homesNear) * 10 + Math.min(2, coreNear) * 4 - workNear * 7 - fieldsNear * 6 + streetBonus(ctx, x, y, anchor) + frontage * 18;
   else if (zone === 'core') score += coreNear * 5 - ring * 0.3; // torg og hall vil helt inn mot sentrum
   else if (zone === 'work') {
     const dir = ctx.dir;

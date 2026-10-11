@@ -5,9 +5,10 @@
 // (stillas), og ferdig bygg har et bestemt trinn som lagres og aldri bygges om uten at et høyere trinn er mulig.
 // Hver bosetting ombygger ett hjem om gangen, minst utviklede først, aldri det utvalgte minnestedet.
 import { BALANCE as B } from '../data/balance.js';
-import { stageRank, isHome } from './settlements.js';
+import { stageRank, isHome, housingCapacity, housingOf } from './settlements.js';
 import { landLink } from './regional.js';
 import { planArchitecture } from './architecture.js';
+import { siteIsValid } from './construction.js';
 
 export const MAX_TIER = 5;
 
@@ -37,6 +38,38 @@ export function maxTierFor(state, S) {
 
 const homesOf = (state, id) => state.buildings.filter((b) => b.complete && isHome(b) && (b.settlementId || 'first') === id);
 const affordable = (state, cost) => Object.entries(cost).every(([k, n]) => (state.resources[k] || 0) >= n + (B.urban.reserve[k] || 0));
+const CONSOLIDATION_COST = { wood: 26, stone: 24, planks: 5, cutstone: 6 };
+
+// To små, utdaterte boliger kan bli én ekte bytomt når det er boligpress. Dette er ikke riving for pynt:
+// kapasiteten bevares eller øker, beboere flyttes til det nye huset, materialene betales og arbeidet tar tid.
+export function consolidationPlan(state, S) {
+  if (stageRank(S.stage || 'Leir') < 5) return null;
+  const homes = homesOf(state, S.id).filter((b) => !b.heritage && b.type === 'hut' && tierOf(b) <= 2 && !b.renovation).sort((a, b) => a.id - b.id);
+  for (let i = 0; i < homes.length; i++) for (let j = i + 1; j < homes.length; j++) {
+    const a = homes[i], b = homes[j], d = Math.hypot(a.x - b.x, a.y - b.y);
+    if (d > 118) continue;
+    const x = (a.x + b.x) / 2, y = (a.y + b.y) / 2, ignored = new Set([a.id, b.id]);
+    if (!siteIsValid(state, 'townhouse', x, y, S.id, ignored)) continue;
+    const oldCapacity = housingOf(a, state) + housingOf(b, state);
+    if (housingOf({ type: 'townhouse', tier: 3 }, state) < oldCapacity) continue;
+    return { a, b, x, y, oldCapacity };
+  }
+  return null;
+}
+
+function finishConsolidation(state, S, active) {
+  const { partnerId, x, y } = active.renovation;
+  const partner = state.buildings.find((b) => b.id === partnerId);
+  if (!partner) { active.renovation = null; return; }
+  const oldIds = new Set([active.id, partner.id]);
+  const b = { id: state.nextId++, type: 'townhouse', x, y, radius: B.building.townhouse.radius, progress: 1, work: B.building.townhouse.work, workNeeded: B.building.townhouse.work, complete: true, divine: false, builders: [], startedAt: state.time, settlementId: S.id, tier: 3, consolidatedFrom: [...oldIds], renovatedAt: state.time };
+  b.arch = planArchitecture(state, b, S, 3);
+  state.buildings = state.buildings.filter((q) => !oldIds.has(q.id));
+  state.buildings.push(b);
+  for (const h of state.humans) if (oldIds.has(h.homeId)) h.homeId = b.id;
+  state.renovation.consolidated = (state.renovation.consolidated || 0) + 1;
+  state.events.push({ type: 'consolidated', id: b.id, from: [...oldIds], x, y, settlementId: S.id });
+}
 
 // Det eldste hjemmet blir et bevart minnested når bosettingen er blitt en by: en gammel halmhytte som får stå (ikke ombygd, ikke glemt).
 function preserveHeritage(state, S) {
@@ -80,6 +113,7 @@ export function stepRenovation(state, dt) {
       const workers = Math.min(2, Math.floor(S.population.length / 2));
       active.renovation.left -= dt * workers / 2;
       if (active.renovation.left <= 0) {
+        if (active.renovation.kind === 'consolidation') { finishConsolidation(state, S, active); continue; }
         const to = active.renovation.to;
         active.tier = to; active.renovation = null; active.renovatedAt = state.time;
         if (to >= 2) active.renovated = true; // eldre kode og lagringer leser `renovated`
@@ -91,6 +125,23 @@ export function stepRenovation(state, dt) {
       continue;
     }
     if (S.population.length < 2) continue;
+    // Sentrumstomter konsolideres bare når byen faktisk mangler boligplass. Ett prosjekt per bosetting,
+    // og vernede/memoriale hjem er aldri kandidater.
+    const plan = S.population.length >= housingCapacity(state, S.id) - 1 ? consolidationPlan(state, S) : null;
+    if (plan) {
+      if (S.id === 'first') {
+        if (!affordable(state, CONSOLIDATION_COST)) continue;
+        for (const [k, n] of Object.entries(CONSOLIDATION_COST)) state.resources[k] -= n;
+      } else {
+        S.stock ??= {};
+        if (!Object.entries(CONSOLIDATION_COST).every(([k, n]) => (S.stock[k] || 0) >= n)) continue;
+        for (const [k, n] of Object.entries(CONSOLIDATION_COST)) S.stock[k] -= n;
+      }
+      plan.a.renovation = { kind: 'consolidation', partnerId: plan.b.id, x: plan.x, y: plan.y, left: 70, startedAt: state.time };
+      state.events.push({ type: 'consolidationStarted', id: plan.a.id, partnerId: plan.b.id, x: plan.x, y: plan.y, settlementId: S.id });
+      started = true;
+      continue;
+    }
     const cap = maxTierFor(state, S);
     const candidate = homes.filter((b) => !b.heritage && tierOf(b) >= 1 && tierOf(b) < cap).sort((a, b) => tierOf(a) - tierOf(b) || a.id - b.id)[0];
     if (!candidate) continue;

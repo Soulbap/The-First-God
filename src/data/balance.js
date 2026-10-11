@@ -150,7 +150,8 @@ export const BALANCE = {
     radius: { 3: 34, 4: 36, 5: 38 },
   },
   // OPUS-11: ekstra luft mellom bygg i samme bosetting etter trinn (Leir, Grend, Landsby, Voksende landsby, Tidlig by, By, Storby).
-  spacing: { byStage: [20, 18, 14, 9, 4, 0, 0] },
+  // Landsbyen beholder luft; fra tidlig by fylles tomter langs eksisterende gater tettere.
+  spacing: { byStage: [20, 18, 13, 7, 2, 0, 0] },
   realm: {
     maxSettlements: 4, foundingCooldown: 70, checkSeconds: 8, party: 3,
     supplies: { wood: 36, stone: 22 }, minFood: 6, minFoodHarvests: 3, minCapitalSurplus: 3,

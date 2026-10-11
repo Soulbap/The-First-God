@@ -488,7 +488,7 @@ Rapporter: `docs/opus-12/` (`REPORT.md`, `VISUAL_QA.md`, `ECONOMY_AND_SETTLEMENT
 ### Antakelser — åpne
 
 - Alle nye tall (`BALANCE.trade`, `.migration`, `.human.foodPerPersonSecond`, `.foodStore`, veiarbeidets kostnader i `streets.js`, arbeidsplasser i `growth.js`) er provisoriske.
-- «Redevelopment» er begrenset til ombygging på stedet, bedre gater rundt og sentrumsnær høyde; sammenslåing av flere gamle hus til ett stort bygg er ikke gjort.
+- **OPUS-12B:** redevelopment kan også, ved reelt boligpress, konsolidere to tette og ikke-vernede hytter til én bygård. Det er autonomt, trinnvis og ressursbetalt; beboere og boligplass bevares. Dette er en begrenset tomteregel, ikke spillerstyrt sonering eller rivingsverktøy.
 - Mineraler kan fortsatt hentes fra årer av satellittens folk uten at gruven står i samme bosetting; gruvebygget er i praksis en arbeidsplass.
 - Fjerne land (regioner utenfor hjemmekartet) har fortsatt oppsummerte bilder (ingen gater/industri).
 

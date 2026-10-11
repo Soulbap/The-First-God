@@ -15,10 +15,10 @@ const pickW = (h, list) => { // vektet valg: list = [[verdi, vekt], ...]
 export function makeArch(tier, seed, id, value = 0.4, rank = 4) {
   const h = hash(seed, id), h2 = hash(h, 7), h3 = hash(h, 13), h4 = hash(h, 29);
   if (tier >= 5) {
-    // 4–8 etasjer: sentrum og tett bebyggelse bygges høyere; en liten by når ikke over fem.
-    const cap = rank >= 6 ? 8 : rank >= 5 ? 7 : 5;
-    const floors = Math.max(4, Math.min(cap, 4 + Math.round(value * 3) + (h % 3 === 0 && rank >= 5 ? 1 : 0)));
-    return { tier: 5, floors, bays: pickW(h2, [[3, 3], [4, 4], [5, 2]]), roof: pickW(h3, [['flat', 4], ['terrace', 3], ['slant', 2], ['loft', 2]]),
+    // Bredere, middels høye blokker leses som sammenhengende byfront heller enn enslige tårn.
+    const cap = rank >= 6 ? 7 : rank >= 5 ? 6 : 5;
+    const floors = Math.max(4, Math.min(cap, 4 + Math.round(value * 2) + (h % 4 === 0 && rank >= 5 ? 1 : 0)));
+    return { tier: 5, floors, bays: pickW(h2, [[4, 3], [5, 4], [6, 2]]), roof: pickW(h3, [['flat', 4], ['terrace', 3], ['slant', 2], ['loft', 2]]),
       facade: pickW(h4, [['concrete', 4], ['glass', 2], ['brick', 3], ['panel', 3]]), entrance: pickW(hash(h, 3), [['center', 3], ['side', 2], ['arch', 1]]),
       balcony: pickW(hash(h, 5), [['none', 3], ['alt', 3], ['all', 2]]), tone: h % 4, sig: `5.${h % 997}` };
   }

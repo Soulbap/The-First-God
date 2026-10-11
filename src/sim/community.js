@@ -13,7 +13,7 @@ export const BOUND = new Set(['toFire', 'rest', 'toMaintain', 'maintain', 'wande
 const KINDS = {
   fire: { cap: 5, ring: true }, hearth: { cap: 7, ring: true }, well: { cap: 3, ring: true }, sanctuary: { cap: 4, ring: true },
   commons: { cap: 8, ring: true }, park: { cap: 9, ring: true },
-  market: { cap: 9 }, hall: { cap: 6 }, storage: { cap: 3 }, warehouse: { cap: 3 },
+  market: { cap: 14 }, hall: { cap: 6 }, storage: { cap: 3 }, warehouse: { cap: 3 },
 };
 const WORK = new Set(['sawmill', 'mason', 'workshop', 'mine', 'coal_mine', 'smelter', 'watermill', 'windmill', 'steam_engine', 'metalworks', 'locomotive_workshop', 'rail_terminal', 'generator', 'oil_well', 'refinery', 'motor_depot', 'precision_works', 'electronics_works', 'aircraft_works', 'airfield', 'research_institute', 'telegraph', 'dock', 'boatyard', 'charcoal_kiln', 'field', 'combustion_engine']);
 export const WORK_TYPES = WORK;
@@ -84,10 +84,11 @@ function weightOf(state, S, b, h, ctx, purpose) {
   const { rank, night, lit } = ctx, day = 1 - night;
   let w = 0;
   switch (b.type) {
-    case 'fire': w = rank <= 2 ? 4 : 0.5 + night * (lit ? 0.3 : 1.2); break;
-    case 'hearth': w = rank <= 3 ? 3.5 : 1.2 + night * (lit ? 0.5 : 2.2); break;
+    case 'fire': w = rank <= 2 ? 4 : 0.25 + night * (lit ? 0.2 : 0.8); break;
+    case 'hearth': w = rank <= 3 ? 3.5 : 0.7 + night * (lit ? 0.4 : 1.5); break;
     case 'well': w = rank >= 2 ? 1.6 * (1 + (ctx.morning ? 1 : 0)) : 0.8; break;
-    case 'market': w = rank >= 2 ? 3.6 * day + (lit ? 1.4 * night : 0.2) : 0.5; break;
+    // En moden by har faktisk dagsliv ved torget, ikke bare en dekorativ markedssprite.
+    case 'market': w = rank >= 2 ? (rank >= 4 ? 6.2 : 3.6) * day + (lit ? 1.4 * night : 0.2) : 0.5; break;
     case 'hall': w = 2.2 * (1 - 0.5 * night); break;
     case 'commons': w = 3.2 + (lit ? 0.6 : 0.2) * night; break;
     case 'park': w = 2.8 * (1 - 0.5 * night) + (lit ? 1.2 * night : 0); break;
