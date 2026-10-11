@@ -6,6 +6,13 @@ Alle merkbare prosjektendringer dokumenteres her av AI-en som utfører endringen
 
 ### OPUS-12B · urban struktur og ytelse (PARTIAL)
 
+#### Docs
+- Sluttverifikasjon for OPUS-12B: 14 faktiske scene-bilder (i `docs/opus-12b/shots/verification/`), åtte ekte botløp og CPU-profiler er dokumentert. Anbefalingen er **B: ikke merge ennå**, fordi moderne byform og representativ synlighet av konsolidering ikke består kvalitetsporten.
+
+#### Tests
+- `tools/opus12b-verification.mjs` er en ren diagnostikk for åtte naturlige botløp og observerer konsolideringshendelser uten å endre spillregler. Alle åtte kontrollfrø nådde instituttet; konsolidering fullførte naturlig i ett av åtte frø.
+- `npm test`: 231/231 bestått i sluttkontrollen.
+
 #### Added
 - Autonom, ressursbetalt tomtekonsolidering erstatter ved gyldig boligpress to tette, ikke-vernede hytter med én bygård. Beboere, boligplass, lagring og determinisme bevares.
 
