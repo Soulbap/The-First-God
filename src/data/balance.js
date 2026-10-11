@@ -148,7 +148,7 @@ export const BALANCE = {
   realm: {
     maxSettlements: 4, foundingCooldown: 70, checkSeconds: 8, party: 3,
     supplies: { wood: 36, stone: 22 }, minFood: 6, minFoodHarvests: 3, minCapitalSurplus: 3,
-    routeEstablishedTrips: 3, minSiteSpacing: 640, minSiteDistance: 660, maxSiteDistance: 1300,
+    routeEstablishedTrips: 3, minSiteSpacing: 780, minSiteDistance: 820, maxSiteDistance: 1500,
   },
   // Verdens-regioner: avstand i «ruter». Reisetid er abstrakt (ingen individuell simulering utenfor kartet).
   globe: { cols: 5, rows: 3, expeditionSecondsPerStep: 55, outpostSecondsPerStep: 70, caravanSeconds: 46, caravanSpeed: 46, maxCaravans: 4,
@@ -186,7 +186,7 @@ export const BALANCE = {
       electronics_works: { cost: { wood: 40, stone: 26, planks: 14, copper: 10, iron: 6, industrialMachinery: 2 }, inputs: { precisionComponents: 1, copper: 1, industrialMachinery: 1 }, outputs: { electronics: 1 }, seconds: 30, power: 0, electricOnly: true, electric: 1.5, cap: { electronics: 6 } },
       aircraft_works: { cost: { wood: 60, stone: 40, planks: 22, iron: 10, precisionComponents: 4, industrialMachinery: 2 }, inputs: { precisionComponents: 3, planks: 6, iron: 2 }, outputs: { aircraft: 1 }, seconds: 40, power: 1, electric: 1.5, cap: { aircraft: 2 } },
     },
-    rail: { cost: { wood: 70, planks: 24, iron: 8, railwayComponents: 2 }, maxDistance: 1200, travelSeconds: 28, load: 3 },
+    rail: { cost: { wood: 70, planks: 24, iron: 8, railwayComponents: 2 }, maxDistance: 1700, travelSeconds: 28, load: 3 },
     locomotive: { wood: 20, iron: 6, industrialMachinery: 2, railwayComponents: 2 },
   },
   // OPUS-08: elektrisk kraft er kapasitet, ikke lager. Generatoren krever damp eller
@@ -205,7 +205,7 @@ export const BALANCE = {
   // OPUS-08: forbrenningsmotor er kraftkilde som bruker raffinert drivstoff; lastebiler frakter planker på land.
   combustion: {
     engine: { cost: { wood: 20, iron: 6, industrialMachinery: 2, mechanicalComponents: 2 }, power: 4, fuelPerSecond: 0.02, standbyFuelPerSecond: 0.0015, wearPerSecond: 0.0012, repairAt: 0.44, repair: { iron: 1, planks: 2 } },
-    road: { maxDistance: 1100, load: 4, cargo: 'planks', reserve: 40, fuelPerTrip: 1, travelSeconds: 20, tripsBeforeService: 3, service: { iron: 1, planks: 2 } },
+    road: { maxDistance: 1500, load: 4, cargo: 'planks', reserve: 40, fuelPerTrip: 1, travelSeconds: 20, tripsBeforeService: 3, service: { iron: 1, planks: 2 } },
   },
   // OPUS-09: fly er lokale oppdrag, ikke et globalt flysystem. Hver flyvning bruker drivstoff og tid,
   // har begrenset rekkevidde og gir kartkunnskap bare over steder som allerede er kjent.

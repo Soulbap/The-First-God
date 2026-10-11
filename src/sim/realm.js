@@ -50,7 +50,7 @@ export function findSettlementSite(state, { ignore = [] } = {}) {
     if (routeCrossesPond(state, nearestS, { x, y })) continue;
     const c = classify(state, x, y);
     const water = dist(x, y, P.x, P.y) < 420 ? 12 : 0;
-    const score = c.trees * 4 + c.rocks * 22 + water - Math.abs(nearest - 820) * 0.06 + (have.has(c.kind) ? 0 : 26) - y * 0.0005 - x * 0.0003;
+    const score = c.trees * 4 + c.rocks * 22 + water - Math.abs(nearest - 1000) * 0.06 + (have.has(c.kind) ? 0 : 26) - y * 0.0005 - x * 0.0003;
     if (!best || score > best.score) best = { x, y, score, kind: c.kind, trees: c.trees, rocks: c.rocks };
   }
   return best;
