@@ -104,8 +104,9 @@ function moveTo(state, h, dt) {
   // OPUS-12: gå rundt bygg i stedet for gjennom dem. Omveien legges ett punkt av gangen (høyst tre per mål) og bare når rett kurs krysser et fotavtrykk.
   if (!h.waypoints?.length) {
     const dsig = `${Math.round(h.tx)},${Math.round(h.ty)}`;
-    if (h.detourSig !== dsig) { h.detourSig = dsig; h.detours = 0; }
-    if (h.detours < 3) { const wp = detourAround(state, h); if (wp) { h.waypoints = [wp]; h.detours++; } }
+    if (h.detourSig !== dsig) { h.detourSig = dsig; h.detours = 0; h.detourChk = -1; }
+    // Sjekken gjøres bare én gang per mål og per passert omvei (ikke i hvert steg): ellers dominerer den simuleringstiden.
+    if (h.detours < 3 && h.detourChk !== h.detours) { h.detourChk = h.detours; const wp = detourAround(state, h); if (wp) { h.waypoints = [wp]; h.detours++; } }
   }
   const goal = h.waypoints?.[0] || { x: h.tx, y: h.ty };
   const dx = goal.x - h.x, dy = goal.y - h.y;
